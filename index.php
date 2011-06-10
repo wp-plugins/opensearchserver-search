@@ -87,13 +87,19 @@ function setFields_OSS($url,$indexname,$username,$key)
 			   $searchTemplate->setSnippetField("search","user_email");
 			
 }
-function reindex_site($id)
+function delete_document($serverurl,$indexname,$username,$password,$query)
+{
+
+		$deleteAPI = new oss_delete($serverurl,$indexname);
+		$deleteAPI->credential($username,$password);
+		$deleteAPI->delete($query);
+}
+function reindex_site($id,$type)
 {
 		
 		global $wpdb;
 		$table_name =$wpdb->prefix ."opensearchserver";
 		$table_name_posts =$wpdb->prefix ."posts";
-		$table_name_comments =$wpdb->prefix ."comments";
 		$table_name_users =$wpdb->prefix ."users";
 		$result = $wpdb->get_results('SELECT * FROM '.$table_name);
 		
@@ -101,22 +107,20 @@ function reindex_site($id)
 		$ossEngineConnectTimeOut = configRequestValue('ossEngineConnectTimeOut', 5, 'engineConnectTimeOut');
 		$ossEngineIndex = configRequestValue('ossEngineIndex', $result[0]->indexname, 'engineIndex');
 	
-	
-		
 		if($id)
 		{
+				$delete='id:'.$type.'_'.$id;
+				delete_document($result[0]->serverurl,$result[0]->indexname,$result[0]->username,$result[0]->key,$delete);
 				$sql='SELECT * FROM `'.$table_name_posts.'` WHERE `post_status` LIKE '."'".'publish'."'" .' AND `ID` ='.$id;
-				echo $sql;
 		}else
 		{
-		$deleteAPI = new oss_delete($result[0]->serverurl,$result[0]->indexname);
-		$deleteAPI->credential($result[0]->username,$result[0]->key);
-		$deleteAPI->delete('*:*');
-		$sql='SELECT * FROM `'.$table_name_posts.'` WHERE `post_status` LIKE '."'".'publish'."'";
+			delete_document($result[0]->serverurl,$result[0]->indexname,$result[0]->username,$result[0]->key,'*:*');
+			$sql='SELECT * FROM `'.$table_name_posts.'` WHERE `post_status` LIKE '."'".'publish'."'";
 		}
 		$result_posts = $wpdb->get_results($sql);
-		 $index = new OSS_IndexDocument();
+		$index = new OSS_IndexDocument();
 		$lang= substr(get_locale(), 0, 2);
+		
 		foreach($result_posts as $posts)
 		{
 								$result_users = $wpdb->get_results('SELECT user_nicename,user_email,user_url FROM `'.$table_name_users.'` WHERE `ID` = '.$posts->post_author);
@@ -143,8 +147,6 @@ function reindex_site($id)
 function admin_page()
 {
 		global $wpdb;
-
-		
 		$table_name =$wpdb->prefix ."opensearchserver";
 		echo '<div class="wrap"><h2> OpenSearchServer Settings</h2>';
 		 if($_POST['action'] == "Create-index/Save") 
@@ -165,7 +167,7 @@ function admin_page()
 		}
 			if($_POST['action'] == "Reindex-Site") 
 			{
-				reindex_site('');
+				reindex_site('','');
 				echo '<h3 style="color:#3366FF">Re-index finshed Successfully.</h3>';
 			}
 		$result = $wpdb->get_results('SELECT * FROM '.$table_name);
@@ -225,10 +227,19 @@ function opensearchserver_update_db_check() {
 }
 
 function do_while_posting($post_id,$post) {
-  if ($post->post_type == 'post'
+
+  if ($post->post_type == 'post' || $post->post_type == 'page'
       && $post->post_status == 'publish') {
-  reindex_site($post->ID);
+  reindex_site($post->ID,$post->post_type);
   } 
+else
+	{
+			global $wpdb;
+			$table_name =$wpdb->prefix ."opensearchserver";
+			$result = $wpdb->get_results('SELECT * FROM '.$table_name);
+			$delete='id:'.$post->post_type.'_'.$post->ID;
+			delete_document($result[0]->serverurl,$result[0]->indexname,$result[0]->username,$result[0]->key,$delete);
+	}
 } 
 add_action('save_post','do_while_posting',10,2);
 add_action('plugins_loaded', 'opensearchserver_update_db_check');
