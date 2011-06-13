@@ -126,9 +126,9 @@ function reindex_site($id,$type)
 								$result_users = $wpdb->get_results('SELECT user_nicename,user_email,user_url FROM `'.$table_name_users.'` WHERE `ID` = '.$posts->post_author);
 								$document = $index->newDocument($lang);
 								$document->newField('id', $posts->post_type.'_'.$posts->ID);
-								$document->newField('type', $posts->post_type);
-								$document->newField('title', $posts->post_title);
-								$document->newField('content', $posts->post_content);
+								$document->newField('type', strip_tags($posts->post_type));
+								$document->newField('title', strip_tags($posts->post_title));
+								$document->newField('content', strip_tags($posts->post_content));
 								$document->newField('url', $posts->guid);
 								$document->newField('timestamp', $posts->post_date_gmt);
 								$document->newField('user_name',$result_users[0]->user_nicename );

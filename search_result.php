@@ -19,7 +19,7 @@ function get_search_result_output($query) {
 		$cont.='<br/><br/>';
 		$cont .='<table border="0" style="border:none">
     <tr>
-         <td width="100px" style="border:none">
+         <td width="120px" height="5%" style="border:none">
             <div>
 			';
 				$cont.='<a href=?s='.$query.'&fq=All>ALL</a><br/>';

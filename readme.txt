@@ -56,6 +56,10 @@ A: Check that you server is enabled with CURL extension else install it.
 1. OpenSearchServer Settings Page.
 2. Search provided by OpenSearchServer with facet and filter.
 
+
+= 1.0.3 =
+* Fixed images in search result. 
+
 = 1.0.2 =
 * Added deletion feature in OSS plugin 
 
