@@ -3,7 +3,7 @@ Contributors: ekeller,naveenann
 Tags: search,search engine,opensearchserver
 Requires at least: 3.0.1
 Tested up to: 3.1.3
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 
 WordPress OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full text search on WordPress-based websites.
