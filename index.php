@@ -34,6 +34,13 @@ function opensearchserver_install() {
   dbDelta($sql);
   add_option("opensearchserver_db_version",'1.2');
 }
+function opensearchserver_uninstall() {
+  global $wpdb;
+  $table_name =$wpdb->prefix ."opensearchserver";
+  $sql ='DROP TABLE ' . $table_name  ;
+  $wpdb->query($sql);
+  delete_option("opensearchserver_db_version",'1.2');
+}
 
 function opensearchserver_form($form) {
   $form = '<form role="search" method="get" id="searchform" action="' . home_url( '/' ) . '" >
@@ -144,45 +151,44 @@ function admin_page() {
   global $wpdb;
   $table_name =$wpdb->prefix ."opensearchserver";
   echo '<div class="wrap"><h2> OpenSearchServer Settings</h2>';
-  if($_POST['action'] == "Create-index/Save") {
+  $action=isset($_POST['action']) ? $_POST['action'] :null;
+  if($action == "Create-index/Save") {
     $wpdb->query('TRUNCATE TABLE `wp_opensearchserver');
-    $delay=$_POST['delay'];
-    $username=$_POST['username'];
-    $key=$_POST['key'];
-    $serverurl=$_POST['serverurl'];
-    $indexname=$_POST['indexname'];
+    $delay = isset($_POST['delay']) ? $_POST['delay'] :null;
+    $username = isset($_POST['username']) ? $_POST['username'] :null;
+    $key = isset($_POST['key']) ? $_POST['key'] :null;
+    $serverurl = isset($_POST['serverurl']) ? $_POST['serverurl'] :null;
+    $indexname = isset($_POST['indexname']) ? $_POST['indexname'] :null;
     $last_index=date('YmdHis', time());
     $rows_affected = $wpdb->insert( $table_name, array( 'serverurl' =>$serverurl, 'indexname' => $indexname, 'username' => $username, 'key' => $key, 'last_indexed' => $last_index ) );
     configure_OSS($serverurl,$indexname,$username,$key);
     setFields_OSS($serverurl,$indexname,$username,$key);
     echo '<h3 style="color:#3366FF">The Preference saved Successfully.</h3>';
   }
-  if($_POST['action'] == "Reindex-Site") {
+  if($action == "Reindex-Site") {
     reindex_site('','');
     echo '<h3 style="color:#3366FF">Re-index finshed Successfully.</h3>';
   }
   $result = $wpdb->get_results('SELECT * FROM '.$table_name);
+  ?>
+<form id="admin" name="admin" method="post" action="">
+	<input type="hidden" name="opensearchserver" value="true" />
 
-  echo '<form id="admin" name="admin" method="post" action="">
-					  <input type="hidden" name="opensearchserver" value="true"/>
+	OpenSearchServer URL: <br /> <input type="text" name="serverurl"
+		id="serverurl" size="50"
+		value="<?php if($result){echo $result[0]->serverurl;}?>" /> <br />
+	IndexName :<br /> <input type="text" name="indexname" id="indexname"
+		size="50" value="<?php if($result){echo $result[0]->indexname;}?>" />
+	<br /> Username :<br /> <input type="text" name="username"
+		id="username" size="50"
+		value="<?php if($result){echo $result[0]->username;}?>" /> <br /> Key
+	:<br /> <input type="text" name="key" id="key" size="50"
+		value="<?php if($result){echo $result[0]->key;}?>" /> <br /> <br /> <input
+		type="submit" name="action" id="action" value="Create-index/Save" /> <input
+		type="submit" name="action" id="action" value="Reindex-Site" />
+</form>
 
-					 OpenSearchServer URL: <br />
-					  <input type="text" name="serverurl" id="serverurl" size="50" value="'.$result[0]->serverurl.'"/>
-					  <br />
-					   IndexName :<br />
-					  <input type="text" name="indexname" id="indexname" size="50" value="'.$result[0]->indexname.'"/>
-					  <br />
-					  Username :<br />
-					  <input type="text" name="username" id="username" size="50" value="'.$result[0]->username.'"/>
-					  <br />
-					  Key :<br />
-					  <input type="text" name="key" id="key" size="50" value="'.$result[0]->key.'"/>
-					  <br />
-					   <br />
-					  <input type="submit" name="action" id="action" value="Create-index/Save" />
-					  <input type="submit" name="action" id="action" value="Reindex-Site" />
-					</form>';
-  echo '</div>';
+<?php echo '</div>';
 
 }
 
