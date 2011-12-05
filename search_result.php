@@ -55,9 +55,9 @@ else {
         	}
         if($type && $user ) {
         	if($user_url) {
-          		$cont.=$type.' by <a href="'.$user_url.'">'.$user.'</a><br/><br/>';
+          		$cont.=$type.' by <a href="'.$user_url.'">'.$user.'</a><br/>';
         	}else {
-        		$cont.=$type.' by '.$user.'<br/><br/>';
+        		$cont.=$type.' by '.$user.'<br/>';
         	}
         }		
 			$cont.="<br/></div>";
