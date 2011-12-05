@@ -219,15 +219,15 @@ function  opensearchserver_search() {
     return;
   }
   get_header();
-  echo '<form role="search" method="get" id="searchform" action="' . home_url( '/' ) . '" >
+  print '<form role="search" method="get" id="searchform" action="' . home_url( '/' ) . '" >
 		<div><label class="screen-reader-text" for="s">' . __('Search for:') . '</label>
 		<input type="text" size=50 value="' . get_search_query() . '" name="s" id="s" />
 		<input type="submit" id="searchsubmit" value="'. esc_attr__('Search') .'" />
 		</div>
-		</form>';
-  echo '<div>';
-  echo get_sidebar();
-  echo get_search_result_output(get_search_query());
+		</form><hr/>';
+
+  print get_sidebar();
+  print get_search_result_output(get_search_query());
   get_footer();
   exit;
 }
