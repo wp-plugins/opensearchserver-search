@@ -6,25 +6,19 @@ function get_search_result_output($query) {
   $result=getSearchResult($query);
   if (isset($result) && $result instanceof SimpleXMLElement) {
     $ossResults = new OSSResults($result);
-    if($ossResults->getResultFound()>0)
-    {
+    if($ossResults->getResultFound()>0)    {
       $resultTime = (float)$result->result['time'] / 1000;
-
       $cont=$ossResults->getResultFound().' documents found ('.$resultTime.' seconds)';
-
       $max = ($ossResults->getResultStart() + $ossResults->getResultRows() > $ossResults->getResultFound()) ? $ossResults->getResultFound() : $ossResults->getResultStart() + $ossResults->getResultRows();
       $cont.='<br/><br/>';
       $cont .='<table border="0" style="border:none">
-    <tr>
-         <td width="120px" height="5%" style="border:none">
-            <div>
-			';
-      $cont.='<a href=?s='.$query.'&fq=All>ALL</a><br/>';
-      foreach ($ossResults->getFacet('type') as $values)
-      {
+      <tr>
+      <td width="120px" height="5%" style="border:none">
+      <div>';
+      $cont.='<a href="?s='.$query.'&fq=All">ALL</a><br/>';
+      foreach ($ossResults->getFacet('type') as $values) {
         $value = $values['name'];
-        $cont.='<a href=?s='.$query.'&fq='.$value.'>'.ucfirst($value).'('.$values.')'.'</a><br/>';
-
+        $cont.='<a href=?s="'.$query.'&fq='.$value.'">'.ucfirst($value).'('.$values.')'.'</a><br/>';
       }
 
       $cont .=' </div>        </td>
@@ -33,10 +27,7 @@ function get_search_result_output($query) {
 
       for ($i = $ossResults->getResultStart(); $i < $max; $i++) {
         $category	 = stripslashes($ossResults->getField($i, 'type', true));
-
-
-
-        $title	 = stripslashes($ossResults->getField($i, 'title', true));
+	    $title	 = stripslashes($ossResults->getField($i, 'title', true));
         $content = stripslashes($ossResults->getField($i, 'content', true));
         $user = stripslashes($ossResults->getField($i, 'user_name', true));
         $user_url = stripslashes($ossResults->getField($i, 'user_url', true));
@@ -46,7 +37,11 @@ function get_search_result_output($query) {
         $cont.=$content.'<br/>';
         $cont.='<a href='.$url.'>'.$url.'</a>&nbsp;&nbsp;&nbsp;&nbsp;';
         if($type && $user ) {
-          $cont.=$type.' by <a href='.$user_url.'>'.$user.'</a><br/><br/>';
+        	if($user_url) {
+          		$cont.=$type.' by <a href="'.$user_url.'">'.$user.'</a><br/><br/>';
+        	}else {
+        		$cont.=$type.' by '.$user.'<br/><br/>';
+        	}
         }
         else
         {$cont.="<br/><br/>";
@@ -88,7 +83,11 @@ function get_search_result_output($query) {
 
       foreach($pagingArray as $page)
       {
-        $cont.='<a href='.$page['url'].'>'.$page['label'].'</a>'.'&nbsp;&nbsp;&nbsp;';
+      	if($page['url']) {
+        	$cont.='<a href="'.$page['url'].'">'.$page['label'].'</a>'.'&nbsp;&nbsp;&nbsp;';
+      	}else {
+      		$cont.=$page['label'].'&nbsp;&nbsp;&nbsp;';
+      	}
       }
 
       $cont.='<div align="right">';
@@ -125,11 +124,11 @@ function getSearchResult($query)
   {
     $result = $wpdb->get_results('SELECT * FROM '.$table_name);
     $start = isset($_REQUEST['pq']) ? $_REQUEST['pq'] : null;
-    $start = isset($start) ? max(0, $start - 1) * 10 : 0;
+    $start = isset($start) ? max(0, $start - 1) * 1 : 0;
     $escapechars = array('\\', '^', '~', ':', '(', ')', '{', '}', '[', ']' , '&&', '||', '!', '*', '?');
     foreach ($escapechars as $escchar) $query = str_replace($escchar, ' ', $query);
     $query = trim($query);
-    $search = new OSSSearch($result[0]->serverurl, $result[0]->indexname, 10, $start);
+    $search = new OSSSearch($result[0]->serverurl, $result[0]->indexname, 1, $start);
     $search->credential($result[0]->username, $result[0]->key);
     $search->facet('type',1);
     $filter=isset($_REQUEST['fq']) ? $_REQUEST['fq'] : null;

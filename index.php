@@ -111,9 +111,9 @@ function reindex_site($id,$type) {
   $table_name_posts =$wpdb->prefix ."posts";
   $table_name_users =$wpdb->prefix ."users";
   $result = $wpdb->get_results('SELECT * FROM '.$table_name);
-  $ossEnginePath  = configRequestValue('ossEnginePath', $result[0]->serverurl, 'engineURL');
-  $ossEngineConnectTimeOut = configRequestValue('ossEngineConnectTimeOut', 5, 'engineConnectTimeOut');
-  $ossEngineIndex = configRequestValue('ossEngineIndex', $result[0]->indexname, 'engineIndex');
+  $ossEnginePath  = config_request_value('ossEnginePath', $result[0]->serverurl, 'engineURL');
+  $ossEngineConnectTimeOut = config_request_value('ossEngineConnectTimeOut', 5, 'engineConnectTimeOut');
+  $ossEngineIndex = config_request_value('ossEngineIndex', $result[0]->indexname, 'engineIndex');
 
   if($id)	{
     $delete='id:'.$type.'_'.$id;
