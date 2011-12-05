@@ -18,7 +18,7 @@ function get_search_result_output($query) {
       $cont.='<a href="?s='.$query.'&fq=All">ALL</a><br/>';
       foreach ($ossResults->getFacet('type') as $values) {
         $value = $values['name'];
-        $cont.='<a href=?s="'.$query.'&fq='.$value.'">'.ucfirst($value).'('.$values.')'.'</a><br/>';
+        $cont.='<a href="?s='.$query.'&fq='.$value.'">'.ucfirst($value).'('.$values.')'.'</a><br/>';
       }
 
       $cont .=' </div>        </td>
@@ -33,9 +33,22 @@ function get_search_result_output($query) {
         $user_url = stripslashes($ossResults->getField($i, 'user_url', true));
         $type = stripslashes($ossResults->getField($i, 'type', true));
         $url = stripslashes($ossResults->getField($i, 'url', false));
-        $cont.='<a href="'.$url.'">'.$title.'</a><br/>';
-        $cont.=$content.'<br/>';
-        $cont.='<a href='.$url.'>'.$url.'</a>&nbsp;&nbsp;&nbsp;&nbsp;';
+        if(!$title && !content && !url ) {
+        	$cont .='No data found.';
+        }else {
+        	if($title && $url) {
+        	$cont.='<a href="'.$url.'">'.$title.'</a><br/>';
+        	}else if(!$url) {
+        		$cont.=$title.'<br/>';
+        	}else if(!$title){
+        		$cont.='<a href="'.$url.'">Un-titled</a><br/>';
+        	}
+        	if($content) {
+        		$cont.=$content.'<br/>';
+        	}
+        	if($url) {
+        		$cont.='<a href='.$url.'>'.$url.'</a>&nbsp;&nbsp;&nbsp;&nbsp;';
+        	}
         if($type && $user ) {
         	if($user_url) {
           		$cont.=$type.' by <a href="'.$user_url.'">'.$user.'</a><br/><br/>';
@@ -46,7 +59,7 @@ function get_search_result_output($query) {
         else
         {$cont.="<br/><br/>";
         }
-
+      }
       }
       $ossPaging = new OSSPaging($result, 'r', 'pq');
       $pagingArray = array();
@@ -116,19 +129,17 @@ function get_search_result_output($query) {
   unset($cont);
 }
 
-function getSearchResult($query)
-{
+function getSearchResult($query) {
   global $wpdb;
   $table_name =$wpdb->prefix ."opensearchserver";
-  if($query)
-  {
+  if($query) {
     $result = $wpdb->get_results('SELECT * FROM '.$table_name);
     $start = isset($_REQUEST['pq']) ? $_REQUEST['pq'] : null;
-    $start = isset($start) ? max(0, $start - 1) * 1 : 0;
+    $start = isset($start) ? max(0, $start - 1) * 10 : 0;
     $escapechars = array('\\', '^', '~', ':', '(', ')', '{', '}', '[', ']' , '&&', '||', '!', '*', '?');
     foreach ($escapechars as $escchar) $query = str_replace($escchar, ' ', $query);
     $query = trim($query);
-    $search = new OSSSearch($result[0]->serverurl, $result[0]->indexname, 1, $start);
+    $search = new OSSSearch($result[0]->serverurl, $result[0]->indexname, 10, $start);
     $search->credential($result[0]->username, $result[0]->key);
     $search->facet('type',1);
     $filter=isset($_REQUEST['fq']) ? $_REQUEST['fq'] : null;

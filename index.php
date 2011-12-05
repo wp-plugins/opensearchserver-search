@@ -8,15 +8,15 @@
  Tested up to: 3.1.3
  Version:1.0.4
  */
-require 'lib/oss_api.class.php';
-require 'lib/oss_misc.lib.php';
-require 'lib/oss_indexdocument.class.php';
-require 'lib/oss_results.class.php';
-require 'lib/oss_paging.class.php';
-require 'lib/oss_search.class.php';
-require 'lib/oss_searchtemplate.class.php';
-require 'lib/oss_delete.class.php';
-require 'search_result.php';
+require_once 'lib/oss_api.class.php';
+require_once 'lib/oss_misc.lib.php';
+require_once 'lib/oss_indexdocument.class.php';
+require_once 'lib/oss_results.class.php';
+require_once 'lib/oss_paging.class.php';
+require_once 'lib/oss_search.class.php';
+require_once 'lib/oss_searchtemplate.class.php';
+require_once 'lib/oss_delete.class.php';
+require_once 'search_result.php';
 
 function opensearchserver_install() {
   global $wpdb;
@@ -27,6 +27,7 @@ function opensearchserver_install() {
 		  `indexname` varchar(255) NOT NULL,
 		  `username` varchar(255) NOT NULL,
 		  `key` varchar(255) NOT NULL,
+		  `indexing_method` varchar(255) NOT NULL,
 		  `last_indexed` varchar(255) NOT NULL
 
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8;';
@@ -111,10 +112,11 @@ function reindex_site($id,$type) {
   $table_name_posts =$wpdb->prefix ."posts";
   $table_name_users =$wpdb->prefix ."users";
   $result = $wpdb->get_results('SELECT * FROM '.$table_name);
+  $index_status=0;
+  if($result[0]->indexing_method=='automated_indexation') {
   $ossEnginePath  = config_request_value('ossEnginePath', $result[0]->serverurl, 'engineURL');
   $ossEngineConnectTimeOut = config_request_value('ossEngineConnectTimeOut', 5, 'engineConnectTimeOut');
   $ossEngineIndex = config_request_value('ossEngineIndex', $result[0]->indexname, 'engineIndex');
-
   if($id)	{
     $delete='id:'.$type.'_'.$id;
     delete_document($result[0]->serverurl,$result[0]->indexname,$result[0]->username,$result[0]->key,$delete);
@@ -144,7 +146,10 @@ function reindex_site($id,$type) {
       $errors[] = 'failedToUpdate';
     }
     $server->optimize();
+  	}
+  $index_status=1;
   }
+  return $index_status;
 }
 
 function admin_page() {
@@ -159,35 +164,52 @@ function admin_page() {
     $key = isset($_POST['key']) ? $_POST['key'] :null;
     $serverurl = isset($_POST['serverurl']) ? $_POST['serverurl'] :null;
     $indexname = isset($_POST['indexname']) ? $_POST['indexname'] :null;
+    $indexing_method = isset($_POST['indexing_method']) ? $_POST['indexing_method'] :null;
     $last_index=date('YmdHis', time());
-    $rows_affected = $wpdb->insert( $table_name, array( 'serverurl' =>$serverurl, 'indexname' => $indexname, 'username' => $username, 'key' => $key, 'last_indexed' => $last_index ) );
-    configure_OSS($serverurl,$indexname,$username,$key);
-    setFields_OSS($serverurl,$indexname,$username,$key);
+    $rows_affected = $wpdb->insert( $table_name, array( 'serverurl' =>$serverurl, 'indexname' => $indexname, 'username' => $username, 'key' => $key,'indexing_method' => $indexing_method, 'last_indexed' => $last_index ) );
+    if ($indexing_method=='automated_indexation') {
+    	 configure_OSS($serverurl,$indexname,$username,$key);
+    	 setFields_OSS($serverurl,$indexname,$username,$key);
+    }
     echo '<h3 style="color:#3366FF">The Preference saved Successfully.</h3>';
   }
   if($action == "Reindex-Site") {
-    reindex_site('','');
+    $index_success=reindex_site('','');
+    if($index_success) {
     echo '<h3 style="color:#3366FF">Re-index finshed Successfully.</h3>';
+    }
+    else {
+    	echo '<h4 style="color:#3366FF">To Re-index the indexation method should selected as automated.</h4>';
+    }
   }
   $result = $wpdb->get_results('SELECT * FROM '.$table_name);
   ?>
 <form id="admin" name="admin" method="post" action="">
 	<input type="hidden" name="opensearchserver" value="true" />
-
-	OpenSearchServer URL: <br /> <input type="text" name="serverurl"
-		id="serverurl" size="50"
-		value="<?php if($result){echo $result[0]->serverurl;}?>" /> <br />
-	IndexName :<br /> <input type="text" name="indexname" id="indexname"
-		size="50" value="<?php if($result){echo $result[0]->indexname;}?>" />
-	<br /> Username :<br /> <input type="text" name="username"
-		id="username" size="50"
-		value="<?php if($result){echo $result[0]->username;}?>" /> <br /> Key
-	:<br /> <input type="text" name="key" id="key" size="50"
-		value="<?php if($result){echo $result[0]->key;}?>" /> <br /> <br /> <input
-		type="submit" name="action" id="action" value="Create-index/Save" /> <input
-		type="submit" name="action" id="action" value="Reindex-Site" />
+	OpenSearchServer URL: <br />
+	 <input type="text" name="serverurl" id="serverurl" size="50" value="<?php if($result){echo $result[0]->serverurl;}?>" /> <br />
+	IndexName :<br /> 
+	<input type="text" name="indexname" id="indexname" size="50" value="<?php if($result){echo $result[0]->indexname;}?>" /><br/> 
+	Username :<br/> 
+	<input type="text" name="username" id="username" size="50" value="<?php if($result){echo $result[0]->username;}?>" /> <br /> 
+	Key	:<br/> 
+	<input type="text" name="key" id="key" size="50" value="<?php if($result){echo $result[0]->key;}?>" /><br/> 
+	Select indexation method :<br/>
+	<?php if($result && $result[0]->indexing_method=='manual_indexation') { ?>	
+ 	<select name="indexing_method">
+  	<option value="manual_indexation" selected="selected" >Manual indexation</option>
+  	<option value="automated_indexation">Automated indexation</option>
+	</select> 
+	<?php }else {?>
+	<select name="indexing_method">
+	<option value="manual_indexation">Manual indexation</option>
+	<option value="automated_indexation" selected="selected">Automated indexation</option>
+	</select>
+	<?php }?>
+	<br /><br /> 
+	<input type="submit" name="action" id="action" value="Create-index/Save" /> <input
+	type="submit" name="action" id="action" value="Reindex-Site" />
 </form>
-
 <?php echo '</div>';
 
 }
@@ -197,15 +219,13 @@ function  opensearchserver_search() {
     return;
   }
   get_header();
-  echo '
-			<form role="search" method="get" id="searchform" action="' . home_url( '/' ) . '" >
-				<div><label class="screen-reader-text" for="s">' . __('Search for:') . '</label>
-				<input type="text" size=50 value="' . get_search_query() . '" name="s" id="s" />
-				<input type="submit" id="searchsubmit" value="'. esc_attr__('Search') .'" />
-				</div>
-			</form>';
+  echo '<form role="search" method="get" id="searchform" action="' . home_url( '/' ) . '" >
+		<div><label class="screen-reader-text" for="s">' . __('Search for:') . '</label>
+		<input type="text" size=50 value="' . get_search_query() . '" name="s" id="s" />
+		<input type="submit" id="searchsubmit" value="'. esc_attr__('Search') .'" />
+		</div>
+		</form>';
   echo '<div>';
-
   echo get_sidebar();
   echo get_search_result_output(get_search_query());
   get_footer();
@@ -223,7 +243,6 @@ function opensearchserver_update_db_check() {
 }
 
 function do_while_posting($post_id,$post) {
-
   if ($post->post_type == 'post' || $post->post_type == 'page'
   && $post->post_status == 'publish') {
     reindex_site($post->ID,$post->post_type);
