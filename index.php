@@ -6,7 +6,7 @@
  Author: Naveen.A.N
  Requires at least: 3.0.0
  Tested up to: 3.1.3
- Version:1.0.4
+ Version:1.0.5
  */
 require_once 'lib/oss_api.class.php';
 require_once 'lib/oss_misc.lib.php';
