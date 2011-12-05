@@ -55,12 +55,13 @@ function opensearchserver_form($form) {
 
 function configure_OSS($url,$indexname,$username,$key) {
   $ossAPI = new OSSAPI($url);
+  $index_available=1;
   $ossAPI->credential($username,$key);
   if (!$ossAPI->isIndexAvailable($indexname)) {
     $ossAPI->createIndex($indexname);
+    $index_available=0;
   }
-
-  return true;
+  return $index_available;
 }
 
 function setFields_OSS($url,$indexname,$username,$key) {
@@ -157,30 +158,41 @@ function admin_page() {
   $table_name =$wpdb->prefix ."opensearchserver";
   echo '<div class="wrap"><h2> OpenSearchServer Settings</h2>';
   $action=isset($_POST['action']) ? $_POST['action'] :null;
-  if($action == "Create-index/Save") {
-    $wpdb->query('TRUNCATE TABLE `wp_opensearchserver');
-    $delay = isset($_POST['delay']) ? $_POST['delay'] :null;
-    $username = isset($_POST['username']) ? $_POST['username'] :null;
-    $key = isset($_POST['key']) ? $_POST['key'] :null;
-    $serverurl = isset($_POST['serverurl']) ? $_POST['serverurl'] :null;
-    $indexname = isset($_POST['indexname']) ? $_POST['indexname'] :null;
-    $indexing_method = isset($_POST['indexing_method']) ? $_POST['indexing_method'] :null;
-    $last_index=date('YmdHis', time());
-    $rows_affected = $wpdb->insert( $table_name, array( 'serverurl' =>$serverurl, 'indexname' => $indexname, 'username' => $username, 'key' => $key,'indexing_method' => $indexing_method, 'last_indexed' => $last_index ) );
-    if ($indexing_method=='automated_indexation') {
-    	 configure_OSS($serverurl,$indexname,$username,$key);
-    	 setFields_OSS($serverurl,$indexname,$username,$key);
+  $delay = isset($_POST['delay']) ? $_POST['delay'] :null;
+  $username = isset($_POST['username']) ? $_POST['username'] :null;
+  $key = isset($_POST['key']) ? $_POST['key'] :null;
+  $serverurl = isset($_POST['serverurl']) ? $_POST['serverurl'] :null;
+  $indexname = isset($_POST['indexname']) ? $_POST['indexname'] :null;
+  $indexing_method = isset($_POST['indexing_method']) ? $_POST['indexing_method'] :null;
+  if($action == "Create-index") {
+  	$wpdb->query('TRUNCATE TABLE `wp_opensearchserver');
+  	$last_index=date('YmdHis', time());
+  	$rows_affected = $wpdb->insert( $table_name, array( 'serverurl' =>$serverurl, 'indexname' => $indexname, 'username' => $username, 'key' => $key,'indexing_method' => $indexing_method, 'last_indexed' => $last_index ) );
+     if ($indexing_method=='automated_indexation') {
+    	 $is_index=configure_OSS($serverurl,$indexname,$username,$key);
+    	 if(!$is_index) {
+    	 	setFields_OSS($serverurl,$indexname,$username,$key);
+    	 	echo '<h4 style="color:#3366FF">Index created successfully.</h4>';
+    	 }
+    	 else {
+    	 	echo '<h4 style="color:#3366FF">Index already exist.</h4>';
+    	 }
+    	 
     }
-    echo '<h3 style="color:#3366FF">The Preference saved Successfully.</h3>';
   }
-  if($action == "Reindex-Site") {
-    $index_success=reindex_site('','');
-    if($index_success) {
-    echo '<h3 style="color:#3366FF">Re-index finshed Successfully.</h3>';
-    }
-    else {
-    	echo '<h4 style="color:#3366FF">To Re-index the indexation method should selected as automated.</h4>';
-    }
+  else if($action == "Reindex-Site") {
+  	if ($indexing_method=='automated_indexation') {
+	    $index_success=reindex_site('','');
+	    if($index_success) {
+	    echo '<h4 style="color:#3366FF">Re-index finshed Successfully.</h4>';
+	    }
+  	}
+  }
+  else  {
+  	$wpdb->query('TRUNCATE TABLE `wp_opensearchserver');
+  	$last_index=date('YmdHis', time());
+  	$rows_affected = $wpdb->insert( $table_name, array( 'serverurl' =>$serverurl, 'indexname' => $indexname, 'username' => $username, 'key' => $key,'indexing_method' => $indexing_method, 'last_indexed' => $last_index ) );
+  	echo '<h4 style="color:#3366FF">The Preference saved Successfully.</h4>';
   }
   $result = $wpdb->get_results('SELECT * FROM '.$table_name);
   ?>
@@ -207,8 +219,11 @@ function admin_page() {
 	</select>
 	<?php }?>
 	<br /><br /> 
-	<input type="submit" name="action" id="action" value="Create-index/Save" /> <input
-	type="submit" name="action" id="action" value="Reindex-Site" />
+	<input type="submit" name="action" id="action" value="Save" />
+	<?php if($result && $result[0]->indexing_method=='automated_indexation') { ?>	
+	<input type="submit" name="action" id="action" value="Create-index" />
+	<input type="submit" name="action" id="action" value="Reindex-Site" />
+	<?php }?>
 </form>
 <?php echo '</div>';
 
