@@ -58,6 +58,7 @@ A: Check that you server is enabled with CURL extension else install it.
 = 1.0.5 =
 * Fixed bug while indexing document
 * Fixed paging issues in the current page.
+* Updated batch indexing process.
 
 = 1.0.4 =
 * OpenSearchServer client library upgrade.

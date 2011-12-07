@@ -122,37 +122,65 @@ function reindex_site($id,$type) {
     $delete='id:'.$type.'_'.$id;
     delete_document($result[0]->serverurl,$result[0]->indexname,$result[0]->username,$result[0]->key,$delete);
     $sql='SELECT * FROM `'.$table_name_posts.'` WHERE `post_status` LIKE '."'".'publish'."'" .' AND `ID` ='.$id;
+	$index=add_documents_to_index($sql,$table_name_users);
+    opensearchserver_start_indexing($index, $result[0], $ossEnginePath, $ossEngineIndex);
   }else {
     delete_document($result[0]->serverurl,$result[0]->indexname,$result[0]->username,$result[0]->key,'*:*');
     $sql='SELECT * FROM `'.$table_name_posts.'` WHERE `post_status` LIKE '."'".'publish'."'";
-  }
   $result_posts = $wpdb->get_results($sql);
-  $index = new OSSIndexDocument();
-  $lang= substr(get_locale(), 0, 2);
-  foreach($result_posts as $posts){
-    $result_users = $wpdb->get_results('SELECT user_nicename,user_email,user_url FROM `'.$table_name_users.'` WHERE `ID` = '.$posts->post_author);
-    $document = $index->newDocument($lang);
-    $document->newField('id', $posts->post_type.'_'.$posts->ID);
-    $document->newField('type', strip_tags($posts->post_type));
-    $document->newField('title', strip_tags($posts->post_title));
-    $document->newField('content', strip_tags($posts->post_content));
-    $document->newField('url', $posts->guid);
-    $document->newField('timestamp', $posts->post_date_gmt);
-    $document->newField('user_name',$result_users[0]->user_nicename );
-    $document->newField('user_email',$result_users[0]->user_email );
-    $document->newField('user_url',$result_users[0]->user_url);
-    $server = new OSSAPI($ossEnginePath, $ossEngineIndex);
-    $server->credential($result[0]->username,$result[0]->key);
-    if ($server->update($index,$ossEngineIndex) === false) {
-      $errors[] = 'failedToUpdate';
-    }
-    $server->optimize();
-  	}
+  $numrows=$wpdb->num_rows;
+   for ($i = 0; $i < $numrows; $i++) {
+ 	if($numrows >100) {
+	 	if ($i != 0) {
+	  		$i = $j + 1;
+	  	}
+	  	$j = $i + 100;
+	}
+	else {
+		$i=0;
+		$j=$numrows;
+		$sql_posts='SELECT * FROM `'.$table_name_posts.'` WHERE `post_status` LIKE '."'".'publish'."'".' LIMIT '.$i.','.$j;
+		$index=add_documents_to_index($sql_posts,$table_name_users);
+		opensearchserver_start_indexing($index, $result[0], $ossEnginePath, $ossEngineIndex);
+		break;
+	}
+	$sql_posts='SELECT * FROM `'.$table_name_posts.'` WHERE `post_status` LIKE '."'".'publish'."'".' LIMIT '.$i.','.$j;
+	$index=add_documents_to_index($sql_posts,$table_name_users);
+ 	opensearchserver_start_indexing($index, $result[0], $ossEnginePath, $ossEngineIndex);
+ }
+}
   $index_status=1;
-  }
+ }
   return $index_status;
 }
-
+function add_documents_to_index($sql_posts,$table_name_users) {
+	global $wpdb;
+	$index = new OSSIndexDocument();
+	$batch_result_posts = $wpdb->get_results($sql_posts);
+	$lang= substr(get_locale(), 0, 2);
+	foreach($batch_result_posts as $posts){
+		$result_users = $wpdb->get_results('SELECT user_nicename,user_email,user_url FROM `'.$table_name_users.'` WHERE `ID` = '.$posts->post_author);
+		$document = $index->newDocument($lang);
+		$document->newField('id', $posts->post_type.'_'.$posts->ID);
+		$document->newField('type', strip_tags($posts->post_type));
+		$document->newField('title', strip_tags($posts->post_title));
+		$document->newField('content', strip_tags($posts->post_content));
+		$document->newField('url', $posts->guid);
+		$document->newField('timestamp', $posts->post_date_gmt);
+		$document->newField('user_name',$result_users[0]->user_nicename );
+		$document->newField('user_email',$result_users[0]->user_email );
+		$document->newField('user_url',$result_users[0]->user_url);		
+	}
+return $index;
+}
+function opensearchserver_start_indexing($index, $serverDetails, $ossEnginePath, $ossEngineIndex) {
+	$server = new OssApi($ossEnginePath, $ossEngineIndex);
+	$server->credential($serverDetails->username, $serverDetails->key);
+	if ($server->update($index, $ossEngineIndex) === FALSE) {
+		$errors[] = 'failedToUpdate';
+	}
+	$server->optimize();
+}
 function admin_page() {
   global $wpdb;
   $table_name =$wpdb->prefix ."opensearchserver";
@@ -225,6 +253,7 @@ function admin_page() {
 	<input type="submit" name="action" id="action" value="Reindex-Site" />
 	<?php }?>
 </form>
+
 <?php echo '</div>';
 
 }
@@ -248,7 +277,7 @@ function  opensearchserver_search() {
 }
 
 function opensearchserver_admin_actions() {
-  add_submenu_page('plugins.php', 'OpenSearchServer Settings', 'OpenSearchServer', 'edit_plugins', __FILE__, 'admin_page');
+	add_submenu_page('plugins.php', 'OpenSearchServer Settings', 'OpenSearchServer', 'edit_plugins', __FILE__, 'admin_page');
 }
 
 function opensearchserver_update_db_check() {
@@ -276,4 +305,5 @@ add_action('save_post','do_while_posting',10,2);
 add_action('admin_menu', 'opensearchserver_admin_actions');
 add_action('template_redirect', 'opensearchserver_search');
 add_filter( 'get_search_form', 'opensearchserver_form' );
+
 ?>
