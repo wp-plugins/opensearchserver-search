@@ -180,7 +180,7 @@ function admin_page() {
     	 
     }
   }
-  else if($action == "Reindex-Site") {
+  if($action == "Reindex-Site") {
   	if ($indexing_method=='automated_indexation') {
 	    $index_success=reindex_site('','');
 	    if($index_success) {
@@ -188,7 +188,7 @@ function admin_page() {
 	    }
   	}
   }
-  else  {
+   if($action == "Save") {
   	$wpdb->query('TRUNCATE TABLE `wp_opensearchserver');
   	$last_index=date('YmdHis', time());
   	$rows_affected = $wpdb->insert( $table_name, array( 'serverurl' =>$serverurl, 'indexname' => $indexname, 'username' => $username, 'key' => $key,'indexing_method' => $indexing_method, 'last_indexed' => $last_index ) );
