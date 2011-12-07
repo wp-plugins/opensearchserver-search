@@ -305,5 +305,4 @@ add_action('save_post','do_while_posting',10,2);
 add_action('admin_menu', 'opensearchserver_admin_actions');
 add_action('template_redirect', 'opensearchserver_search');
 add_filter( 'get_search_form', 'opensearchserver_form' );
-
 ?>

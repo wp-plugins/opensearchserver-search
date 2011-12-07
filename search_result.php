@@ -1,10 +1,8 @@
 <?php
 function get_search_result_output($query) {
 	$result=getSearchResult($query,true);
-	$result_facet=getSearchResult($query,false);
 	if (isset($result) && $result instanceof SimpleXMLElement) {
 		$ossResults = new OSSResults($result);
-		$ossResults_facet = new OSSResults($result_facet);
 		$display_error='<div align="left" id="oss_error">
 					No documents containing all your search terms were found.<br/>
 					Your Search Keyword <b>'.$query.'</b> did not match any document<br/>Suggestions:<br/>
@@ -85,7 +83,7 @@ unset($cont);
 
 function opensearchserver_paging($result) {
 		if ($result != NULL) {
-			$ossPaging = new OssPaging($result, 'r', 'pa');
+			$ossPaging = new OssPaging($result, 'r', 'pq');
 			$pagingArray = array();
 			if (isset($ossPaging) && $ossPaging->getResultTotal() >= 1) {
 				if ($ossPaging->getResultLow() > 0) {
