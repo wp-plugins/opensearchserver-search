@@ -193,7 +193,7 @@ function admin_page() {
   $indexname = isset($_POST['indexname']) ? $_POST['indexname'] :null;
   $indexing_method = isset($_POST['indexing_method']) ? $_POST['indexing_method'] :null;
   if($action == "Create-index") {
-  	$wpdb->query('TRUNCATE TABLE `wp_opensearchserver');
+  	$wpdb->query('TRUNCATE TABLE '.'`'.$table_name.'`');
   	$last_index=date('YmdHis', time());
   	$rows_affected = $wpdb->insert( $table_name, array( 'serverurl' =>$serverurl, 'indexname' => $indexname, 'username' => $username, 'key' => $key,'indexing_method' => $indexing_method, 'last_indexed' => $last_index ) );
      if ($indexing_method=='automated_indexation') {
@@ -217,7 +217,7 @@ function admin_page() {
   	}
   }
    if($action == "Save") {
-  	$wpdb->query('TRUNCATE TABLE `wp_opensearchserver');
+  	$wpdb->query('TRUNCATE TABLE '.'`'.$table_name.'`');
   	$last_index=date('YmdHis', time());
   	$rows_affected = $wpdb->insert( $table_name, array( 'serverurl' =>$serverurl, 'indexname' => $indexname, 'username' => $username, 'key' => $key,'indexing_method' => $indexing_method, 'last_indexed' => $last_index ) );
   	echo '<h4 style="color:#3366FF">The Preference saved Successfully.</h4>';

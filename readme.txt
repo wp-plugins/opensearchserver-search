@@ -56,6 +56,7 @@ A: Check that you server is enabled with CURL extension else install it.
 2. Search provided by OpenSearchServer with facet and filter.
 
 = 1.0.5 =
+* Fixed bug while saving settings.
 * Fixed bug while indexing document
 * Fixed paging issues in the current page.
 * Updated batch indexing process.
