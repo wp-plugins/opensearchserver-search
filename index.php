@@ -42,7 +42,12 @@ function opensearchserver_uninstall() {
   $wpdb->query($sql);
   delete_option("opensearchserver_db_version",'1.2');
 }
-
+function clean_query($query) {
+  $escapechars = array('\\', '^', '~', ':', '(', ')', '{', '}', '[', ']' , '&', '||', '!', '*', '?','039;','\'','#');
+  foreach ($escapechars as $escchar)  {
+    $query = str_replace($escchar, ' ', $query);
+  }
+}
 function opensearchserver_form($form) {
   $form = '<form role="search" method="get" id="searchform" action="' . home_url( '/' ) . '" >
     <div><label class="screen-reader-text" for="s">' . __('Search for:') . '</label>
@@ -83,14 +88,7 @@ function setFields_OSS($url,$indexname,$username,$key) {
 					title:($$)^10 OR title:("$$")^10
 							OR
 					content:($$)^10 OR content:("$$")^10
-							OR
-					user_name:($$)^10 OR user_name:("$$")^10
-							OR
-					user_email:($$)^10 OR user_email:("$$")^10
-
-
 			 ',"AND","10","2","ENGLISH");
-
     $searchTemplate->setSnippetField("search","title");
     $searchTemplate->setSnippetField("search","content");
     $searchTemplate->setReturnField("search","url");
@@ -169,7 +167,7 @@ function add_documents_to_index($sql_posts,$table_name_users) {
 		$document->newField('timestamp', $posts->post_date_gmt);
 		$document->newField('user_name',$result_users[0]->user_nicename );
 		$document->newField('user_email',$result_users[0]->user_email );
-		$document->newField('user_url',$result_users[0]->user_url);		
+		$document->newField('user_url',$result_users[0]->user_url);
 	}
 return $index;
 }
@@ -205,7 +203,6 @@ function admin_page() {
     	 else {
     	 	echo '<h4 style="color:#3366FF">Index already exist.</h4>';
     	 }
-    	 
     }
   }
   if($action == "Reindex-Site") {
@@ -228,27 +225,27 @@ function admin_page() {
 	<input type="hidden" name="opensearchserver" value="true" />
 	OpenSearchServer URL: <br />
 	 <input type="text" name="serverurl" id="serverurl" size="50" value="<?php if($result){echo $result[0]->serverurl;}?>" /> <br />
-	IndexName :<br /> 
-	<input type="text" name="indexname" id="indexname" size="50" value="<?php if($result){echo $result[0]->indexname;}?>" /><br/> 
-	Username :<br/> 
-	<input type="text" name="username" id="username" size="50" value="<?php if($result){echo $result[0]->username;}?>" /> <br /> 
-	Key	:<br/> 
-	<input type="text" name="key" id="key" size="50" value="<?php if($result){echo $result[0]->key;}?>" /><br/> 
+	IndexName :<br />
+	<input type="text" name="indexname" id="indexname" size="50" value="<?php if($result){echo $result[0]->indexname;}?>" /><br/>
+	Username :<br/>
+	<input type="text" name="username" id="username" size="50" value="<?php if($result){echo $result[0]->username;}?>" /> <br />
+	Key	:<br/>
+	<input type="text" name="key" id="key" size="50" value="<?php if($result){echo $result[0]->key;}?>" /><br/>
 	Select indexation method :<br/>
-	<?php if($result && $result[0]->indexing_method=='manual_indexation') { ?>	
+	<?php if($result && $result[0]->indexing_method=='manual_indexation') { ?>
  	<select name="indexing_method">
   	<option value="manual_indexation" selected="selected" >Manual indexation</option>
   	<option value="automated_indexation">Automated indexation</option>
-	</select> 
+	</select>
 	<?php }else {?>
 	<select name="indexing_method">
 	<option value="manual_indexation">Manual indexation</option>
 	<option value="automated_indexation" selected="selected">Automated indexation</option>
 	</select>
 	<?php }?>
-	<br /><br /> 
+	<br /><br />
 	<input type="submit" name="action" id="action" value="Save" />
-	<?php if($result && $result[0]->indexing_method=='automated_indexation') { ?>	
+	<?php if($result && $result[0]->indexing_method=='automated_indexation') { ?>
 	<input type="submit" name="action" id="action" value="Create-index" />
 	<input type="submit" name="action" id="action" value="Reindex-Site" />
 	<?php }?>
@@ -262,18 +259,16 @@ function  opensearchserver_search() {
   if ( stripos($_SERVER['REQUEST_URI'], '/?s=') === FALSE && stripos($_SERVER['REQUEST_URI'], '/search/') === FALSE)	{
     return;
   }
-  get_header();
-  print '<form role="search" method="get" id="searchform" action="' . home_url( '/' ) . '" >
-		<div><label class="screen-reader-text" for="s">' . __('Search for:') . '</label>
-		<input type="text" size=50 value="' . get_search_query() . '" name="s" id="s" />
-		<input type="submit" id="searchsubmit" value="'. esc_attr__('Search') .'" />
-		</div>
-		</form><hr/>';
-
-  print get_sidebar();
-  print get_search_result_output(get_search_query());
-  get_footer();
-  exit;
+if (stripos($_SERVER['REQUEST_URI'], '/?s=') === FALSE && stripos($_SERVER['REQUEST_URI'], '/search/') === FALSE)	{
+			return;
+	}
+	if (file_exists(TEMPLATEPATH . '/oss_search.php')) {
+		include_once(TEMPLATEPATH . '/oss_search.php');
+	} else if (file_exists(dirname(__FILE__) . '/template/opensearchserver_search.php')) {
+		include_once(dirname(__FILE__) . '/template/opensearchserver_search.php');
+	} else {
+		return;
+	}
 }
 
 function opensearchserver_admin_actions() {
