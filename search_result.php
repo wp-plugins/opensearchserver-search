@@ -1,4 +1,7 @@
 <?php
+/*
+ *Functions for search request
+ */
 function opensearchserver_paging($result) {
 		if ($result != NULL) {
 			$ossPaging = new OssPaging($result, 'r', 'pq');

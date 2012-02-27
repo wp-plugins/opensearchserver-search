@@ -23,6 +23,7 @@ Key Features
 = Requirements =
 
     * WordPress 3.0.0 or higher
+    * OpenSearchServer 1.2.4 or higher
 
 = Installing the plugin =
 
