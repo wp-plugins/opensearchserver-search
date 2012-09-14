@@ -2,11 +2,11 @@
 /**
  Plugin Name: OpenSearchServer
  Plugin URI: http://wordpress.org/extend/plugins/opensearchserver-search/
- Description:This Plugin will integrate OpenSearchServer 1.2 as search engine for Wordpress.Go to <a href="plugins.php?page=opensearchserver/index.php">OpenSearchServer Settings</a> for OpenSearchServer Settings,
+ Description: This Plugin will integrate OpenSearchServer 1.2 as search engine for Wordpress. Go to <a href="plugins.php?page=opensearchserver-search/index.php">OpenSearchServer Settings</a> for OpenSearchServer Settings. More information <a href="http://www.open-search-server.com">about OpenSearchServer</a>.
  Author: Naveen.A.N
- Requires at least: 3.0.0
+ Requires at least: 3.0.1
  Tested up to: 3.4.2
- Version:1.0.7
+ Version: 1.0.7
  */
 require_once 'lib/oss_api.class.php';
 require_once 'lib/oss_misc.lib.php';
