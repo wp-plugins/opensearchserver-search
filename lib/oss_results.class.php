@@ -1,24 +1,24 @@
 <?php
 /*
- *  This file is part of OpenSearchServer.
- *
- *  Copyright (C) 2008-2011 Emmanuel Keller / Jaeksoft
- *
- *  http://www.open-search-server.com
- *
- *  OpenSearchServer is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  OpenSearchServer is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with OpenSearchServer.  If not, see <http://www.gnu.org/licenses/>.
- */
+*  This file is part of OpenSearchServer.
+*
+*  Copyright (C) 2008-2012 Emmanuel Keller / Jaeksoft
+*
+*  http://www.open-search-server.com
+*
+*  OpenSearchServer is free software: you can redistribute it and/or modify
+*  it under the terms of the GNU General Public License as published by
+*  the Free Software Foundation, either version 3 of the License, or
+*  (at your option) any later version.
+*
+*  OpenSearchServer is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU General Public License for more details.
+*
+*  You should have received a copy of the GNU General Public License
+*  along with OpenSearchServer.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 if (!extension_loaded('SimpleXML')) {
   trigger_error("OssApi won't work whitout SimpleXML extension", E_USER_ERROR); die();
@@ -38,7 +38,7 @@ class OssResults {
   protected $resultTime;
   protected $resultRows;
   protected $resultStart;
-
+  protected $resultCollapsedCount;
 
   /**
    * @param $result The data
@@ -51,11 +51,14 @@ class OssResults {
     $this->resultTime = (float)$this->result->result['time'] / 1000;
     $this->resultRows = (int)$this->result->result['rows'];
     $this->resultStart = (int)$this->result->result['start'];
-
+    $this->resultCollapsedCount = (int)$this->result->result['collapsedDocCount'];
     if (!function_exists('OssApi_Dummy_Function')) {
       function OssApi_Dummy_Function() {
       }
     }
+  }
+  public function getResultCollapsedCount() {
+    return $this->resultCollapsedCount;
   }
 
   public function getResult() {
@@ -149,6 +152,29 @@ class OssResults {
       $facets[] = $each[0]['name'];
     }
     return $facets;
+  }
+
+  /**
+  *
+  * @return Return the spellsuggest array.
+  */
+  public function getSpellSuggestions($fieldName) {
+    $currentSpellCheck = isset($fieldName)? $this->result->xpath('spellcheck/field[@name="' . $fieldName . '"]/word/suggest'):NULL;
+    if (!isset($currentSpellCheck) || ( isset($currentSpellCheck) && $currentSpellCheck === FALSE)) {
+      $currentSpellCheck = array();
+    }
+    return $currentSpellCheck;
+  }
+  /**
+   *
+   * @return Return the spellsuggest terms.
+   */
+  public function getSpellSuggest($fieldName) {
+    $spellCheckWord = isset($fieldName)? $this->result->xpath('spellcheck/field[@name="' . $fieldName . '"]/word'):NULL;
+    foreach ($spellCheckWord as $each) {
+      $queryExact .= $each[0]->suggest.' ';
+    }
+    return $queryExact;
   }
 
 }

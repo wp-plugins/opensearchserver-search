@@ -5,8 +5,8 @@
  Description:This Plugin will integrate OpenSearchServer 1.2 as search engine for Wordpress.Go to <a href="plugins.php?page=opensearchserver/index.php">OpenSearchServer Settings</a> for OpenSearchServer Settings,
  Author: Naveen.A.N
  Requires at least: 3.0.0
- Tested up to: 3.1.3
- Version:1.0.6
+ Tested up to: 3.4.2
+ Version:1.0.7
  */
 require_once 'lib/oss_api.class.php';
 require_once 'lib/oss_misc.lib.php';
@@ -72,15 +72,15 @@ function setFields_OSS($url,$indexname,$username,$key) {
 		global $wpdb;
 		$table_name =$wpdb->prefix ."opensearchserver";
 		$result = $wpdb->get_results('SELECT * FROM '.$table_name);
-		$ossAPI->setField('id','','NO','YES','YES','','NO','YES');
-		$ossAPI->setField('type','','NO','YES','YES','','NO','NO');
-		$ossAPI->setField('url','','NO','YES','YES','','NO','NO');
-		$ossAPI->setField('title','TextAnalyzer','compress','YES','positions_offsets','','NO','NO');
-		$ossAPI->setField('content','TextAnalyzer','compress','YES','positions_offsets','','YES','NO');
-		$ossAPI->setField('timestamp','','NO','YES','YES','','NO','NO');
-		$ossAPI->setField('user_name','','compress','YES','YES','','NO','NO');
-		$ossAPI->setField('user_email','','compress','YES','YES','','NO','NO');
-		$ossAPI->setField('user_url','','NO','YES','YES','','NO','NO');
+		$ossAPI->setField('id','','NO','YES','YES','NO','YES');
+		$ossAPI->setField('type','','NO','YES','YES','NO','NO');
+		$ossAPI->setField('url','','NO','YES','YES','NO','NO');
+		$ossAPI->setField('title','TextAnalyzer','compress','YES','positions_offsets','NO','NO');
+		$ossAPI->setField('content','TextAnalyzer','compress','YES','positions_offsets','YES','NO');
+		$ossAPI->setField('timestamp','','NO','YES','YES','NO','NO');
+		$ossAPI->setField('user_name','','compress','YES','YES','NO','NO');
+		$ossAPI->setField('user_email','','compress','YES','YES','NO','NO');
+		$ossAPI->setField('user_url','','NO','YES','YES','NO','NO');
 		$searchTemplate->createSearchTemplate("search",'	title:($$)^10 OR title:("$$")^10
 				OR
 				content:($$)^5 OR content:("$$")^5
