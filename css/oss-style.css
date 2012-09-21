@@ -1,0 +1,361 @@
+/* OpenSearchServer result page */
+
+#oss-quick-open {
+	font-size: 12px;
+}
+#oss-content {
+	font-size: 12px;
+	color:#222222;
+}
+#oss-title {
+	font-size: 12px;
+	color:#1122CC;
+}
+#oss-url {
+	font-size: 12px;
+	color:#009933;
+}
+#oss-no-of-doc {
+	padding-left:200px;
+	padding-bottom:15px;
+}
+#oss-results {
+	padding-left:200px;
+}
+#oss-result {
+	padding-bottom:15px;
+}
+
+#oss-filter{
+	margin:0;
+	padding:0;
+	clear:both;
+	float:left;
+	margin-right:10px;
+	width: 180px;
+}
+#oss-filter-not-selected a{
+font-size:11px;
+}
+#oss-filter-selected a{
+	color: #DD4B39;
+	cursor: pointer;
+	font-size:11px;
+}
+#oss-paging {
+	margin: 0;
+    	padding: 0;
+	text-align: center; 
+}
+
+
+#oss-search-form #keyword{
+	border:1px solid #ccc; 
+	width:570px; 
+	height:25px;
+	-webkit-box-shadow: 0px 0px 4px #4195fc; 
+	-moz-box-shadow: 0px 0px 4px #d8d9d9; 
+	box-shadow: 0px 0px 4px #d8d9d9;
+}
+#oss-submit {
+	background-color:#4D90FE;
+	background-image:-webkit-linear-gradient(top, #4D90FE, #4787ED); 
+	border:1px solid #3079ED; 
+	color:#FFFFFF;
+	 -webkit-user-select:none; 
+	border-bottom-left-radius:3px; 
+	border-bottom-right-radius:3px; 
+	border-top-left-radius:3px;  
+	border-top-right-radius:3px; 
+	cursor:default; 
+	display:inline-block; 
+	font-weight:bold; 
+	height:31px; 
+	min-width:54px; 
+	padding:0 8px;  
+	margin-left:10px;
+	 text-align:center; 
+	text-decoration:none;
+}
+#oss-search-form form{
+	padding-left:200px;
+}
+#oss-search {
+	width:960px;
+	font-family:arial,sans-serif;
+	font-size:13px;
+	font-weight:400;
+	font-style:normal;
+	font-size-adjust:none;
+	margin-left:20px;
+  }
+
+.autocomplete_link {
+	font-size: 12px;
+	background-color: #FFFFFF;
+	padding: 2px 6px 2px 6px;
+}
+
+.autocomplete_link_over {
+	font-size: 12px;
+	background-color: #99BBFF;
+	padding: 2px 6px 2px 6px;
+}
+
+#autocomplete {
+	margin: 0;
+	width: 380px;
+	float: left;
+	cursor: pointer !important;
+}
+
+#autocompletelist {
+	background-color: #FFFFFF;
+	text-align: left;
+	z-index: 1000;
+	position:absolute;width: 380px;
+	border: 1px solid #99BBFF;
+}
+#oss-page {
+	padding-left:10px;
+}
+.autocomplete_link {
+	font-size: 12px;
+	background-color: #FFFFFF;
+	padding: 2px 6px 2px 6px;
+}
+
+.autocomplete_link_over {
+	font-size: 12px;
+	background-color: #99BBFF;
+	padding: 2px 6px 2px 6px;
+}
+ 
+ 
+#oss-image img{
+	-webkit-transform:scale(0.8);
+	-moz-transform:scale(0.8);
+	-o-transform:scale(0.8);
+	-webkit-transition-duration: 0.5s;
+	-moz-transition-duration: 0.5s;
+	-o-transition-duration: 0.5s;
+	margin: 0 10px 5px 0;
+	max-width: 170px;
+	max-height: 130px;
+	width: expression(this.width > 170 ? "170px" : true);
+	height: expression(this.height > 130 ? "130px" : true);
+}
+ 
+#oss-image img:hover{
+	-webkit-transform:scale(1.1);
+	-moz-transform:scale(1.1);
+	-o-transform:scale(1.1);
+	box-shadow:0px 0px 30px gray;
+	-webkit-box-shadow:0px 0px 30px gray;
+	-moz-box-shadow:0px 0px 30px gray;
+}
+#oss-facets-menu {
+	vertical-align: middle;
+	margin:0;
+	list-style:none;
+}
+#oss-facets {
+	padding-top:10px;
+}
+.oss-facets-li a{
+	color: #222222;
+}
+.oss-facets-li {
+	padding-left:10px;
+	margin-top:0;
+}
+#oss-facets-menu li:hover {
+	background:#EEEEEE;
+}
+#oss-facets-menu li a {
+	text-decoration:none;
+}
+ 
+.oss-submenu{
+	display: none;
+	list-style: none;
+	padding-left:15px;
+	margin:0;
+}
+.oss-top-nav  a {
+	color:#000000;
+}
+#oss-menu-selected  a {
+	color: #DD4B39;
+	cursor: pointer;
+}
+#oss-head a {
+	font-size:16px;
+	color: #1122CC;
+	margin-top:0;
+	clear:both;
+}
+#oss-nav {
+	list-style: none;
+	margin:0;
+	padding-right:7px;
+	padding-top:10px;
+	padding-bottom:10px;
+	border-bottom:1px solid #ccc;
+ }
+#oss-nav li {
+	padding-left:10px;
+}
+#oss-nav li a {
+	text-decoration:none;
+}
+#oss-nav li:hover {
+	background:#EEEEEE;
+	
+}
+#oss-image-result {
+	padding-top:40px;
+}
+
+
+#ibox{
+    position:absolute;
+    overflow-y:none;
+    background:#fff;
+    z-index:1001;
+    display:none;
+    padding:4px;
+    -webkit-box-shadow: 0px 0px 6px 0px #bbb;
+    -moz-box-shadow: 0px 0px 6px 0px #bbb;
+    box-shadow: 0px 0px 6px 0px #bbb; 
+}
+#ibox img{
+   max-width: 250px;
+  max-height: 210px;
+  width: expression(this.width > 250 ? "250px" : true);
+  height: expression(this.height > 210 ? "210px" : true);
+  margin:5px;
+  padding:0px;
+}
+#ibox br{
+    clear:both;
+}​
+
+/*
+    ColorBox Core Style:
+    The following CSS is consistent between example themes and should not be altered.
+*/
+#colorbox, #cboxOverlay, #cboxWrapper{position:absolute; top:0; left:0; z-index:9999; overflow:hidden;}
+#cboxOverlay{position:fixed; width:100%; height:100%;}
+#cboxMiddleLeft, #cboxBottomLeft{clear:left;}
+#cboxContent{position:relative;}
+#cboxLoadedContent{overflow:auto;}
+#cboxTitle{margin:0;}
+#cboxLoadingOverlay, #cboxLoadingGraphic{position:absolute; top:0; left:0; width:100%; height:100%;}
+#cboxPrevious, #cboxNext, #cboxClose, #cboxSlideshow{cursor:pointer;}
+.cboxPhoto{float:left; margin:auto; border:0; display:block; max-width: none;}
+.cboxIframe{width:100%; height:100%; display:block; border:0;}
+#colorbox, #cboxContent, #cboxLoadedContent{box-sizing:content-box;}
+
+/* 
+    User Style:
+    Change the following styles to modify the appearance of ColorBox.  They are
+    ordered & tabbed in a way that represents the nesting of the generated HTML.
+*/
+#cboxOverlay{background:#000;}
+#colorbox{}
+    #cboxContent{margin-top:20px;}
+        .cboxIframe{background:#fff;}
+        #cboxError{padding:50px; border:1px solid #ccc;}
+        #cboxLoadedContent{border:5px solid #000; background:#fff;}
+        #cboxTitle{position:absolute; top:-20px; left:0; color:#ccc;}
+        #cboxCurrent{position:absolute; top:-20px; right:0px; color:#ccc;}
+        #cboxSlideshow{position:absolute; top:-20px; right:90px; color:#fff;}
+        #cboxPrevious{position:absolute; top:50%; left:5px; margin-top:-32px; background:url(../images/controls.png) no-repeat top left; width:28px; height:65px; text-indent:-9999px;}
+        #cboxPrevious:hover{background-position:bottom left;}
+        #cboxNext{position:absolute; top:50%; right:5px; margin-top:-32px; background:url(../images/controls.png) no-repeat top right; width:28px; height:65px; text-indent:-9999px;}
+        #cboxNext:hover{background-position:bottom right;}
+        #cboxLoadingOverlay{background:#000;}
+        #cboxLoadingGraphic{background:url(../images/loading.gif) no-repeat center center;}
+        #cboxClose{position:absolute; top:5px; right:5px; display:block; background:url(../images/controls.png) no-repeat top center; width:38px; height:19px; text-indent:-9999px;}
+        #cboxClose:hover{background-position:bottom center;}
+
+ 
+div.popphoto {
+	padding: 0;
+	position: relative;
+	display: inline-block;
+	#display: inline;
+}
+div.popphoto img {
+	  max-width: 170px;
+	  max-height: 130px;
+	  width: expression(this.width > 170 ? "170px" : true);
+	  height: expression(this.height > 130 ? "130px" : true);
+	  margin:10px;
+}
+
+div.popphoto img:hover {
+ 	-moz-box-shadow: 2px 2px 4px #222222;
+	-webkit-box-shadow: 2px 2px 4px #222222;
+	box-shadow: 2px 2px 4px #222222;
+	/* For IE 8 */
+	-ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=2, Direction=135, Color='#222222')";
+	/* For IE 5.5 - 7 */
+	filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2, Direction=135, Color='#222222');
+}
+
+div.POPPER_popper {
+ 	position: absolute;
+	#position: fixed;
+	display: block;
+	background-color: #ffffff;
+	top: 0px;
+	left: 0px;
+	
+	-moz-box-shadow: 2px 2px 4px #222222;
+	-webkit-box-shadow: 2px 2px 4px #222222;
+	box-shadow: 2px 2px 4px #222222;
+	/* For IE 8 */
+	-ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=2, Direction=135, Color='#222222')";
+	/* For IE 5.5 - 7 */
+	filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2, Direction=135, Color='#222222');
+}
+div.POPPER_popper  img {
+	  max-width: 250px;
+	  max-height: 210px;
+	  width: expression(this.width > 250 ? "250px" : true);
+	  height: expression(this.height > 210 ? "210px" : true);
+}
+
+div.POPPER_slider {
+	position: absolute;
+	#position: fixed;
+	display: none;
+	background-color: #000000;
+	color: #ffffff;
+	text-align: left;
+	padding-right: 11px;
+	font-size: 10px;
+	font-family: Verdana;
+	margin-top: 0;
+	margin-right:0;	
+}
+
+a.POPPER_a,a.POPPER_a img {
+
+	border: none;
+	border-width: 0px;
+}
+
+.popinfo {
+	display: none;
+}
+
+.POPPER_pinf {
+	overflow: hidden;
+	display: none;
+	background-color: #ffffff;
+	font-family: Verdana;
+	font-size: 12px;
+}

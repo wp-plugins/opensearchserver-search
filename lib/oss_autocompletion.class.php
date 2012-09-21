@@ -25,11 +25,7 @@
  * Class to access OpenSearchServer API
  */
 
-if (!class_exists('OssApi')) {
-  trigger_error("OssSearch won't work whitout OssApi", E_USER_ERROR); die();
-}
-
-require_once('oss_abstract.class.php');
+require_once(dirname(__FILE__).'/oss_abstract.class.php');
 
 class OssAutocompletion extends OssAbstract {
 
@@ -37,5 +33,13 @@ class OssAutocompletion extends OssAbstract {
     $this->init($enginePath, $index, $login, $apiKey);
   }
 
+  public function autocomplete($query, $rows = 10) {
+    $params = array('query' => $query, 'rows' => $rows);
+    $return = OssApi::queryServer($this->getQueryURL(OssApi::API_AUTOCOMPLETION, $params));
+    if ($return === FALSE) {
+      return FALSE;
+    }
+    return $return;
+  }
 }
 ?>

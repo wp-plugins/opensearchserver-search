@@ -3,7 +3,7 @@ Contributors: ekeller,naveenann
 Tags: search,search engine,opensearchserver
 Requires at least: 3.0.1
 Tested up to: 3.4.2
-Stable tag: 1.0.7
+Stable tag: 1.0.8
 License: GPLv2 or later
 
 WordPress OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full text search on WordPress-based websites.
@@ -22,8 +22,7 @@ Key Features
 
 = Requirements =
 
-    * WordPress 3.0.1 or higher
-    * OpenSearchServer 1.2.4 or higher
+    * WordPress 3.0.0 or higher
 
 = Installing the plugin =
 
@@ -56,6 +55,11 @@ A: Check that you server is enabled with CURL extension else install it.
 1. OpenSearchServer Settings Page.
 2. Search provided by OpenSearchServer with facet and filter.
 
+= 1.0.8 =
+* Improved OpenSearchServer settings page.
+* SpellCheck feature in search page.
+* AutoCompletion feature in search page.
+
 = 1.0.7 =
 * OpenSearchServer client library upgrade (1.3)
 
@@ -63,7 +67,6 @@ A: Check that you server is enabled with CURL extension else install it.
 * Search result has template file. 
 
 = 1.0.5 =
-* Fixed bug while saving settings.
 * Fixed bug while indexing document
 * Fixed paging issues in the current page.
 * Updated batch indexing process.
