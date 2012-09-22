@@ -69,7 +69,6 @@ abstract class OssAbstract {
    * param string $apiCall The Web API to call. Refer to the OSS Wiki documentation of [Web API]
    * param string[] $options Additional query parameters
    * return string
-   * Use OssApi::API_* constants for $apiCall.
    * Optionals query parameters are provided as a named list:
    * array(
    *   "arg1" => "value1",
@@ -133,7 +132,7 @@ abstract class OssAbstract {
 
     // Use CURL to post the data
 
-  	$rcurl = curl_init($url);
+    $rcurl = curl_init($url);
     curl_setopt($rcurl, CURLOPT_HTTP_VERSION, '1.0');
     curl_setopt($rcurl, CURLOPT_BINARYTRANSFER, TRUE);
     curl_setopt($rcurl, CURLOPT_RETURNTRANSFER, TRUE);
@@ -191,6 +190,10 @@ abstract class OssAbstract {
     return $content;
   }
 
+  protected function queryServerTXT($path, $params = null, $data = null, $connexionTimeout = OssApi::DEFAULT_CONNEXION_TIMEOUT, $timeout = OssApi::DEFAULT_QUERY_TIMEOUT) {
+    return $this->queryServer($this->getQueryURL($path, $params), $data, $connexionTimeout, $timeout);
+  }
+
   /**
    * Post data to an URL and retrieve an XML
    * @param string $url
@@ -198,10 +201,10 @@ abstract class OssAbstract {
    *                     data as POST encoded string or raw XML string.
    * @param int $timeout Optional. Number of seconds before the query fail
    * @return SimpleXMLElement
-   * Use OssApi::queryServerto retrieve an XML and check its validity
+   * Use queryServer to retrieve an XML and check its validity
    */
   protected function queryServerXML($path, $params, $data = NULL, $connexionTimeout = OssApi::DEFAULT_CONNEXION_TIMEOUT, $timeout = OssApi::DEFAULT_QUERY_TIMEOUT) {
-    $result = $this->queryServer($this->getQueryURL($path, $params), $data, $connexionTimeout, $timeout);
+    $result = $this->queryServerTXT($path, $params, $data, $connexionTimeout, $timeout);
     if ($result === FALSE) {
       return FALSE;
     }
