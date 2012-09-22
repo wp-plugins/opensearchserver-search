@@ -1,15 +1,15 @@
 === OpenSearchServer ===
 Contributors: ekeller,naveenann
-Tags: search,search engine,opensearchserver
+Tags: search,search engine,opensearchserver, full-text, phonetic, filter, facet, indexation, auto-completion
 Requires at least: 3.0.1
 Tested up to: 3.4.2
 Stable tag: 1.0.9
 License: GPLv2 or later
 
-WordPress OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full text search on WordPress-based websites.
+WordPress OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full-text search on WordPress-based websites.
 
 == Description ==
-WordPress OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full text search on WordPress-based websites. Including spellcheck, facet, filter, phonetic search, autocompletion. This plugin replaces WordPress's built-in search functionality.
+WordPress OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full-text search on WordPress-based websites. Including spellcheck, facet, filter, phonetic search, autocompletion. This plugin replaces WordPress's built-in search functionality.
 
 Key Features
 
