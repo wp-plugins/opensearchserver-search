@@ -1,19 +1,23 @@
-=== OpenSearchServer ===
+=== OpenSearchServer Search ===
 Contributors: ekeller,naveenann
-Tags: search,search engine,opensearchserver
+Tags: search,search engine,opensearchserver, full-text, phonetic, filter, facet, indexation, auto-completion
 Requires at least: 3.0.1
 Tested up to: 3.4.2
-Stable tag: 1.0.8
+Stable tag: 1.1.0
 License: GPLv2 or later
 
-WordPress OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full text search on WordPress-based websites.
+WordPress OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full-text search on WordPress-based websites.
 
 == Description ==
-WordPress OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full text search on WordPress-based websites. This plugin replaces WordPress's built-in search functionality.
+
+WordPress OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full-text search on WordPress-based websites. Including spellcheck, facet, filter, phonetic search, autocompletion. This plugin replaces WordPress's built-in search functionality.
 
 Key Features
 
+ * Full-text search with phonetic support,
  * Filter search results by Facet Field,
+ * Automatic suggestion with autocompletion,
+ * Spellcheking with automatic substitution,
  * Automatically index an post when you publish an post,
  * Search through posts and pages,
  * Easy to set up with just filling a form.
@@ -22,7 +26,7 @@ Key Features
 
 = Requirements =
 
-    * WordPress 3.0.0 or higher
+    * WordPress 3.0.1 or higher
 
 = Installing the plugin =
 
@@ -52,8 +56,19 @@ A: Check that you server is enabled with CURL extension else install it.
 
 == Screenshots ==
 
-1. OpenSearchServer Settings Page.
-2. Search provided by OpenSearchServer with facet and filter.
+1. The admin page.
+2. An example of search result.
+
+== Changelog ==
+
+= 1.1.0 =
+* Tested with OpenSearchServer 1.3-rc2
+
+= 1.0.9 =
+* Phonetic search
+* Custom fields support
+* Facets and filters on categories
+* CSS and javascript improvements
 
 = 1.0.8 =
 * Improved OpenSearchServer settings page.
@@ -83,4 +98,3 @@ A: Check that you server is enabled with CURL extension else install it.
 
 = 1.0.1 =
 * Implemented and overridden wordpress search to OpenSearchServer search
-

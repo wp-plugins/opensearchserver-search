@@ -58,12 +58,12 @@ function opensearchserver_getpaging($result) {
 		return $pagingArray;
 	}
 }
-function opensearchserver_getsearchresult($query,$spellcheck,$facet) {
+function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
 	if($query) {
 		$start = isset($_REQUEST['pa']) ? $_REQUEST['pa'] : null;
 		$start = isset($start) ? max(0, $start - 1) * 10 : 0;
-		$query = clean_query($query);
-		$search = opensearchserver_getsearch_instance(10,$start);
+		$query = opensearchserver_clean_query($query);
+		$search = opensearchserver_getsearch_instance(10, $start);
 		if(!$spellcheck) {
 			opensearchserver_add_facets_search($search);
 			if($facet) {
@@ -84,7 +84,7 @@ function opensearchserver_getsearchresult($query,$spellcheck,$facet) {
 }
 
 
-function clean_query($query) {
+function opensearchserver_clean_query($query) {
 	$escapechars = array('\\', '^', '~', ':', '(', ')', '{', '}', '[', ']' , '&', '||', '!', '*', '?','039;','\'','#');
 	foreach ($escapechars as $escchar)  {
 		$query = str_replace($escchar, ' ', $query);
@@ -102,7 +102,7 @@ function opensearchserver_add_facets_search($search) {
 function opensearchserver_get_max($oss_results) {
 	return ($oss_results->getResultStart() + $oss_results->getResultRows() > $oss_results->getResultFound()) ? $oss_results->getResultFound() : $oss_results->getResultStart() + $oss_results->getResultRows();
 }
-function get_custom_fields() {
+function opensearchserver_get_custom_fields() {
 	return explode(",",get_option('oss_custom_field'));
 }
 ?>

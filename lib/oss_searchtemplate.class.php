@@ -43,7 +43,7 @@ class OssSearchTemplate extends OssAbstract {
   }
 
   public function createSearchTemplate($qtname, $qtquery = NULL, $qtoperator = NULL, $qtrows = NULL, $qtslop = NULL, $qtlang = NULL) {
-  	$params = array("qt.name" => $qtname);
+    $params = array("qt.name" => $qtname);
     if ($qtquery) {
       $params['qt.query'] = $qtquery;
     }
@@ -65,35 +65,35 @@ class OssSearchTemplate extends OssAbstract {
   }
   /*
    * Function to create spell check Query Template
-   * $qtsuggestions - No of suggestions to be returned
-   * $qtfield - The field that is used for spell checking.
-   * $qtscore - The minimum score of Spellcheck match.
-   * $qtalgorithm -The alorithm used for spellcheck.OpenSearchServer has below alogrithms for spellcheck.
-   *               1)LevensteinDistance
-   *               2)NGramDistance
-   *               3)JaroWinklerDistance
-   */
+  * $qtsuggestions - No of suggestions to be returned
+  * $qtfield - The field that is used for spell checking.
+  * $qtscore - The minimum score of Spellcheck match.
+  * $qtalgorithm -The alorithm used for spellcheck.OpenSearchServer has below alogrithms for spellcheck.
+  *               1)LevensteinDistance
+  *               2)NGramDistance
+  *               3)JaroWinklerDistance
+  */
   public function createSpellCheckTemplate($qtname, $qtquery = NULL, $qtsuggestions = NULL, $qtfield = NULL, $qtscore = NULL, $qtlang = NULL, $qtalgorithm = NULL) {
-  	$params = array("qt.name" => $qtname);
-  	$params['qt.type'] = 'SpellCheckRequest';
-  	if ($qtquery) {
-  		$params['qt.query'] = $qtquery;
-  	}
-  	if ($qtsuggestions) {
-  		$params['qt.suggestions'] = $qtsuggestions;
-  	}
-  	if ($qtfield) {
-  		$params['qt.field'] = $qtfield;
-  	}
-  	if ($qtscore) {
-  		$params['qt.score'] = $qtscore;
-  	}
+    $params = array("qt.name" => $qtname);
+    $params['qt.type'] = 'SpellCheckRequest';
+    if ($qtquery) {
+      $params['qt.query'] = $qtquery;
+    }
+    if ($qtsuggestions) {
+      $params['qt.suggestions'] = $qtsuggestions;
+    }
+    if ($qtfield) {
+      $params['qt.field'] = $qtfield;
+    }
+    if ($qtscore) {
+      $params['qt.score'] = $qtscore;
+    }
 
-  	if ($qtlang) {
-  		$params['qt.lang'] = $qtlang;
-  	}
-  	if ($qtalgorithm) {
-  		$params['qt.algorithm'] = $qtalgorithm;
+    if ($qtlang) {
+      $params['qt.lang'] = $qtlang;
+    }
+    if ($qtalgorithm) {
+      $params['qt.algorithm'] = $qtalgorithm;
     }
     $params['cmd'] = OssSearchTemplate::API_SEARCH_TEMPLATE_CREATE;
     $return = $this->queryServerXML(OssSearchTemplate::API_SEARCH_TEMPLATE, $params);
@@ -124,7 +124,7 @@ class OssSearchTemplate extends OssAbstract {
     }
     $params['snippetfield'] = $snippetField;
     $params['cmd'] = OssSearchTemplate::API_SEARCH_TEMPLATE_SETSNIPPETFIELD;
-    $return = OssApi::queryServerXML(OssSearchTemplate::API_SEARCH_TEMPLATE, $params);
+    $return = $this->queryServerXML(OssSearchTemplate::API_SEARCH_TEMPLATE, $params);
     return $return === FALSE ? FALSE : TRUE;
   }
 

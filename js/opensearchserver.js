@@ -1,4 +1,7 @@
-function getXmlHttpRequestObject() {
+if (typeof (OpenSearchServer) == "undefined")
+	OpenSearchServer = {};
+
+OpenSearchServer.getXmlHttpRequestObject = function() {
 	if (window.XMLHttpRequest) {
 		return new XMLHttpRequest();
 	} else if (window.ActiveXObject) {
@@ -6,25 +9,25 @@ function getXmlHttpRequestObject() {
 	} else {
 		return null;
 	}
-}
+};
 
-var xmlHttp = getXmlHttpRequestObject();
+OpenSearchServer.xmlHttp = OpenSearchServer.getXmlHttpRequestObject();
 
-function setAutocomplete(value) {
-	var ac = document.getElementById('autocomplete');
+OpenSearchServer.setAutocomplete = function(value) {
+	var ac = document.getElementById('oss-autocomplete');
 	ac.innerHTML = value;
 	return ac;
-}
+};
 
-var selectedAutocomplete = 0;
-var autocompleteSize = 0;
+OpenSearchServer.selectedAutocomplete = 0;
+OpenSearchServer.autocompleteSize = 0;
 
-function getselectedautocompletediv(n) {
-	return document.getElementById('autocompleteitem' + n);
-}
+OpenSearchServer.getselectedautocompletediv = function(n) {
+	return document.getElementById('oss-autocompleteitem' + n);
+};
 
-function autosuggest(event) {
-	var keynum;
+OpenSearchServer.autosuggest = function(event) {
+	var keynum = 0;
 	if (window.event) { // IE
 		keynum = event.keyCode;
 	} else if (event.which) { // Netscape/Firefox/Opera
@@ -32,7 +35,7 @@ function autosuggest(event) {
 	}
 	if (keynum == 38 || keynum == 40) {
 		if (selectedAutocomplete > 0) {
-			autocompleteLinkOut(selectedAutocomplete);
+			OpenSearchServer.autocompleteLinkOut(selectedAutocomplete);
 		}
 		if (keynum == 38) {
 			if (selectedAutocomplete > 0) {
@@ -44,32 +47,33 @@ function autosuggest(event) {
 			}
 		}
 		if (selectedAutocomplete > 0) {
-			var dv = getselectedautocompletediv(selectedAutocomplete);
-			autocompleteLinkOver(selectedAutocomplete);
-			setKeywords(dv.innerHTML);
+			var dv = OpenSearchServer.getselectedautocompletediv(selectedAutocomplete);
+			OpenSearchServer.autocompleteLinkOver(selectedAutocomplete);
+			OpenSearchServer.setKeywords(dv.innerHTML);
 		}
 		return false;
 	}
 
-	if (xmlHttp.readyState != 4 && xmlHttp.readyState != 0)
+	if (OpenSearchServer.xmlHttp.readyState != 4
+			&& OpenSearchServer.xmlHttp.readyState != 0)
 		return;
-	var str = escape(document.getElementById('keyword').value);
+	var str = escape(document.getElementById('oss-keyword').value);
 	if (str.length == 0) {
-		setAutocomplete('');
+		OpenSearchServer.setAutocomplete('');
 		return;
 	}
 
-	xmlHttp.open("GET", '?s=ossautointernal&q=' + str, true);
-	xmlHttp.onreadystatechange = handleAutocomplete;
-	xmlHttp.send(null);
+	OpenSearchServer.xmlHttp.open("GET", '?s=ossautointernal&q=' + str, true);
+	OpenSearchServer.xmlHttp.onreadystatechange = OpenSearchServer.handleAutocomplete;
+	OpenSearchServer.xmlHttp.send(null);
 	return true;
-}
+};
 
-function handleAutocomplete() {
-	if (xmlHttp.readyState != 4)
+OpenSearchServer.handleAutocomplete = function() {
+	if (OpenSearchServer.xmlHttp.readyState != 4)
 		return;
-	var ac = setAutocomplete('');
-	var resp = xmlHttp.responseText;
+	var ac = OpenSearchServer.setAutocomplete('');
+	var resp = OpenSearchServer.xmlHttp.responseText;
 	if (resp == null) {
 		return;
 	}
@@ -77,53 +81,56 @@ function handleAutocomplete() {
 		return;
 	}
 	var str = resp.split("\n");
-	var content = '<div id="autocompletelist">';
-	for (i = 0; i < str.length - 1; i++) {
+	var content = '<div id="oss-autocompletelist">';
+	for ( var i = 0; i < str.length - 1; i++) {
 		var j = i + 1;
-		content += '<div id="autocompleteitem' + j + '" ';
-		content += 'onmouseover="javascript:autocompleteLinkOver(' + j + ');" ';
-		content += 'onmouseout="javascript:autocompleteLinkOut(' + j + ');" ';
-		content += 'onclick="javascript:setsetKeywords_onClick(this.innerHTML);" ';
-		content += 'class="autocomplete_link">' + str[i] + '</div>';
+		content += '<div id="oss-autocompleteitem' + j + '" ';
+		content += 'onmouseover="javascript:OpenSearchServer.autocompleteLinkOver('
+				+ j + ');" ';
+		content += 'onmouseout="javascript:OpenSearchServer.autocompleteLinkOut('
+				+ j + ');" ';
+		content += 'onclick="javascript:OpenSearchServer.setKeywords_onClick(this.innerHTML);" ';
+		content += 'class="oss-autocomplete_link">' + str[i] + '</div>';
 	}
 	content += '</div>';
 	ac.innerHTML = content;
 	selectedAutocomplete = 0;
 	autocompleteSize = str.length;
-}
+};
 
-function autocompleteLinkOver(n) {
+OpenSearchServer.autocompleteLinkOver = function(n) {
 	if (selectedAutocomplete > 0) {
-		autocompleteLinkOut(selectedAutocomplete);
+		OpenSearchServer.autocompleteLinkOut(selectedAutocomplete);
 	}
-	var dv = getselectedautocompletediv(n);
-	if(dv != null)
-	{
-		dv.className = 'autocomplete_link_over';
+	var dv = OpenSearchServer.getselectedautocompletediv(n);
+	if (dv != null) {
+		dv.className = 'oss-autocomplete_link_over';
 		selectedAutocomplete = n;
 	}
-}
+};
 
-function autocompleteLinkOut(n) {
-	var dv = getselectedautocompletediv(n);
+OpenSearchServer.autocompleteLinkOut = function(n) {
+	var dv = OpenSearchServer.getselectedautocompletediv(n);
 	if (dv != null) {
-		dv.className = 'autocomplete_link';
+		dv.className = 'oss-autocomplete_link';
 	}
-}
-function setsetKeywords_onClick(value) {
-	var dv = document.getElementById('keyword');
+};
+
+OpenSearchServer.setKeywords_onClick = function(value) {
+	var dv = document.getElementById('oss-keyword');
 	if (dv != null) {
 		dv.value = value;
 		dv.focus();
-		setAutocomplete('');
-		document.forms['searchformForm'].submit()
+		OpenSearchServer.setAutocomplete('');
+		document.forms['oss-searchform'].submit();
 		return true;
 	}
-}
-function setKeywords(value) {
-	var dv = document.getElementById('keyword');
+};
+
+OpenSearchServer.setKeywords = function(value) {
+	var dv = document.getElementById('oss-keyword');
 	if (dv != null) {
 		dv.value = value;
 		dv.focus();
 	}
-}
+};
