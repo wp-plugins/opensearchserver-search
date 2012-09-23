@@ -26,14 +26,15 @@ Key Features
 
 = Requirements =
 
-    * WordPress 3.0.1 or higher
+ * WordPress 3.0.1 or higher
+ * A running OpenSearchServer instance
 
 = Installing the plugin =
 
    1. Check you have a running OpenSearchServer instance
    2. Unpack the plugin archive to wp-content/plugins folder of your WordPress installation.
-   3. Activate OpenSearchServer plugin via WordPress Settings.
-   4. Open OpenSearchServer settings page and just fill the form and create and index and re-index it for first time.
+   3. Activate the OpenSearchServer Search plugin via WordPress settings.
+   4. Open OpenSearchServer settings page and just fill the form to create and index.
 
 [youtube http://www.youtube.com/watch?v=GGZuGiMX5DA]
 
