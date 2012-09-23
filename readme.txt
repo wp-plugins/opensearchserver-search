@@ -35,6 +35,8 @@ Key Features
    3. Activate OpenSearchServer plugin via WordPress Settings.
    4. Open OpenSearchServer settings page and just fill the form and create and index and re-index it for first time.
 
+[youtube http://www.youtube.com/watch?v=GGZuGiMX5DA]
+
 == Frequently Asked Questions ==
 
 Q: What is OpenSearchServer?
