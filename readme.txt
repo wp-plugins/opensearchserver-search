@@ -27,7 +27,7 @@ Key Features
 = Requirements =
 
  * WordPress 3.0.1 or higher
- * A running OpenSearchServer instance
+ * A running instance of OpenSearchServer 1.3 or higher
 
 = Installing the plugin =
 
@@ -63,6 +63,10 @@ A: Check that you server is enabled with CURL extension else install it.
 2. An example of search result.
 
 == Changelog ==
+
+= 1.1.1 =
+* 17 Language support
+* Spelling corrections
 
 = 1.1.0 =
 * Tested with OpenSearchServer 1.3-rc2

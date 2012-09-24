@@ -96,7 +96,7 @@ function opensearchserver_display_messages($message, $errormsg = FALSE) {
 function opensearchserver_query_template() {
   $query_template = opensearchserver_getsearchtemplate_instance();
   $oss_query = stripcslashes(get_option('oss_query'));
-  $query_template->createSearchTemplate('search', $oss_query, 'AND', '10', '2', 'ENGLISH');
+  $query_template->createSearchTemplate('search', $oss_query, 'AND', '10', '2', get_option('oss_language'));
   $query_template->setSnippetField('search','title', 70, 'b');
   $query_template->setSnippetField('search','content', 300, 'b', NULL, 'SentenceFragmenter');
   if (get_option('oss_phonetic')) {
@@ -133,6 +133,7 @@ function opensearchserver_reindex_site($id,$type) {
   $oss_login =  get_option('oss_login');
   $oss_key = get_option('oss_key');
   $custom_fields = get_option('oss_custom_field');
+  $lang = get_option('oss_language');
   $table_name_posts =$wpdb->prefix ."posts";
   $table_name_users =$wpdb->prefix ."users";
   $index_status=0;
@@ -145,7 +146,7 @@ function opensearchserver_reindex_site($id,$type) {
     $sql_suffix = 'FROM '.$table_name_posts.' p LEFT JOIN  '.$table_name_users.' u ON p.post_author = u.ID WHERE `post_status` = \'publish\' AND p.ID ='.$id;
     $sql_query = 'SELECT p.ID,post_type,post_title,post_content,guid,post_date_gmt,post_author,user_nicename,user_url,user_email '.$sql_suffix;
     $sql_posts = $wpdb->get_results($sql_query);
-    $index = opensearchserver_add_documents_to_index($sql_posts, $custom_fields);
+    $index = opensearchserver_add_documents_to_index($lang, $sql_posts, $custom_fields);
     opensearchserver_start_indexing($index);
   }else {
     opensearchserver_delete_document('*:*');
@@ -164,7 +165,7 @@ function opensearchserver_reindex_site($id,$type) {
       }
 
       $sql_posts = $wpdb->get_results($sql_query.' LIMIT '.$current_pos.','.$batch);
-      $index = opensearchserver_add_documents_to_index($sql_posts,$custom_fields);
+      $index = opensearchserver_add_documents_to_index($lang, $sql_posts, $custom_fields);
       opensearchserver_start_indexing($index);
       $wpdb->flush();
       wp_cache_flush();
@@ -243,7 +244,7 @@ function opensearchserver_autocompletionBuild() {
   $autocompletion->autocompletionBuild();
 }
 
-function opensearchserver_add_documents_to_index($sql_posts,$customFields) {
+function opensearchserver_add_documents_to_index($lang, $sql_posts, $customFields) {
   $index = new OSSIndexDocument();
   $lang= substr(get_locale(), 0, 2);
   foreach($sql_posts as $post){
@@ -354,6 +355,27 @@ function opensearchserver_admin_page() {
     'JaroWinklerDistance' => 'JaroWinklerDistance',
     'LevensteinDistance' => 'LevensteinDistance',
     'NGramDistance' => 'NGramDistance');
+  $languages = array(
+    ''   => 'Undefined',
+    'ar' => 'Arabic',
+    'zh' => 'Chinese',
+    'da' => 'Danish',
+    'nl' => 'Dutch',
+    'en' => 'English',
+    'fi' => 'Finnish',
+    'fr' => 'French',
+    'de' => 'German',
+    'hu' => 'Hungarian',
+    'it' => 'Italian',
+    'no' => 'Norwegian',
+    'pt' => 'Portuguese',
+    'ro' => 'Romanian',
+    'ru' => 'Russian',
+    'es' => 'Spanish',
+    'sv' => 'Swedish',
+    'tr' => 'Turkish'
+  );
+
 
   $action = isset($_POST['oss_submit']) ? $_POST['oss_submit'] :NULL;
   if($action == 'settings') {
@@ -403,6 +425,8 @@ function opensearchserver_admin_page() {
       }
       update_option('oss_spell', $oss_spell);
       update_option('oss_spell_algo', $oss_spell_algo);
+      $oss_language = isset($_POST['oss_language']) ? $_POST['oss_language'] : NULL;
+      update_option('oss_language', $oss_language);
       $oss_phonetic = isset($_POST['oss_phonetic']) ? $_POST['oss_phonetic'] : NULL;
       update_option('oss_phonetic', $oss_phonetic);
       opensearchserver_display_messages('OpenSearchServer Settings has been updated.');
@@ -436,34 +460,34 @@ function opensearchserver_admin_page() {
 						<br />
 					</div>
 					<h3 class="hndle">
-						<span><?php print 'Server Settings'; ?> </span>
+						<span><?php print 'Instance settings'; ?> </span>
 					</h3>
 					<form id="oss_settings" name="oss_settings" method="post" action="">
 						<div class="inside">
 							<p>
-								<label for="opensearchserver_location">OpenSearchServer
-									Installation Location</label>:<br /> <input type="text"
-									name="oss_serverurl" id="oss_serverurl"
-									placeholder="http://localhost:8080" size="50"
-									value="<?php print get_option('oss_serverurl');?>" /> <br />
+								<label for="opensearchserver_location">OpenSearchServer instance
+									location</label>:<br /> <input type="text" name="oss_serverurl"
+									id="oss_serverurl" placeholder="http://localhost:8080"
+									size="80" value="<?php print get_option('oss_serverurl');?>" />
+								<br />
 							</p>
 							<p>
-								<label for="opensearchserver_index_name">OpenSearchServer Index
-									Name</label>:<br /> <input type="text" name="oss_indexname"
+								<label for="opensearchserver_index_name">OpenSearchServer index
+									name</label>:<br /> <input type="text" name="oss_indexname"
 									id="oss_indexname" placeholder="opensearchserver_wordpress"
 									size="50" value="<?php print get_option('oss_indexname');?>" />
 								<br />
 							</p>
 							<p>
-								<label for="opensearchserver_login">OpenSearchServer Login Name</label>:<br />
+								<label for="opensearchserver_login">OpenSearchServer login name</label>:<br />
 								<input type="text" name="oss_login" id="oss_login"
-									placeholder="admin" size="50"
+									placeholder="admin" size="30"
 									value="<?php print get_option('oss_login');?>" /> <br />
 							</p>
 
 
 							<p>
-								<label for="opensearchserver_key">OpenSearchServer Access key</label>:<br />
+								<label for="opensearchserver_key">OpenSearchServer API key</label>:<br />
 								<input type="text" name="oss_key" id="oss_key"
 									placeholder="9bc6aceeb43965b02b1d28a5201924e2" size="50"
 									value="<?php print get_option('oss_key');?>" /><br />
@@ -482,25 +506,24 @@ function opensearchserver_admin_page() {
 						<br />
 					</div>
 					<h3 class="hndle">
-						<span>Query Settings </span>
+						<span>Query settings </span>
 					</h3>
 					<div class="inside">
-						<p>Available for querying,facet and spell check are title, posts,
-							category, user,user_email, post_type.</p>
+						<p>Enter the template query, or leave empty to use the default one</p>
 						<form id="query_settings" name="query_settings" method="post"
 							action="">
 							<p>
-								<label for="oss_query">OpenSearchServer Query</label>:<br />
+								<label for="oss_query">OpenSearchServer query template</label>:<br />
 								<textarea rows="10" cols="100" name="oss_query" wrap="off">
-<?php
-if (trim(get_option('oss_query'))) {
-  print stripslashes(get_option('oss_query'));
-}
-?>
+                                  <?php
+                                  if (trim(get_option('oss_query'))) {
+                                    print stripslashes(get_option('oss_query'));
+                                  }
+                                  ?>
 								</textarea>
 							</p>
 							<p>
-								<label for="oss_query">Facet Field</label>:<br /> <select
+								<label for="oss_query">Facet field</label>:<br /> <select
 									name="oss_facet">
 									<?php
 									foreach ($fields as $key => $field) {
@@ -517,7 +540,7 @@ if (trim(get_option('oss_query'))) {
 							<table class="widefat" style="width: 40% !important">
 								<thead>
 									<tr>
-										<th>Facet Field</th>
+										<th>Facet field list</th>
 										<th>Action</th>
 									</tr>
 								</thead>
@@ -539,7 +562,7 @@ if (trim(get_option('oss_query'))) {
 							</table>
 							<?php }?>
 							<p>
-								<label for="oss_query">SpellCheck Field</label>:<br /> <select
+								<label for="oss_query">SpellCheck field</label>:<br /> <select
 									name="oss_spell"><?php
 									$facet = get_option('oss_spell');
 									foreach ($spellcheck_fields as $key => $field) {
@@ -552,7 +575,11 @@ if (trim(get_option('oss_query'))) {
 										<?php print $field;?>
 									</option>
 									<?php }?>
-								</select> <br /> <label for="oss_query">SpellCheck algorithm</label>:<br />
+								</select>
+							
+							
+							<p>
+								<label for="oss_spell_algo">SpellCheck algorithm</label>:<br />
 								<select name="oss_spell_algo"><?php
 								$facet = get_option('oss_spell_algo');
 								foreach ($spellcheck_algo as $key => $field) {
@@ -561,6 +588,23 @@ if (trim(get_option('oss_query'))) {
 								    $selected = 'selected="selected"';
 								  }
 								  ?>
+									<option value="<?php print $key;?>" <?php print $selected;?>>
+										<?php print $field;?>
+									</option>
+									<?php }?>
+								</select>
+							</p>
+							</p>
+							<p>
+								<label for="oss_language">Default language</label>:<br /> <select
+									name="oss_language"><?php
+									$opt = get_option('oss_language');
+									foreach ($languages as $key => $field) {
+									  $selected = '';
+									  if($opt == $key) {
+									    $selected = 'selected="selected"';
+									  }
+									  ?>
 									<option value="<?php print $key;?>" <?php print $selected;?>>
 										<?php print $field;?>
 									</option>
@@ -586,7 +630,7 @@ if (trim(get_option('oss_query'))) {
 						<br />
 					</div>
 					<h3 class="hndle">
-						<span>Index Settings </span>
+						<span>Index settings </span>
 					</h3>
 					<div class="inside">
 						<form id="index_settings" name="index_settings" method="post"
@@ -609,15 +653,16 @@ if (trim(get_option('oss_query'))) {
 						<br />
 					</div>
 					<h3 class="hndle">
-						<span>Custom Fields Settings </span>
+						<span>Custom fields settings </span>
 					</h3>
 					<div class="inside">
 						<form id="custom_field_settings" name="custom_field_settings"
 							method="post" action="">
 							<p>
 								<label for="custom_fields_oss">Enter the fields from the Custom
-									Field Template more information at
-									http://wordpress.org/extend/plugins/custom-field-template/</label>:
+									Field Template. Get useful information <a target="_blank"
+									href="http://wordpress.org/extend/plugins/custom-field-template/">here</a>
+								</label>:<br />
 								<textarea rows="10" cols="100" name="oss_custom_field"
 									wrap="off">
 									<?php

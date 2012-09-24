@@ -2,11 +2,11 @@
 /**
  Plugin Name: OpenSearchServer
  Plugin URI: http://wordpress.org/extend/plugins/opensearchserver-search/
- Description:This Plugin will integrate OpenSearchServer 1.3 as search engine for Wordpress.Go to <a href="plugins.php?page=opensearchserver/index.php">OpenSearchServer Settings</a> for OpenSearchServer Settings,
- Author: Naveen.A.N
+ Description: This Plugin will integrate OpenSearchServer as search engine for Wordpress.Go to <a href="plugins.php?page=opensearchserver/index.php">OpenSearchServer Settings</a> for OpenSearchServer Settings,
+ Author: Emmanuel Keller - Naveen.A.N
  Author URI: http://open-search-server.com
  Tested up to: 3.4.2
- Version:1.1.0
+ Version:1.1.1
  */
 require_once 'lib/oss_api.class.php';
 require_once 'lib/oss_misc.lib.php';
@@ -26,6 +26,7 @@ require_once 'opensearchserver_search_functions.php';
 function opensearchserver_admin_actions() {
   add_submenu_page('plugins.php', 'OpenSearchServer Settings', 'OpenSearchServer', 'edit_plugins', __FILE__, 'opensearchserver_admin_page');
 }
+
 function opensearchserver_load_scripts_styles() {
   wp_register_script( 'opensearchserver', plugins_url('opensearchserver-search') .'/js/opensearchserver.js' );
   wp_enqueue_script( 'opensearchserver' );
@@ -33,9 +34,10 @@ function opensearchserver_load_scripts_styles() {
   wp_enqueue_style('opensearchserver-style');
   wp_enqueue_script( 'jQuery' );
 }
+
 function  opensearchserver_search() {
 
-  if ( stripos($_SERVER['REQUEST_URI'], '/?s=') === FALSE && stripos($_SERVER['REQUEST_URI'], '/search/') === FALSE)	{
+  if (stripos($_SERVER['REQUEST_URI'], '/?s=') === FALSE && stripos($_SERVER['REQUEST_URI'], '/search/') === FALSE)	{
     return;
   }
   if (stripos($_SERVER['REQUEST_URI'], '/?s=') === FALSE && stripos($_SERVER['REQUEST_URI'], '/search/') === FALSE)	{
@@ -55,11 +57,8 @@ function  opensearchserver_search() {
     }
   }
 }
+
 function opensearchserver_install() {
-  $oss_query  = 'title:($$)^10 OR title:("$$")^10 OR allContent:($$) OR allContent:("$$")
-  OR
-  content:($$)^5 OR content:("$$")^5 OR categories:($$) OR categories:("$$")';
-  update_option('oss_query', $oss_query);
 }
 
 function opensearchserver_uninstall() {
@@ -70,7 +69,11 @@ function opensearchserver_uninstall() {
   delete_option('oss_key');
   delete_option('oss_facet');
   delete_option('oss_spell');
+  delete_option('oss_spell_algo');
+  delete_option('oss_phonetic');
+  delete_option('oss_language');
 }
+
 function opensearchserver_do_while_posting($post_id,$post) {
   if ($post->post_type == 'post' || $post->post_type == 'page'
     && $post->post_status == 'publish') {
