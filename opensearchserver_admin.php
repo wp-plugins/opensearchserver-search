@@ -25,6 +25,7 @@ function opensearchserver_getautocomplete_instance() {
  */
 function opensearchserver_create_index() {
   $indexName = get_option('oss_indexname');
+  $custom_fields = get_option('oss_custom_field');
   $oss_api = opensearchserver_getapi_instance();
   $index_list = $oss_api->indexList();
   $index = in_array($indexName, $index_list);
@@ -33,8 +34,8 @@ function opensearchserver_create_index() {
   }
 
   $oss_api->createIndex($indexName);
-  opensearchserver_create_schema();
-  opensearchserver_query_template();
+  opensearchserver_create_schema($custom_fields);
+  opensearchserver_query_template($custom_fields);
   opensearchserver_spellcheck_query_template();
   return TRUE;
 }
@@ -48,12 +49,11 @@ function opensearchserver_setField($ossSchema, $xmlSchema, $fieldName, $analyzer
   $ossSchema->setField($fieldName, $analyzer, $stored, $indexed, $termVector, $default, $unique);
 }
 
-
 /*
  * Function create schema values for OpenSearchServer
 */
 
-function opensearchserver_create_schema() {
+function opensearchserver_create_schema($custom_fields) {
   $schema = opensearchserver_getschema_instance();
   $schema_xml = $schema->getSchema();
   opensearchserver_setField($schema,$schema_xml,'id', NULL, 'yes', 'yes', 'no', 'no', 'yes');
@@ -66,7 +66,7 @@ function opensearchserver_create_schema() {
     opensearchserver_setField($schema,$schema_xml,'titlePhonetic','PhoneticAnalyzer','yes','yes','positions_offsets','no','no');
     opensearchserver_setField($schema,$schema_xml,'contentPhonetic','PhoneticAnalyzer','yes','yes','positions_offsets','no','no');
   }
-  opensearchserver_setField($schema,$schema_xml,'content','TextAnalyzer','compress','yes','positions_offsets','yes','no');
+  opensearchserver_setField($schema,$schema_xml,'content','TextAnalyzer','yes','yes','positions_offsets','yes','no');
   opensearchserver_setField($schema,$schema_xml,'contentExact','StandardAnalyzer','no','yes','no','no','no');
   opensearchserver_setField($schema,$schema_xml,'timestamp',NULL,'no','yes','yes','no','no');
   opensearchserver_setField($schema,$schema_xml,'user_name',NULL,'yes','yes','yes','no','no');
@@ -75,6 +75,15 @@ function opensearchserver_create_schema() {
   opensearchserver_setField($schema,$schema_xml,'allContent','TextAnalyzer','no','yes','no','yes','no');
   opensearchserver_setField($schema,$schema_xml,'categories','TextAnalyzer','yes','yes','no','yes','no');
   opensearchserver_setField($schema,$schema_xml,'categoriesExact',NULL,'yes','yes','no','yes','no');
+  if (isset($custom_fields) && $custom_fields != null) {
+    $custom_fields_array = explode(',', $custom_fields);
+    foreach ($custom_fields_array as $field) {
+      $field = opensearchserver_clean_field($field);
+      if (strlen($field) > 0) {
+        opensearchserver_setField($schema,$schema_xml,'custom_'.$field,NULL,'yes','yes','no','yes','no');
+      }
+    }
+  }
 }
 
 /*
@@ -93,7 +102,7 @@ function opensearchserver_display_messages($message, $errormsg = FALSE) {
 /*
  * Function to update the query template
 */
-function opensearchserver_query_template() {
+function opensearchserver_query_template($custom_fields) {
   $query_template = opensearchserver_getsearchtemplate_instance();
   $oss_query = stripcslashes(get_option('oss_query'));
   $query_template->createSearchTemplate('search', $oss_query, 'AND', '10', '2', get_option('oss_language'));
@@ -103,12 +112,21 @@ function opensearchserver_query_template() {
     $query_template->setSnippetField('search','titlePhonetic', 70, 'b');
     $query_template->setSnippetField('search','contentPhonetic', 300, 'b', NULL, 'SentenceFragmenter');
   }
-  $query_template->setReturnField('search',"url");
-  $query_template->setReturnField('search',"user_url");
-  $query_template->setReturnField('search',"type");
-  $query_template->setReturnField('search',"user_name");
-  $query_template->setReturnField('search',"user_email");
-  $query_template->setReturnField('search',"categories");
+  $query_template->setReturnField('search','url');
+  $query_template->setReturnField('search','user_url');
+  $query_template->setReturnField('search','type');
+  $query_template->setReturnField('search','user_name');
+  $query_template->setReturnField('search','user_email');
+  $query_template->setReturnField('search','categories');
+  if (isset($custom_fields) && $custom_fields != null) {
+    $custom_fields_array = explode(',', $custom_fields);
+    foreach ($custom_fields_array as $field) {
+      $field = opensearchserver_clean_field($field);
+      if (strlen($field) > 0) {
+        $query_template->setReturnField('search','custom_'.$field);
+      }
+    }
+  }
 }
 
 /*
@@ -123,10 +141,38 @@ function opensearchserver_spellcheck_query_template() {
   }
 }
 
+/**
+ * Check if the document list should be indexed
+ * @param OSSIndexDocument $index
+ * @param number $limit
+ */
+function opensearchserver_checkindex(OSSIndexDocument $index, $limit = 1, $idx = 0, $total = 0) {
+  global $wpdb;
+  if ($index->count() < $limit) {
+    return $index;
+  }
+  opensearchserver_start_indexing($index);
+  $index = null;
+  wp_cache_flush();
+  $wpdb->flush();
+  if (function_exists('gc_enabled')) {
+    if (gc_enabled()) {
+      gc_collect_cycles();
+    }
+  }
+
+  if ($idx != 0 && $total != 0) {
+    $percent = (floatval($idx) / floatval($total)) * 100;
+    $mem = floatval(memory_get_usage()) / 1024 / 1024;
+    opensearchserver_display_messages(sprintf('Completed: %.2f - Memory usage: %2f', $percent, $mem));
+  }
+  return new OSSIndexDocument();
+}
+
 /*
  * Function to reindex the website.
 */
-function opensearchserver_reindex_site($id,$type) {
+function opensearchserver_reindex_site($id,$type, $from = 0, $to = 0) {
   global $wpdb;
   $oss_server_url = get_option('oss_serverurl');
   $oss_indexname = get_option('oss_indexname');
@@ -140,44 +186,33 @@ function opensearchserver_reindex_site($id,$type) {
   $ossEnginePath  = config_request_value('ossEnginePath', $oss_server_url, 'engineURL');
   $ossEngineConnectTimeOut = config_request_value('ossEngineConnectTimeOut', 5, 'engineConnectTimeOut');
   $ossEngineIndex = config_request_value('ossEngineIndex', $oss_indexname, 'engineIndex');
-  if($id)	{
+  if($id) {
     $delete='id:'.$type.'_'.$id;
     opensearchserver_delete_document($delete);
-    $sql_suffix = 'FROM '.$table_name_posts.' p LEFT JOIN  '.$table_name_users.' u ON p.post_author = u.ID WHERE `post_status` = \'publish\' AND p.ID ='.$id;
-    $sql_query = 'SELECT p.ID,post_type,post_title,post_content,guid,post_date_gmt,post_author,user_nicename,user_url,user_email '.$sql_suffix;
-    $sql_posts = $wpdb->get_results($sql_query);
-    $index = opensearchserver_add_documents_to_index($lang, $sql_posts, $custom_fields);
-    opensearchserver_start_indexing($index);
-  }else {
-    opensearchserver_delete_document('*:*');
-    wp_cache_flush();
-    $batch = 200;
-    $sql_suffix = 'FROM '.$table_name_posts.' p LEFT JOIN  '.$table_name_users.' u ON p.post_author = u.ID WHERE `post_status` = \'publish\'';
-    $total_count = $wpdb->get_var($wpdb->prepare( 'SELECT COUNT(*) '.$sql_suffix));
-    $wpdb->flush();
-    $sql_query = 'SELECT p.ID,post_type,post_title,post_content,guid,post_date_gmt,post_author,user_nicename,user_url,user_email '.$sql_suffix;
-
-    $current_pos = 0;
-    while ($current_pos < $total_count) {
-      $row_fetch = $total_count - $current_pos;
-      if ($row_fetch > $batch) {
-        $row_fetch = $batch;
-      }
-
-      $sql_posts = $wpdb->get_results($sql_query.' LIMIT '.$current_pos.','.$batch);
-      $index = opensearchserver_add_documents_to_index($lang, $sql_posts, $custom_fields);
-      opensearchserver_start_indexing($index);
-      $wpdb->flush();
-      wp_cache_flush();
-      unset($sql_posts);
-      unset($index);
-      $current_pos += $row_fetch;
+    $index = new OSSIndexDocument();
+    opensearchserver_add_documents_to_index($index, $lang, get_post($id), $custom_fields);
+    opensearchserver_checkindex($index);
+  } else {
+    $from = (int) $from;
+    $to = (int) $to;
+    if ($from == 0 && $to == 0) {
+      opensearchserver_delete_document('*:*');
     }
+    $limitSuffix = $to != 0 ? ' LIMIT '.$from.','.($to - $from) : '';
+    $sql_query = 'SELECT ID FROM '.$wpdb->posts.' WHERE post_status = \'publish\' ORDER BY ID'.$limitSuffix;
+    $posts = $wpdb->get_results($sql_query);
+    $total_count = count($posts);
+    $index = new OSSIndexDocument();
+    for ($i = 0; $i < $total_count; $i++) {
+      $id = $posts[$i]->ID;
+      opensearchserver_add_documents_to_index($index, $lang, get_post($id), $custom_fields);
+      $index = opensearchserver_checkindex($index, 200, $i, $total_count);
+    }
+    opensearchserver_checkindex($index, 1, $i, $total_count);
   }
   opensearchserver_optimize();
   opensearchserver_autocompletionBuild();
-  $index_status=1;
-  return $index_status;
+  return 1;
 }
 
 function opensearchserver_delete_document($query) {
@@ -244,75 +279,75 @@ function opensearchserver_autocompletionBuild() {
   $autocompletion->autocompletionBuild();
 }
 
-function opensearchserver_add_documents_to_index($lang, $sql_posts, $customFields) {
-  $index = new OSSIndexDocument();
-  $lang= substr(get_locale(), 0, 2);
-  foreach($sql_posts as $post){
-    $content=$post->post_content;
-    $content = apply_filters('the_content', $content);
-    $content = str_replace(']]>', ']]&gt;', $content);
-    $content = opensearchserver_encode(strip_tags($content));
-    $document = $index->newDocument($lang);
-    $document->newField('id', $post->post_type.'_'.$post->ID);
-    $document->newField('type', strip_tags($post->post_type));
-    $title = opensearchserver_stripInvalidXml(strip_tags($post->post_title));
-    $document->newField('title', $title);
-    $document->newField('titleExact', $title);
-    $document->newField('titlePhonetic', $title);
-    $content = opensearchserver_stripInvalidXml($content);
-    $document->newField('content', $content);
-    $document->newField('contentExact', $content);
-    $document->newField('contentPhonetic', $content);
-    $document->newField('url', get_permalink($post->ID));
-    $document->newField('urlExact', get_permalink($post->ID));
-    $document->newField('timestamp', $post->post_date_gmt);
-    $document->newField('user_name', $post->user_nicename);
-    $document->newField('user_email', $post->user_email);
-    $document->newField('user_email', $post->user_url);
-    $categories_data= '';
+function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang, $post, $customFields) {
+  $user = get_userdata($post->post_author);
+  $content = $post->post_content;
+  $content = apply_filters('the_content', $content);
+  $content = str_replace(']]>', ']]&gt;', $content);
+  $content = opensearchserver_encode(strip_tags($content));
+  $content = opensearchserver_stripInvalidXml($content);
+  $document = $index->newDocument($lang);
+  $document->newField('id', $post->post_type.'_'.$post->ID);
+  $document->newField('type', strip_tags($post->post_type));
+  $title = opensearchserver_stripInvalidXml(strip_tags($post->post_title));
+  $document->newField('title', $title);
+  $document->newField('titleExact', $title);
+  $document->newField('titlePhonetic', $title);
+  $document->newField('content', $content);
+  $document->newField('contentExact', $content);
+  $document->newField('contentPhonetic', $content);
+  $document->newField('url', get_permalink($post->ID));
+  $document->newField('urlExact', get_permalink($post->ID));
+  $document->newField('timestamp', $post->post_date_gmt);
+  $document->newField('user_name', $user->user_nicename);
+  $document->newField('user_email', $user->user_email);
+  $document->newField('user_email', $user->user_url);
+  $categories_data= '';
 
-    // Handling categories
-    $categories_data = null;
-    $categories = get_the_category($post->ID);
-    if ( ! $categories == NULL ) {
-      foreach( $categories as $category ) {
-        $categories_data .= $category->cat_name.' ';
-        $document->newField('categories', $category->cat_name);
-        $document->newField('categoriesExact', $category->cat_name);
-      }
+  // Handling categories
+  $categories_data = null;
+  $categories = get_the_category($post->ID);
+  if ($categories != NULL) {
+    foreach( $categories as $category ) {
+      $categories_data .= $category->cat_name.' ';
+      $document->newField('categories', $category->cat_name);
+      $document->newField('categoriesExact', $category->cat_name);
     }
-
-    // Handling custom fields
-    $custom_clean_all='';
-    if($customFields) {
-      $custom_fields_array=explode(",",$customFields);
-      foreach ($custom_fields_array as $field) {
-        $custom_content = '';
-        $custom_values=get_post_custom_values($field,$post->ID);
-        if(is_array($custom_values)) {
-          foreach ($custom_values as $values) {
-            $custom_content .= $values." ";
-          }
-        }else {
-          $custom_content = $custom_values;
-        }
-        $content_br = nl2br($custom_content);
-        $content_clean=str_replace("<br />", ' ', $content_br);
-        $document->newField("custom_".clean_field($field), stripInvalidXml(strip_tags($content_clean)));
-        $custom_clean_all .=' '.$content_clean;
-      }
-    }
-    // Build all content field
-    $all_content = opensearchserver_stripInvalidXml(strip_tags($post->post_title)). ' '.$content;
-    if ($categories_data) {
-      $all_content = strip_tags($all_content.' '.$categories_data);
-    }
-    if ($custom_clean_all) {
-      $all_content .= ' ' .$custom_clean_all;
-    }
-    $document->newField("allContent", strip_tags($all_content.' '.$categories_data));
+    $categories = null;
   }
-  return $index;
+
+  // Handling custom fields
+  $custom_clean_all='';
+  if($customFields) {
+    $custom_fields_array = explode(',',$customFields);
+    foreach ($custom_fields_array as $field) {
+      $field = trim($field);
+      $custom_content = '';
+      $custom_values=get_post_custom_values($field, $post->ID);
+      if(is_array($custom_values)) {
+        foreach ($custom_values as $values) {
+          $custom_content .= $values.' ';
+        }
+      }else {
+        $custom_content = $custom_values;
+      }
+      $content_br = nl2br($custom_content);
+      $content_clean=str_replace('<br />', ' ', $content_br);
+      $document->newField('custom_'.opensearchserver_clean_field($field), opensearchserver_stripInvalidXml(strip_tags($content_clean)));
+      $custom_clean_all .=' '.$content_clean;
+    }
+    $custom_fields_array = null;
+  }
+  // Build all content field
+  $all_content = opensearchserver_stripInvalidXml(strip_tags($post->post_title)). ' '.$content;
+  if ($categories_data) {
+    $all_content = strip_tags($all_content.' '.$categories_data);
+  }
+  if ($custom_clean_all) {
+    $all_content .= ' ' .$custom_clean_all;
+    $custom_clean_all = null;
+  }
+  $document->newField("allContent", strip_tags($all_content.' '.$categories_data));
 }
 
 function opensearchserver_default_query() {
@@ -388,8 +423,8 @@ function opensearchserver_admin_page() {
     update_option('oss_login', $oss_login);
     update_option('oss_key', $oss_key);
     opensearchserver_display_messages('OpenSearchServer Settings has been updated');
-
-  }if($action == 'query_settings') {
+  }
+  if($action == 'query_settings') {
     $delete = isset($_POST['oss_delete']) ? $_POST['oss_delete'] :NULL;
     $delete_action = isset($_POST['opensearchserver_delete']) ? $_POST['opensearchserver_delete'] :NULL;
     if($delete !=NULL && $delete_action === 'Delete') {
@@ -432,18 +467,23 @@ function opensearchserver_admin_page() {
       opensearchserver_display_messages('OpenSearchServer Settings has been updated.');
     }
 
-  } if($action == 'index_settings') {
+  }
+  if($action == 'index_settings') {
     $is_index_created = opensearchserver_create_index();
     opensearchserver_display_messages('Index '.get_option('oss_indexname').' Created successfully');
      
-  }if($action == 'custom_field_settings') {
+  }
+  if($action == 'custom_field_settings') {
     $oss_custom_field = isset($_POST['oss_custom_field']) ? $_POST['oss_custom_field'] :NULL;
     update_option('oss_custom_field', $oss_custom_field);
     opensearchserver_display_messages('OpenSearchServer Settings has been updated.');
   }
   if($action == 'opensearchserver_reindex') {
-    $is_index_created = opensearchserver_create_index();
-    $index_success = opensearchserver_reindex_site(NULL,NULL);
+    $oss_index_from = isset($_POST['oss_index_from']) ? $_POST['oss_index_from'] : NULL;
+    $oss_index_to = isset($_POST['oss_index_to']) ? $_POST['oss_index_to'] : NULL;
+    update_option('oss_index_from', $oss_index_from);
+    update_option('oss_index_to', $oss_index_to);
+    $index_success = opensearchserver_reindex_site(NULL,NULL, $oss_index_from, $oss_index_to);
     opensearchserver_display_messages('Re indexing has been finished successfully.');
   }
   ?>
@@ -545,19 +585,17 @@ function opensearchserver_admin_page() {
 									</tr>
 								</thead>
 								<tbody>
-
 									<?php
 									foreach($facets as $facet) {
 									  ?>
 									<tr>
 										<td><?php print $fields[$facet]; ?></td>
-										<input type="hidden" name="oss_delete" id="oss_submit"
-											value="<?php print $facet; ?>" />
-										<td><input type="submit" name="opensearchserver_delete"
-											value="Delete" class="button-secondary" /></td>
+										<td><input type="hidden" name="oss_delete" id="oss_submit"
+											value="<?php print $facet; ?>" /> <input type="submit"
+											name="opensearchserver_delete" value="Delete"
+											class="button-secondary" /></td>
 									</tr>
 									<?php }?>
-
 								</tbody>
 							</table>
 							<?php }?>
@@ -682,10 +720,22 @@ function opensearchserver_admin_page() {
 				</div>
 				<form id="reindex_settings" name="reindex_settings" method="post"
 					action="">
-					<input type="hidden" name="oss_submit" id="oss_submit"
-						value="opensearchserver_reindex" /> <input type="submit"
-						name="opensearchserver_submit" value="Synchronize / Re-Index"
-						class="button-primary" />
+					<p>
+						<label for="oss_index_from">From index</label>:<br /> <input
+							type="text" name="oss_index_from" id="oss_index_from" size="15"
+							value="<?php print get_option('oss_index_from');?>" /> <br />
+					</p>
+					<p>
+						<label for="oss_index_to">To index</label>:<br /> <input
+							type="text" name="oss_index_to" id="oss_index_to" size="15"
+							value="<?php print get_option('oss_index_to');?>" /> <br />
+					</p>
+					<p>
+						<input type="hidden" name="oss_submit" id="oss_submit"
+							value="opensearchserver_reindex" /> <input type="submit"
+							name="opensearchserver_submit" value="Synchronize / Re-Index"
+							class="button-primary" />
+					</p>
 				</form>
 			</div>
 		</div>

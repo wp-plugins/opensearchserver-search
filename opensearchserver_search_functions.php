@@ -4,6 +4,9 @@ function opensearchserver_getsearch_instance($rows, $start) {
 }
 
 function opensearchserver_getresult_instance($result) {
+  if ($result == null) {
+    return null;
+  }
   return new OssResults($result);
 }
 
@@ -12,6 +15,8 @@ function opensearchserver_getpaging_instance($result) {
 }
 
 function opensearchserver_getspellcheck($result) {
+  if ($result == null)
+    return null;
   $spell_field = get_option('oss_spell').'Exact';
   return opensearchserver_getresult_instance($result)->getSpellSuggest($spell_field);
 }
@@ -78,9 +83,9 @@ function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
           }
         }
       }
-      $result = $search->query($query)->template('search')->execute(5);
+      $result = $search->query($query)->template('search')->execute();
     }else {
-      $result = $search->query($query)->template('spellcheck')->execute(5);
+      $result = $search->query($query)->template('spellcheck')->execute();
     }
     return $result;
   }
@@ -98,9 +103,9 @@ function opensearchserver_clean_query($query) {
 
 function opensearchserver_add_facets_search($search) {
   $facets = get_option('oss_facet');
-  if (isset($facet) && $facet != null) {
+  if (isset($facets) && $facets != null) {
     foreach ($facets as $facet) {
-      $search->facet($facet,1);
+      $search->facet($facet, 1);
     }
   }
   return $search;

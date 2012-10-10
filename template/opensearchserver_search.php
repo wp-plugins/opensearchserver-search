@@ -23,7 +23,7 @@ get_header();
 	$query = get_search_query();
 	$oss_result = opensearchserver_getsearchresult($query, FALSE, TRUE);
 	$oss_result_facet = opensearchserver_getsearchresult($query, FALSE, FALSE);
-	$oss_sp= isset($_REQUEST['sp']) ? $_REQUEST['sp'] :NULL;
+	$oss_sp = isset($_REQUEST['sp']) ? $_REQUEST['sp'] :NULL;
 	if (isset($oss_result) && $oss_result instanceof SimpleXMLElement && isset($oss_result_facet) && $oss_result_facet instanceof SimpleXMLElement) {
 	  $oss_results = opensearchserver_getresult_instance($oss_result);
 	  $oss_result_facets = opensearchserver_getresult_instance($oss_result_facet);
@@ -54,7 +54,7 @@ get_header();
 	    ?>
 	<div id="oss-filter">
 		<?php $facets = get_option('oss_facet');
-		if (isset($facet) && $facet != null) {
+		if (isset($facets) && $facets != null) {
 		foreach ($facets as $facet) {
 		  $facet_results = $oss_result_facets->getFacet($facet);
 		  ?>
