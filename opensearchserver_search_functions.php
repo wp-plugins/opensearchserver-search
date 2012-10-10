@@ -98,8 +98,10 @@ function opensearchserver_clean_query($query) {
 
 function opensearchserver_add_facets_search($search) {
   $facets = get_option('oss_facet');
-  foreach ($facets as $facet) {
-    $search->facet($facet,1);
+  if (isset($facet) && $facet != null) {
+    foreach ($facets as $facet) {
+      $search->facet($facet,1);
+    }
   }
   return $search;
 }

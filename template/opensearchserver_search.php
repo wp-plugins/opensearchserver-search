@@ -54,6 +54,7 @@ get_header();
 	    ?>
 	<div id="oss-filter">
 		<?php $facets = get_option('oss_facet');
+		if (isset($facet) && $facet != null) {
 		foreach ($facets as $facet) {
 		  $facet_results = $oss_result_facets->getFacet($facet);
 		  ?>
@@ -82,6 +83,7 @@ get_header();
 			?>
 		</ul>
 		<?php
+	}
 }?>
 	</div>
 	<div id="oss-search-form"></div>
