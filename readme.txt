@@ -32,6 +32,13 @@ Key Features
 
  * WordPress 3.0.1 or higher
  * A running instance of OpenSearchServer 1.3 or higher
+ 
+= Installing an OpenSearchServer instance =
+
+Two ways to get an OpenSearchServer instance:
+
+ * Deploy it on your own server by reading the [OpenSearchServer documentation](http://www.open-search-server.com/documentation "OpenSearchServer documentation")
+ * Or use an OpenSearchServer SaaS instance [OpenSearchServer SaaS service](http://www.open-search-server.com/services/saas_services "OpenSearchServer SaaS services")
 
 = Installing the plugin =
 
