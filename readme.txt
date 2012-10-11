@@ -1,35 +1,53 @@
-=== OpenSearchServer ===
+=== OpenSearchServer Search ===
 Contributors: ekeller,naveenann
-Tags: search,search engine,opensearchserver
+Tags: search,search engine,opensearchserver, full-text, phonetic, filter, facet, indexation, auto-completion
 Requires at least: 3.0.1
 Tested up to: 3.4.2
-Stable tag: 1.0.8
+Stable tag: 1.2.0
 License: GPLv2 or later
 
-WordPress OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full text search on WordPress-based websites.
+The OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full-text search on WordPress-based websites.
 
 == Description ==
-WordPress OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full text search on WordPress-based websites. This plugin replaces WordPress's built-in search functionality.
+
+The OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full-text search on WordPress-based websites.
+OpenSearchServer is an high-performance search engine which includes spell-check, facet, filter, phonetic search, auto-completion.
+This plugin replaces automatically the WordPress's built-in search functionnality.
 
 Key Features
 
+ * Full-text search with phonetic support,
  * Filter search results by Facet Field,
+ * Automatic suggestion with autocompletion,
+ * Spellcheking with automatic substitution,
  * Automatically index an post when you publish an post,
  * Search through posts and pages,
  * Easy to set up with just filling a form.
+
+[youtube http://www.youtube.com/watch?v=_hnUMBLH-aw]
  
 == Installation ==
 
 = Requirements =
 
-    * WordPress 3.0.0 or higher
+ * WordPress 3.0.1 or higher
+ * A running instance of OpenSearchServer 1.3 or higher
+ 
+= Installing an OpenSearchServer instance =
+
+Two ways to get an OpenSearchServer instance:
+
+ * Deploy it on your own server by reading the [OpenSearchServer documentation](http://www.open-search-server.com/documentation "OpenSearchServer documentation")
+ * Or use an OpenSearchServer SaaS instance [OpenSearchServer SaaS service](http://www.open-search-server.com/services/saas_services "OpenSearchServer SaaS services")
 
 = Installing the plugin =
 
    1. Check you have a running OpenSearchServer instance
    2. Unpack the plugin archive to wp-content/plugins folder of your WordPress installation.
-   3. Activate OpenSearchServer plugin via WordPress Settings.
-   4. Open OpenSearchServer settings page and just fill the form and create and index and re-index it for first time.
+   3. Activate the OpenSearchServer Search plugin via WordPress settings.
+   4. Open OpenSearchServer settings page and just fill the form to create and index.
+
+[youtube http://www.youtube.com/watch?v=_hnUMBLH-aw]
 
 == Frequently Asked Questions ==
 
@@ -52,8 +70,27 @@ A: Check that you server is enabled with CURL extension else install it.
 
 == Screenshots ==
 
-1. OpenSearchServer Settings Page.
-2. Search provided by OpenSearchServer with facet and filter.
+1. The admin page.
+2. An example of search result.
+
+== Changelog ==
+
+= 1.2.0 =
+* Upgrade to last OpenSearchServer PHP library
+* Possibility to index a range of documents
+
+= 1.1.1 =
+* 17 Language support
+* Spelling corrections
+
+= 1.1.0 =
+* Tested with OpenSearchServer 1.3-rc2
+
+= 1.0.9 =
+* Phonetic search
+* Custom fields support
+* Facets and filters on categories
+* CSS and javascript improvements
 
 = 1.0.8 =
 * Improved OpenSearchServer settings page.
@@ -83,4 +120,3 @@ A: Check that you server is enabled with CURL extension else install it.
 
 = 1.0.1 =
 * Implemented and overridden wordpress search to OpenSearchServer search
-

@@ -13,8 +13,8 @@ $result = $search->autocomplete($query,10);
 $result_array = explode("\n", $result);
 $count = count($result_array)-1;
 for($i=0;$i<$count;$i++) {
-	echo $result_array[$i];
-	echo "\r\n";
+  echo $result_array[$i];
+  echo "\r\n";
 }
 
 ?>

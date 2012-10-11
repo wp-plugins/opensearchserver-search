@@ -27,35 +27,24 @@
  */
 
 require_once(dirname(__FILE__).'/oss_abstract.class.php');
+require_once(dirname(__FILE__).'/oss_search_abstract.class.php');
 
 
 /**
- * @author pmercier <pmercier@open-search-server.com>
  * @package OpenSearchServer
- * FIXME Complete this documentations
- * FIXME Clean this class and use facilities provided by OssApi
- */
-class OssSearch extends OssAbstract {
-
-  const API_SELECT   = 'select';
+*/
+class OssSearch extends OssSearchAbstract {
 
   protected $query;
-  protected $template;
   protected $start;
   protected $rows;
   protected $lang;
   protected $filter;
-  protected $delete;
   protected $field;
   protected $sort;
+  protected $operator;
   protected $collapse;
   protected $facet;
-  protected $sortBy;
-  protected $moreLikeThis;
-  protected $log;
-  protected $customLogs;
-  protected $uniqueKeys;
-  protected $docIds;
 
   /**
    * @param $enginePath The URL to access the OSS Engine
@@ -63,8 +52,7 @@ class OssSearch extends OssAbstract {
    * @return OssSearch
    */
   public function __construct($enginePath, $index = NULL, $rows = NULL, $start = NULL, $login = NULL, $apiKey = NULL) {
-
-    $this->init($enginePath, $index, $login, $apiKey);
+    parent::__construct($enginePath, $index, $login, $apiKey);
 
     $this->rows($rows);
     $this->start($start);
@@ -72,14 +60,11 @@ class OssSearch extends OssAbstract {
     $this->field  = array();
     $this->filter  = array();
     $this->sort    = array();
-    $this->facets  = array();
-    $this->collapse  = array('field' => NULL, 'max' => NULL, 'mode' => NULL);
-    $this->moreLikeThis = array('active' => NULL, 'docquery' => NULL, 'minwordlen' => NULL,
-      'maxwordlen' => NULL, 'mindocfreq' => NULL, 'mintermfreq' => NULL, 'stopwords' => NULL);
-    $this->log = FALSE;
-    $this->customLogs = array();
-    $this->uniqueKey = array();
-    $this->docIds = array();
+    $this->facet  = array();
+    $this->query = NULL;
+    $this->lang = NULL;
+    $this->operator = NULL;
+    $this->collapse  = array('field' => NULL, 'max' => NULL, 'mode' => NULL, 'type' => NULL);
   }
 
   /**
@@ -89,14 +74,6 @@ class OssSearch extends OssAbstract {
    */
   public function query($query = NULL) {
     $this->query = $query;
-    return $this;
-  }
-
-  /**
-   * @return OssSearch
-   */
-  public function template($template = NULL) {
-    $this->template = $template;
     return $this;
   }
 
@@ -117,6 +94,16 @@ class OssSearch extends OssAbstract {
   }
 
   /**
+   * Set the default operation OR or AND
+   * @param unknown_type $start
+   * @return OssSearch
+   */
+  public function operator($operator = NULL) {
+    $this->operator = $operator;
+    return $this;
+  }
+
+  /**
    * @return OssSearch
    */
   public function filter($filter = NULL) {
@@ -129,14 +116,6 @@ class OssSearch extends OssAbstract {
    */
   public function lang($lang = NULL) {
     $this->lang = $lang;
-    return $this;
-  }
-
-  /**
-   * @return OssSearch
-   */
-  public function delete($delete = TRUE) {
-    $this->delete = (bool)$delete;
     return $this;
   }
 
@@ -176,6 +155,15 @@ class OssSearch extends OssAbstract {
   /**
    * @return OssSearch
    */
+  public function collapseType($type) {
+    $this->collapse['type'] = $type;
+    return $this;
+  }
+
+
+  /**
+   * @return OssSearch
+   */
   public function collapseMax($max) {
     $this->collapse['max'] = $max;
     return $this;
@@ -184,85 +172,17 @@ class OssSearch extends OssAbstract {
   /**
    * @return OssSearch
    */
-  public function uniqueKey($uniqueKey = NULL) {
-    $this->uniqueKeys[] = $uniqueKey;
+  public function facet($field, $min = NULL, $multi = FALSE, $multi_collapse = FALSE) {
+    $this->facet[$field] = array('min' => $min, 'multi' => $multi, 'multi_collapse' => $multi_collapse);
     return $this;
   }
 
-  /**
-   * @return OssSearch
-   */
-  public function docId($docId = NULL) {
-    $this->docIds[] = $docId;
-    return $this;
-  }
 
-  /**
-   * @return OssSearch
-   */
-  public function facet($field, $min = NULL, $multi = FALSE) {
-    $this->facet[$field] = array('min' => $min, 'multi' => $multi);
-    return $this;
-  }
+  protected function addParams($queryChunks) {
 
-  public function moreLikeThisActive($active) {
-    $this->moreLikeThis['active'] = $active;
-  }
-
-  public function moreLikeThisDocQuery($docQuery) {
-    $this->moreLikeThis['docquery'] = $docQuery;
-  }
-
-  public function moreLikeThisMinWordLen($minwordlen) {
-    $this->moreLikeThis['minwordlen'] = $minwordlen;
-  }
-
-  public function moreLikeThisMaxWordLen($maxwordlen) {
-    $this->moreLikeThis['maxwordlen'] = $maxwordlen;
-  }
-
-  public function moreLikeThisMinDocFreq($mindocfreq) {
-    $this->moreLikeThis['mindocfreq'] = $mindocfreq;
-  }
-
-  public function moreLikeThisMinTermFreq($mintermfreq) {
-    $this->moreLikeThis['mintermfreq'] = $mintermfreq;
-  }
-
-  public function moreLikeThisMinStopWords($stopwords) {
-    $this->moreLikeThis['stopwords'] = $stopwords;
-  }
-
-  public function setLog($log = FALSE) {
-    $this->log = $log;
-  }
-
-  public function setCustomLog($pos, $log) {
-    $this->customLogs[(int)$pos] = $log;
-  }
-
-
-  /**
-   * @return SimpleXMLElement False if the query produced an error
-   * FIXME Must think about OssApi inteegration inside OssSearch
-   */
-  public function execute($connectTimeOut = NULL, $timeOut = NULL) {
-    $result = $this->queryServerXML(OssSearch::API_SELECT, $this->getParamsString(), $connectTimeOut, $timeOut);
-    if ($result === FALSE) {
-      return FALSE;
-    }
-    return $result;
-  }
-
-  protected function getParamsString() {
-
-    $queryChunks = array();
-
+    $queryChunks = parent::addParams($queryChunks);
+     
     $queryChunks[] = 'q=' . urlencode((empty($this->query) ? "*:*" : $this->query));
-
-    if (!empty($this->template)) {
-      $queryChunks[] = 'qt='   . $this->template;
-    }
 
     if (!empty($this->lang)) {
       $queryChunks[] = 'lang=' . $this->lang;
@@ -276,8 +196,8 @@ class OssSearch extends OssAbstract {
       $queryChunks[] = 'start=' . (int) $this->start;
     }
 
-    if ($this->delete) {
-      $queryChunks[] = 'delete';
+    if ($this->operator !== NULL) {
+      $queryChunks[] = 'operator=' . $this->operator;
     }
 
     // Sorting
@@ -285,7 +205,7 @@ class OssSearch extends OssAbstract {
       if (empty($sort)) {
         continue;
       }
-      $queryChunks[] = 'sort=' . $sort;
+      $queryChunks[] = 'sort=' . urlencode($sort);
     }
 
     // Filters
@@ -304,7 +224,13 @@ class OssSearch extends OssAbstract {
 
     // Facets
     foreach ((array)$this->facet as $field => $options) {
-      $facet  = $options['multi'] ? 'facet.multi=' : 'facet=';
+      if ($options['multi']) {
+        $facet = 'facet.multi=';
+      } else if ($options['multi_collapse']) {
+        $facet = 'facet.multi.collapse=';
+      } else {
+        $facet = 'facet=';
+      }
       $facet .= $field;
       if ($options['min'] !== NULL) {
         $facet .= '(' . $options['min'] . ')';
@@ -316,6 +242,9 @@ class OssSearch extends OssAbstract {
     if ($this->collapse['field']) {
       $queryChunks[] = 'collapse.field=' . $this->collapse['field'];
     }
+    if ($this->collapse['type']) {
+      $queryChunks[] = 'collapse.type=' . $this->collapse['type'];
+    }
     if ($this->collapse['mode'] !== NULL) {
       $queryChunks[] = 'collapse.mode=' . $this->collapse['mode'];
     }
@@ -323,53 +252,7 @@ class OssSearch extends OssAbstract {
       $queryChunks[] = 'collapse.max=' . (int)$this->collapse['max'];
     }
 
-    // MoreLikeThis
-    if ($this->moreLikeThis['active']) {
-      $queryChunks[] = 'mlt=yes';
-    }
-    if ($this->moreLikeThis['docquery']) {
-      $queryChunks[] = 'mlt.docquery=' . urlencode($this->moreLikeThis['docquery']);
-    }
-    if ($this->moreLikeThis['minwordlen']) {
-      $queryChunks[] = 'mlt.minwordlen=' . (int)$this->moreLikeThis['minwordlen'];
-    }
-    if ($this->moreLikeThis['maxwordlen']) {
-      $queryChunks[] = 'mlt.maxwordlen=' . (int)$this->moreLikeThis['maxwordlen'];
-    }
-    if ($this->moreLikeThis['mindocfreq']) {
-      $queryChunks[] = 'mlt.mindocfreq=' . (int)$this->moreLikeThis['mindocfreq'];
-    }
-    if ($this->moreLikeThis['mintermfreq']) {
-      $queryChunks[] = 'mlt.mintermfreq=' . (int)$this->moreLikeThis['mintermfreq'];
-    }
-    if ($this->moreLikeThis['stopwords']) {
-      $queryChunks[] = 'mlt.stopwords=' . urlencode($this->moreLikeThis['stopwords']);
-    }
-
-    // Logs and customLogs
-    if ($this->log) {
-      $queryChunks[] = 'log=' . $this->log;
-    }
-    foreach ($this->customLogs as $pos => $customLog) {
-      $queryChunks[] = 'log' . $pos . '=' . urlencode($customLog);
-    }
-
-    // DocID
-    foreach ((array) $this->docIds as $docId) {
-      if (empty($docId)) {
-        continue;
-      }
-      $queryChunks[] = 'id=' . urlencode($docId);
-    }
-
-    // UniqueKey
-    foreach ((array) $this->uniqueKeys as $uniqueKey) {
-      if (empty($uniqueKey)) {
-        continue;
-      }
-      $queryChunks[] = 'uk=' . urlencode($uniqueKey);
-    }
-    return implode('&', $queryChunks);
+    return $queryChunks;
   }
 }
 ?>
