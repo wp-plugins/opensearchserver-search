@@ -25,33 +25,22 @@ get_header();
 	$oss_result_facet = opensearchserver_getsearchresult($query, FALSE, FALSE);
 	$oss_sp = isset($_REQUEST['sp']) ? $_REQUEST['sp'] :NULL;
 	if (isset($oss_result) && $oss_result instanceof SimpleXMLElement && isset($oss_result_facet) && $oss_result_facet instanceof SimpleXMLElement) {
-	  $oss_results = opensearchserver_getresult_instance($oss_result);
-	  $oss_result_facets = opensearchserver_getresult_instance($oss_result_facet);
-	  if($oss_results->getResultFound() <= 0 && $oss_sp != 1) {
-	    $oss_spell_result = opensearchserver_getsearchresult($query, TRUE,NULL);
-	    $spellcheck_query = opensearchserver_getspellcheck($oss_spell_result);
-	    $oss_result =  opensearchserver_getsearchresult($spellcheck_query, FALSE, TRUE);
-	    if (isset($oss_result) && $oss_result instanceof SimpleXMLElement && isset($oss_result_facet) && $oss_result_facet instanceof SimpleXMLElement) {
+		$oss_results = opensearchserver_getresult_instance($oss_result);
+		$oss_result_facets = opensearchserver_getresult_instance($oss_result_facet);
+		if($oss_results->getResultFound() <= 0 && $oss_sp != 1 && get_option('oss_spell')!='none') {
+			$oss_spell_result = opensearchserver_getsearchresult($query, TRUE,NULL);
+			$spellcheck_query = opensearchserver_getspellcheck($oss_spell_result);
+			$oss_result =  opensearchserver_getsearchresult($spellcheck_query, FALSE, TRUE);
+			if (isset($oss_result) && $oss_result instanceof SimpleXMLElement && isset($oss_result_facet) && $oss_result_facet instanceof SimpleXMLElement) {
 	      $oss_results = opensearchserver_getresult_instance($oss_result);
 	      $oss_result_facet = opensearchserver_getsearchresult($spellcheck_query, FALSE, FALSE);
 	      $oss_result_facets = opensearchserver_getresult_instance($oss_result_facet);
 	    }
-	  }
-	  $oss_resultTime = isset($oss_result) ? (float)$oss_result->result['time'] / 1000 : NULL;
-	  $max = opensearchserver_get_max($oss_results);
-	  if($oss_sp == 1 || $oss_results->getResultFound() <= 0) {
-	    ?>
-	<div align="left" id="oss_error">
-		No documents containing all your search terms were found.<br /> Your
-		Search Keyword <b><?php print "'	".$query. "	'";?> </b> did not match
-		any document<br />Suggestions:<br /> - Make sure all words are spelled
-		correctly.<br /> - Try different keywords.<br /> -Try more general
-		keywords.<br />
-	</div>
-	<?php
-	  }
-	  else {
-	    ?>
+		}
+		$oss_resultTime = isset($oss_result) ? (float)$oss_result->result['time'] / 1000 : NULL;
+		$max = opensearchserver_get_max($oss_results);
+		?>
+	<?php if($oss_result_facets->getResultFound()>0) {?>
 	<div id="oss-filter">
 		<?php $facets = get_option('oss_facet');
 		if (isset($facets) && $facets != null) {
@@ -65,17 +54,25 @@ get_header();
 		</div>
 		<ul class="oss-nav">
 			<li class="oss-top-nav"><a
-				href="<?php print '?s='.urlencode($query);?>">All</a>
+				href="<?php print '?s='.urlencode($query).get_multiple_filter_all_parameter($facet);?>">All</a>
 			</li>
 			<?php
 			if(count($facet_results) > 0 ) {
 			  foreach ($facet_results as $values) {
 			    $value = $values['name'];
 			    $fqParm = $facet. ':' .$value;
-			    ?>
-			<li><a
-				class="oss-link<?php if ($query_fq_parm == $fqParm) {?> oss-bold<?php } ?>"
-				href="?s=<?php print $query.'&fq='.urlencode($fqParm); ?>"><?php print $value.'('.$values.')';?>
+			    $css_class = 'oss-link';
+			    $link = "?s=".$query;
+			    if(is_multiple_filter_enabled()) {
+					$link .= get_multiple_filter_parameter_string($facet);
+				}
+				?>
+			<li><?php if (search_filter_parameter($fqParm)) {
+				$css_class .= ' oss-bold';
+			}else {
+				$link .= '&fq='.$fqParm;
+			}
+			?> <a class="<?php print $css_class;?>" href="<?php print $link; ?>"><?php print $value.'('.$values.')';?>
 			</a>
 			</li>
 			<?php }
@@ -86,12 +83,24 @@ get_header();
 	}
 }?>
 	</div>
+	<?php }?>
 	<div id="oss-search-form"></div>
-
+	<?php if($oss_sp == 1 || $oss_results->getResultFound() <= 0) {
+		?>
+	<div align="left" id="oss_error">
+		No documents containing all your search terms were found.<br /> Your
+		Search Keyword <b><?php print "'	".$query. "	'";?> </b> did not match
+		any document<br />Suggestions:<br /> - Make sure all words are spelled
+		correctly.<br /> - Try different keywords.<br /> -Try more general
+		keywords.<br />
+	</div>
+	<?php
+	}else {
+	    ?>
+	
 	<div id="oss-no-of-doc">
 		<?php print $oss_results->getResultFound().' documents found ('.$oss_resultTime.' seconds)';
-		if($oss_sp != 1 && $oss_results->getResultFound() > 0) {
-		  ?>
+		?>
 		<div id="oss-did-you-mean">
 			<?php if(isset($spellcheck_query)) { ?>
 			Showing results for <b><?php print $spellcheck_query;?> </b> Search
@@ -105,20 +114,20 @@ get_header();
 	<div id="oss-results">
 		<?php
 		for ($i = $oss_results->getResultStart(); $i < $max; $i++) {
-		  $category	 = stripslashes($oss_results->getField($i, 'type', true));
-		  $title	 = stripslashes($oss_results->getField($i, 'title', true));
-		  $content = stripslashes($oss_results->getField($i, 'content', true, true));
+		  $category	 = stripslashes($oss_results->getField($i, 'type', TRUE));
+		  $title	 = stripslashes($oss_results->getField($i, 'title', TRUE));
+		  $content = stripslashes($oss_results->getField($i, 'content', TRUE, TRUE));
 		  if ($content == null) {
-		    $content = stripslashes($oss_results->getField($i, 'contentPhonetic', true, true));
+		    $content = stripslashes($oss_results->getField($i, 'contentPhonetic', TRUE, TRUE));
 		    if ($content == null) {
-		      $content = stripslashes($oss_results->getField($i, 'content', true, false));
+		      $content = stripslashes($oss_results->getField($i, 'content', TRUE, FALSE));
 		    }
 		  }
-		  $user = stripslashes($oss_results->getField($i, 'user_name', true));
-		  $user_url = stripslashes($oss_results->getField($i, 'user_url', true));
-		  $type = stripslashes($oss_results->getField($i, 'type', true));
-		  $url = stripslashes($oss_results->getField($i, 'url', false));
-		  $categories = stripslashes($oss_results->getField($i, 'categories', false));
+		  $user = stripslashes($oss_results->getField($i, 'user_name', TRUE));
+		  $user_url = stripslashes($oss_results->getField($i, 'user_url', TRUE));
+		  $type = stripslashes($oss_results->getField($i, 'type', TRUE));
+		  $url = stripslashes($oss_results->getField($i, 'url', FALSE));
+		  $categories = stripslashes($oss_results->getField($i, 'categories', FALSE));
 		  ?>
 
 		<div class="oss-result">
@@ -133,11 +142,11 @@ get_header();
 			?>
 			<div class="oss-content">
 				<?php if ($content) {
-				  print $content.'<br/>';
+					print $content.'<br/>';
 				}
 				$custom_fields_array = opensearchserver_get_custom_fields();
 				foreach($custom_fields_array as $field) {
-				  $value = stripslashes($oss_results->getField($i, "custom_".opensearchserver_clean_field($field), false));
+				  $value = stripslashes($oss_results->getField($i, "custom_".opensearchserver_clean_field($field), FALSE));
 				  if($value) {
 				    print '<b>'. $field.'</b> : '.$value.'<br/>';
 				  }
@@ -181,12 +190,10 @@ get_header();
 	<?php }?>
 	<div align="right">
 		<a href="http://www.open-search-server.com/"> <img
-			src="http://www.open-search-server.com/images/oss_logo_62x60.png" /><br />
+			src="http://www.open-search-server.com/oss-head-foot/logo-oss-alpha.png" /><br />
 		</a>
 	</div>
 </div>
 <?php
-	  }
 	}
-
 get_footer(); exit; ?>

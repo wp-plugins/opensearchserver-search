@@ -21,6 +21,10 @@ function opensearchserver_getspellcheck($result) {
   return opensearchserver_getresult_instance($result)->getSpellSuggest($spell_field);
 }
 
+function is_multiple_filter_enabled() {
+  return get_option('oss_multi_filter');
+}
+
 function opensearchserver_getpaging($result) {
   if ($result != NULL) {
     $ossPaging = opensearchserver_getpaging_instance($result);
@@ -66,20 +70,63 @@ function opensearchserver_getpaging($result) {
     return $pagingArray;
   }
 }
+function get_multiple_filter_parameter() {
+  $parameters = $_SERVER['QUERY_STRING'];
+  $filters = array();
+  foreach (explode('&', $parameters) as $param) {
+    $filter = explode('=', $param);
+    if($filter[0]=='fq') {
+      array_push($filters, $filter[1]);
+    }
+  }
+  return array_unique($filters);
+}
+function get_multiple_filter_all_parameter($facet) {
+  $filters_string = '';
+  $filters = get_multiple_filter_parameter();
+  foreach($filters as $filter) {
+    $fqn = explode(':', $filter);
+    if($fqn!='' && $fqn[0]!=$facet) {
+      $filters_string .= '&fq='.$filter;
+    }
 
+  }
+  return $filters_string;
+}
+function search_filter_parameter($param) {
+  $filters = get_multiple_filter_parameter();
+  if(in_array($param, $filters)){
+    return TRUE;
+  }
+  return FALSE;
+}
+function get_multiple_filter_parameter_string($current_key) {
+
+  $filters_string = '';
+  $filters = get_multiple_filter_parameter();
+  foreach($filters as $filter) {
+    $fqn = explode(':', $filter);
+    if($fqn[0]!=$current_key){
+      $filters_string .= '&fq='.$filter;
+    }
+  }
+  return $filters_string;
+}
 function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
   if($query) {
-    $start = isset($_REQUEST['pa']) ? $_REQUEST['pa'] : null;
+    $start = isset($_REQUEST['pa']) ? $_REQUEST['pa'] : NULL;
     $start = isset($start) ? max(0, $start - 1) * 10 : 0;
     $query = opensearchserver_clean_query($query);
     $search = opensearchserver_getsearch_instance(10, $start);
     if(!$spellcheck) {
       opensearchserver_add_facets_search($search);
       if($facet) {
-        $filter = isset($_REQUEST['fq']) ? $_REQUEST['fq'] : null;
-        if($filter) {
-          if($filter != 'All') {
-            $search->filter($filter);
+        $filters = get_multiple_filter_parameter();
+        if(count($filters)>0) {
+          foreach ($filters as $filter){
+            if($filter != 'All') {
+              $search->filter(urldecode($filter));
+            }
           }
         }
       }

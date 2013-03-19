@@ -246,11 +246,11 @@ function opensearchserver_stripInvalidXml($value) {
   for ($i=0; $i < $length; $i++) {
     $current = ord($value{$i});
     if (($current == 0x9) ||
-      ($current == 0xA) ||
-      ($current == 0xD) ||
-      (($current >= 0x20) && ($current <= 0xD7FF)) ||
-      (($current >= 0xE000) && ($current <= 0xFFFD)) ||
-      (($current >= 0x10000) && ($current <= 0x10FFFF))){
+        ($current == 0xA) ||
+        ($current == 0xD) ||
+        (($current >= 0x20) && ($current <= 0xD7FF)) ||
+        (($current >= 0xE000) && ($current <= 0xFFFD)) ||
+        (($current >= 0x10000) && ($current <= 0x10FFFF))){
       $ret .= chr($current);
     }
     else {
@@ -365,16 +365,16 @@ function opensearchserver_default_query() {
 
 function opensearchserver_get_fields() {
   return array('none'=>'Select',
-    'title' => 'Title',
-    'content' =>'Content',
-    'url' => 'Url',
-    'user_name' => 'User Name',
-    'user_email' => 'User Email',
-    'user_url' => 'User URL',
-    'id' => 'ID',
-    'type' => 'Type',
-    'timestamp' => 'TimeStamp',
-    'categoriesExact' => 'Categories');
+      'title' => 'Title',
+      'content' =>'Content',
+      'url' => 'Url',
+      'user_name' => 'User Name',
+      'user_email' => 'User Email',
+      'user_url' => 'User URL',
+      'id' => 'ID',
+      'type' => 'Type',
+      'timestamp' => 'TimeStamp',
+      'categoriesExact' => 'Categories');
 }
 
 /*
@@ -383,32 +383,32 @@ function opensearchserver_get_fields() {
 function opensearchserver_admin_page() {
   $fields = opensearchserver_get_fields();
   $spellcheck_fields = array(
-    'none'=>'Select',
-    'title' => 'Title',
-    'content' =>'Content');
+      'none'=>'Select',
+      'title' => 'Title',
+      'content' =>'Content');
   $spellcheck_algo = array(
-    'JaroWinklerDistance' => 'JaroWinklerDistance',
-    'LevensteinDistance' => 'LevensteinDistance',
-    'NGramDistance' => 'NGramDistance');
+      'JaroWinklerDistance' => 'JaroWinklerDistance',
+      'LevensteinDistance' => 'LevensteinDistance',
+      'NGramDistance' => 'NGramDistance');
   $languages = array(
-    ''   => 'Undefined',
-    'ar' => 'Arabic',
-    'zh' => 'Chinese',
-    'da' => 'Danish',
-    'nl' => 'Dutch',
-    'en' => 'English',
-    'fi' => 'Finnish',
-    'fr' => 'French',
-    'de' => 'German',
-    'hu' => 'Hungarian',
-    'it' => 'Italian',
-    'no' => 'Norwegian',
-    'pt' => 'Portuguese',
-    'ro' => 'Romanian',
-    'ru' => 'Russian',
-    'es' => 'Spanish',
-    'sv' => 'Swedish',
-    'tr' => 'Turkish'
+      ''   => 'Undefined',
+      'ar' => 'Arabic',
+      'zh' => 'Chinese',
+      'da' => 'Danish',
+      'nl' => 'Dutch',
+      'en' => 'English',
+      'fi' => 'Finnish',
+      'fr' => 'French',
+      'de' => 'German',
+      'hu' => 'Hungarian',
+      'it' => 'Italian',
+      'no' => 'Norwegian',
+      'pt' => 'Portuguese',
+      'ro' => 'Romanian',
+      'ru' => 'Russian',
+      'es' => 'Spanish',
+      'sv' => 'Swedish',
+      'tr' => 'Turkish'
   );
 
 
@@ -458,6 +458,8 @@ function opensearchserver_admin_page() {
         }
         update_option('oss_facet', $facet);
       }
+      $oss_multi_filter = isset($_POST['oss_multi_filter']) ? $_POST['oss_multi_filter'] : NULL;
+      update_option('oss_multi_filter', $oss_multi_filter);
       update_option('oss_spell', $oss_spell);
       update_option('oss_spell_algo', $oss_spell_algo);
       $oss_language = isset($_POST['oss_language']) ? $_POST['oss_language'] : NULL;
@@ -471,7 +473,7 @@ function opensearchserver_admin_page() {
   if($action == 'index_settings') {
     $is_index_created = opensearchserver_create_index();
     opensearchserver_display_messages('Index '.get_option('oss_indexname').' Created successfully');
-     
+    	
   }
   if($action == 'custom_field_settings') {
     $oss_custom_field = isset($_POST['oss_custom_field']) ? $_POST['oss_custom_field'] :NULL;
@@ -555,11 +557,12 @@ function opensearchserver_admin_page() {
 							<p>
 								<label for="oss_query">OpenSearchServer query template</label>:<br />
 								<textarea rows="10" cols="100" name="oss_query" wrap="off">
-                                  <?php
-                                  if (trim(get_option('oss_query'))) {
+									<?php
+									if (trim(get_option('oss_query'))) {
                                     print stripslashes(get_option('oss_query'));
-                                  }
-                                  ?>
+                                  }else {
+									print opensearchserver_default_query();
+								  }?>
 								</textarea>
 							</p>
 							<p>
@@ -600,6 +603,11 @@ function opensearchserver_admin_page() {
 							</table>
 							<?php }?>
 							<p>
+								<label for="oss_enable_multi_filter">Enable multiple filter</label>:
+								<input type="checkbox" name="oss_multi_filter" value="1"
+								<?php checked( 1 == get_option('oss_multi_filter')); ?> />
+							</p>
+							<p>
 								<label for="oss_query">SpellCheck field</label>:<br /> <select
 									name="oss_spell"><?php
 									$facet = get_option('oss_spell');
@@ -631,7 +639,6 @@ function opensearchserver_admin_page() {
 									</option>
 									<?php }?>
 								</select>
-							</p>
 							</p>
 							<p>
 								<label for="oss_language">Default language</label>:<br /> <select
