@@ -70,7 +70,7 @@ get_header();
 			<li><?php if (search_filter_parameter($fqParm)) {
 				$css_class .= ' oss-bold';
 			}else {
-				$link .= '&fq='.$fqParm;
+				$link .= '&fq='. urlencode($fqParm);
 			}
 			?> <a class="<?php print $css_class;?>" href="<?php print $link; ?>"><?php print $value.'('.$values.')';?>
 			</a>

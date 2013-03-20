@@ -71,7 +71,7 @@ function opensearchserver_getpaging($result) {
   }
 }
 function get_multiple_filter_parameter() {
-  $parameters = $_SERVER['QUERY_STRING'];
+  $parameters = urldecode($_SERVER['QUERY_STRING']);
   $filters = array();
   foreach (explode('&', $parameters) as $param) {
     $filter = explode('=', $param);
@@ -125,7 +125,8 @@ function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
         if(count($filters)>0) {
           foreach ($filters as $filter){
             if($filter != 'All') {
-              $search->filter(urldecode($filter));
+              $filter_split = explode(':', $filter);
+              $search->filter($filter_split[0]. ':"' .$filter_split[1]. '"');
             }
           }
         }

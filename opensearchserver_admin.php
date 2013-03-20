@@ -105,6 +105,7 @@ function opensearchserver_display_messages($message, $errormsg = FALSE) {
 function opensearchserver_query_template($custom_fields) {
   $query_template = opensearchserver_getsearchtemplate_instance();
   $oss_query = stripcslashes(get_option('oss_query'));
+  $oss_query = str_replace("\r", "", $oss_query);
   $query_template->createSearchTemplate('search', $oss_query, 'AND', '10', '2', get_option('oss_language'));
   $query_template->setSnippetField('search','title', 70, 'b');
   $query_template->setSnippetField('search','content', 300, 'b', NULL, 'SentenceFragmenter');
