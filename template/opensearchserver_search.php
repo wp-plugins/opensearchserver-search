@@ -25,21 +25,21 @@ get_header();
 	$oss_result_facet = opensearchserver_getsearchresult($query, FALSE, FALSE);
 	$oss_sp = isset($_REQUEST['sp']) ? $_REQUEST['sp'] :NULL;
 	if (isset($oss_result) && $oss_result instanceof SimpleXMLElement && isset($oss_result_facet) && $oss_result_facet instanceof SimpleXMLElement) {
-		$oss_results = opensearchserver_getresult_instance($oss_result);
-		$oss_result_facets = opensearchserver_getresult_instance($oss_result_facet);
-		if($oss_results->getResultFound() <= 0 && $oss_sp != 1 && get_option('oss_spell')!='none') {
-			$oss_spell_result = opensearchserver_getsearchresult($query, TRUE,NULL);
-			$spellcheck_query = opensearchserver_getspellcheck($oss_spell_result);
-			$oss_result =  opensearchserver_getsearchresult($spellcheck_query, FALSE, TRUE);
-			if (isset($oss_result) && $oss_result instanceof SimpleXMLElement && isset($oss_result_facet) && $oss_result_facet instanceof SimpleXMLElement) {
+	  $oss_results = opensearchserver_getresult_instance($oss_result);
+	  $oss_result_facets = opensearchserver_getresult_instance($oss_result_facet);
+	  if($oss_results->getResultFound() <= 0 && $oss_sp != 1 && get_option('oss_spell')!='none') {
+	    $oss_spell_result = opensearchserver_getsearchresult($query, TRUE,NULL);
+	    $spellcheck_query = opensearchserver_getspellcheck($oss_spell_result);
+	    $oss_result =  opensearchserver_getsearchresult($spellcheck_query, FALSE, TRUE);
+	    if (isset($oss_result) && $oss_result instanceof SimpleXMLElement && isset($oss_result_facet) && $oss_result_facet instanceof SimpleXMLElement) {
 	      $oss_results = opensearchserver_getresult_instance($oss_result);
 	      $oss_result_facet = opensearchserver_getsearchresult($spellcheck_query, FALSE, FALSE);
 	      $oss_result_facets = opensearchserver_getresult_instance($oss_result_facet);
 	    }
-		}
-		$oss_resultTime = isset($oss_result) ? (float)$oss_result->result['time'] / 1000 : NULL;
-		$max = opensearchserver_get_max($oss_results);
-		?>
+	  }
+	  $oss_resultTime = isset($oss_result) ? (float)$oss_result->result['time'] / 1000 : NULL;
+	  $max = opensearchserver_get_max($oss_results);
+	  ?>
 	<?php if($oss_result_facets->getResultFound()>0) {?>
 	<div id="oss-filter">
 		<?php $facets = get_option('oss_facet');
@@ -60,7 +60,7 @@ get_header();
 			if(count($facet_results) > 0 ) {
 			  foreach ($facet_results as $values) {
 			    $value = $values['name'];
-			    $fqParm = $facet. ':' .$value;
+			    $fqParm = $facet. ':' .urlencode($value);
 			    $css_class = 'oss-link';
 			    $link = "?s=".$query;
 			    if(is_multiple_filter_enabled()) {
@@ -68,9 +68,9 @@ get_header();
 				}
 				?>
 			<li><?php if (search_filter_parameter($fqParm)) {
-				$css_class .= ' oss-bold';
+			  $css_class .= ' oss-bold';
 			}else {
-				$link .= '&fq='. urlencode($fqParm);
+				$link .= '&fq='. $fqParm;
 			}
 			?> <a class="<?php print $css_class;?>" href="<?php print $link; ?>"><?php print $value.'('.$values.')';?>
 			</a>
@@ -86,7 +86,7 @@ get_header();
 	<?php }?>
 	<div id="oss-search-form"></div>
 	<?php if($oss_sp == 1 || $oss_results->getResultFound() <= 0) {
-		?>
+	  ?>
 	<div align="left" id="oss_error">
 		No documents containing all your search terms were found.<br /> Your
 		Search Keyword <b><?php print "'	".$query. "	'";?> </b> did not match
@@ -97,7 +97,7 @@ get_header();
 	<?php
 	}else {
 	    ?>
-	
+
 	<div id="oss-no-of-doc">
 		<?php print $oss_results->getResultFound().' documents found ('.$oss_resultTime.' seconds)';
 		?>
@@ -142,7 +142,7 @@ get_header();
 			?>
 			<div class="oss-content">
 				<?php if ($content) {
-					print $content.'<br/>';
+				  print $content.'<br/>';
 				}
 				$custom_fields_array = opensearchserver_get_custom_fields();
 				foreach($custom_fields_array as $field) {
