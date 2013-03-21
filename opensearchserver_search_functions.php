@@ -25,6 +25,14 @@ function is_multiple_filter_enabled() {
   return get_option('oss_multi_filter');
 }
 
+function is_separate_filter_query() {
+  if(get_option('oss_facet_behavior') == 'separate_query'){
+    return TRUE;
+  }else {
+    return FALSE;
+  }
+}
+
 function opensearchserver_getpaging($result) {
   if ($result != NULL) {
     $ossPaging = opensearchserver_getpaging_instance($result);
@@ -100,13 +108,16 @@ function search_filter_parameter($param) {
   }
   return FALSE;
 }
-function get_multiple_filter_parameter_string($current_key) {
+function get_multiple_filter_parameter_string($current_key, $current_value) {
 
   $filters_string = '';
   $filters = get_multiple_filter_parameter();
   foreach($filters as $filter) {
     $fqn = explode(':', $filter);
     if($fqn[0]!=$current_key){
+      $filters_string .= '&fq='.$filter;
+    }
+    if($fqn[0]==$current_key && $fqn[1] == $current_value){
       $filters_string .= '&fq='.$filter;
     }
   }

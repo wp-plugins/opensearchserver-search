@@ -73,6 +73,7 @@ function opensearchserver_uninstall() {
   delete_option('oss_phonetic');
   delete_option('oss_multi_filter');
   delete_option('oss_language');
+  delete_option('oss_facet_behavior');
 }
 
 function opensearchserver_do_while_posting($post_id,$post) {

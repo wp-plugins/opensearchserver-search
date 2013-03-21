@@ -383,6 +383,7 @@ function opensearchserver_get_fields() {
 */
 function opensearchserver_admin_page() {
   $fields = opensearchserver_get_fields();
+  $facet_behaviour = array('separate_query'=>'Separate query','no_separate_query'=>'No separate query');
   $spellcheck_fields = array(
       'none'=>'Select',
       'title' => 'Title',
@@ -461,6 +462,8 @@ function opensearchserver_admin_page() {
       }
       $oss_multi_filter = isset($_POST['oss_multi_filter']) ? $_POST['oss_multi_filter'] : NULL;
       update_option('oss_multi_filter', $oss_multi_filter);
+      $oss_facet_behavior = isset($_POST['oss_facet_behavior']) ? $_POST['oss_facet_behavior'] : NULL;
+      update_option('oss_facet_behavior', $oss_facet_behavior);
       update_option('oss_spell', $oss_spell);
       update_option('oss_spell_algo', $oss_spell_algo);
       $oss_language = isset($_POST['oss_language']) ? $_POST['oss_language'] : NULL;
@@ -474,7 +477,6 @@ function opensearchserver_admin_page() {
   if($action == 'index_settings') {
     $is_index_created = opensearchserver_create_index();
     opensearchserver_display_messages('Index '.get_option('oss_indexname').' Created successfully');
-    	
   }
   if($action == 'custom_field_settings') {
     $oss_custom_field = isset($_POST['oss_custom_field']) ? $_POST['oss_custom_field'] :NULL;
@@ -603,6 +605,22 @@ function opensearchserver_admin_page() {
 								</tbody>
 							</table>
 							<?php }?>
+							<p>
+								<label for="oss_facet_behavior">Facet behavior
+								</label>:<br /> <select name="oss_facet_behavior"><?php
+								$facet_option = get_option('oss_facet_behavior');
+								foreach ($facet_behaviour as $key => $field) {
+								  $selected = '';
+								  if($facet_behaviour[$facet_option] == $field) {
+								    $selected = 'selected="selected"';
+								  }
+								  ?>
+									<option value="<?php print $key;?>" <?php print $selected;?>>
+										<?php print $field;?>
+									</option>
+									<?php }?>
+								</select>
+							</p>
 							<p>
 								<label for="oss_enable_multi_filter">Enable multiple filter</label>:
 								<input type="checkbox" name="oss_multi_filter" value="1"

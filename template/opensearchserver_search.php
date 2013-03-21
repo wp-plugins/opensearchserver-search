@@ -22,7 +22,7 @@ get_header();
 	$query_fq_parm = isset($_REQUEST['fq']) ? $_REQUEST['fq'] : NULL;
 	$query = get_search_query();
 	$oss_result = opensearchserver_getsearchresult($query, FALSE, TRUE);
-	$oss_result_facet = opensearchserver_getsearchresult($query, FALSE, FALSE);
+	$oss_result_facet = is_separate_filter_query() ? opensearchserver_getsearchresult($query, FALSE, FALSE) : $oss_result;
 	$oss_sp = isset($_REQUEST['sp']) ? $_REQUEST['sp'] :NULL;
 	if (isset($oss_result) && $oss_result instanceof SimpleXMLElement && isset($oss_result_facet) && $oss_result_facet instanceof SimpleXMLElement) {
 	  $oss_results = opensearchserver_getresult_instance($oss_result);
@@ -33,7 +33,7 @@ get_header();
 	    $oss_result =  opensearchserver_getsearchresult($spellcheck_query, FALSE, TRUE);
 	    if (isset($oss_result) && $oss_result instanceof SimpleXMLElement && isset($oss_result_facet) && $oss_result_facet instanceof SimpleXMLElement) {
 	      $oss_results = opensearchserver_getresult_instance($oss_result);
-	      $oss_result_facet = opensearchserver_getsearchresult($spellcheck_query, FALSE, FALSE);
+	      $oss_result_facet = is_separate_filter_query() ? opensearchserver_getsearchresult($spellcheck_query, FALSE, FALSE) : $oss_result;
 	      $oss_result_facets = opensearchserver_getresult_instance($oss_result_facet);
 	    }
 	  }
@@ -64,7 +64,7 @@ get_header();
 			    $css_class = 'oss-link';
 			    $link = "?s=".$query;
 			    if(is_multiple_filter_enabled()) {
-					$link .= get_multiple_filter_parameter_string($facet);
+					$link .= get_multiple_filter_parameter_string($facet,$value);
 				}
 				?>
 			<li><?php if (search_filter_parameter($fqParm)) {
