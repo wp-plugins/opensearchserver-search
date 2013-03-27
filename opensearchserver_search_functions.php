@@ -103,13 +103,13 @@ function get_multiple_filter_all_parameter($facet) {
 }
 function search_filter_parameter($param) {
   $filters = get_multiple_filter_parameter();
-  if(in_array($param, $filters)){
+  if(in_array(urldecode($param), $filters)){
     return TRUE;
   }
   return FALSE;
 }
 function get_multiple_filter_parameter_string($current_key, $current_value) {
-
+  $current_value = urlencode($current_value);
   $filters_string = '';
   $filters = get_multiple_filter_parameter();
   foreach($filters as $filter) {
