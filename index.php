@@ -40,9 +40,6 @@ function  opensearchserver_search() {
   if (stripos($_SERVER['REQUEST_URI'], '/?s=') === FALSE && stripos($_SERVER['REQUEST_URI'], '/search/') === FALSE)	{
     return;
   }
-  if (stripos($_SERVER['REQUEST_URI'], '/?s=') === FALSE && stripos($_SERVER['REQUEST_URI'], '/search/') === FALSE)	{
-    return;
-  }
   $query=get_search_query();
   if($query == 'ossautointernal') {
     include_once('autocomplete.php');
