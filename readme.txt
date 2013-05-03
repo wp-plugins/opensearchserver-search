@@ -75,6 +75,10 @@ A: Check that you server is enabled with CURL extension else install it.
 
 == Changelog ==
 
+= 1.2.2 =
+* Select which type of post will be indexed
+* Option to display user, type and category in search result
+
 = 1.2.1 =
 * Multiple facet support.
 * New feature facet behavior.
