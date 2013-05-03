@@ -35,37 +35,74 @@ require_once(dirname(__FILE__).'/oss_search_abstract.class.php');
  * FIXME Complete this documentations
  * FIXME Clean this class and use facilities provided by OssApi
 */
-class OssSearchSpellCheck extends OssSearchAbstract {
+class OssSearchDocument extends OssSearchAbstract {
 
-  protected $query;
+  protected $field;
+  protected $uniqueKeys;
+  protected $docIds;
 
   /**
    * @param $enginePath The URL to access the OSS Engine
    * @param $index The index name
-   * @return OssSearchSpellCheck
+   * @return OssSearchDocument
    */
   public function __construct($enginePath, $index = NULL, $login = NULL, $apiKey = NULL) {
     parent::__construct($enginePath, $index, $login, $apiKey);
-    $this->query  = NULL;
+
+    $this->field  = array();
+    $this->uniqueKey = array();
+    $this->docIds = array();
   }
 
   /**
-   * Specify the query
-   * @param $query string
-   * @return OssSearch
+   * @return OssSearchDocument
    */
-  public function query($query = NULL) {
-    $this->query = $query;
+  public function field($fields) {
+    $this->field = array_unique(array_merge($this->field, (array)$fields));
     return $this;
   }
 
   /**
-   * @param array $queryChunks
-   * @return array
+   * @return OssSearchDocument
    */
+  public function uniqueKey($uniqueKey = NULL) {
+    $this->uniqueKeys[] = $uniqueKey;
+    return $this;
+  }
+
+  /**
+   * @return OssSearchDocument
+   */
+  public function docId($docId = NULL) {
+    $this->docIds[] = $docId;
+    return $this;
+  }
+
   protected function addParams($queryChunks = NULL) {
+
     $queryChunks = parent::addParams($queryChunks);
-    $queryChunks[] = 'q=' . urlencode($this->query);
+
+    // Fields
+    foreach ((array)$this->field as $field) {
+      if (empty($field)) continue;
+      $queryChunks[] = 'rf=' . $field;
+    }
+
+    // DocID
+    foreach ((array) $this->docIds as $docId) {
+      if (empty($docId)) {
+        continue;
+      }
+      $queryChunks[] = 'id=' . urlencode($docId);
+    }
+
+    // UniqueKey
+    foreach ((array) $this->uniqueKeys as $uniqueKey) {
+      if (empty($uniqueKey)) {
+        continue;
+      }
+      $queryChunks[] = 'uk=' . urlencode($uniqueKey);
+    }
     return $queryChunks;
   }
 }

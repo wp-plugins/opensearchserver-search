@@ -205,9 +205,11 @@ function opensearchserver_reindex_site($id,$type, $from = 0, $to = 0) {
     $total_count = count($posts);
     $index = new OSSIndexDocument();
     for ($i = 0; $i < $total_count; $i++) {
-      $id = $posts[$i]->ID;
-      opensearchserver_add_documents_to_index($index, $lang, get_post($id), $custom_fields);
-      $index = opensearchserver_checkindex($index, 200, $i, $total_count);
+      $post = get_post($posts[$i]->ID);
+      if (get_option('oss_index_types_'.$post->post_type) == 1) {
+        opensearchserver_add_documents_to_index($index, $lang, $post, $custom_fields);
+        $index = opensearchserver_checkindex($index, 200, $i, $total_count);
+      }
     }
     opensearchserver_checkindex($index, 1, $i, $total_count);
   }
@@ -247,11 +249,11 @@ function opensearchserver_stripInvalidXml($value) {
   for ($i=0; $i < $length; $i++) {
     $current = ord($value{$i});
     if (($current == 0x9) ||
-        ($current == 0xA) ||
-        ($current == 0xD) ||
-        (($current >= 0x20) && ($current <= 0xD7FF)) ||
-        (($current >= 0xE000) && ($current <= 0xFFFD)) ||
-        (($current >= 0x10000) && ($current <= 0x10FFFF))){
+      ($current == 0xA) ||
+      ($current == 0xD) ||
+      (($current >= 0x20) && ($current <= 0xD7FF)) ||
+      (($current >= 0xE000) && ($current <= 0xFFFD)) ||
+      (($current >= 0x10000) && ($current <= 0x10FFFF))){
       $ret .= chr($current);
     }
     else {
@@ -366,18 +368,112 @@ function opensearchserver_default_query() {
 
 function opensearchserver_get_fields() {
   return array('none'=>'Select',
-      'title' => 'Title',
-      'content' =>'Content',
-      'url' => 'Url',
-      'user_name' => 'User Name',
-      'user_email' => 'User Email',
-      'user_url' => 'User URL',
-      'id' => 'ID',
-      'type' => 'Type',
-      'timestamp' => 'TimeStamp',
-      'categoriesExact' => 'Categories');
+    'title' => 'Title',
+    'content' =>'Content',
+    'url' => 'Url',
+    'user_name' => 'User Name',
+    'user_email' => 'User Email',
+    'user_url' => 'User URL',
+    'id' => 'ID',
+    'type' => 'Type',
+    'timestamp' => 'TimeStamp',
+    'categoriesExact' => 'Categories');
 }
 
+function opensearchserver_admin_set_instance_settings() {
+  $oss_url = isset($_POST['oss_serverurl']) ? $_POST['oss_serverurl'] :NULL;
+  $oss_indexname = isset($_POST['oss_indexname']) ? $_POST['oss_indexname'] :NULL;
+  $oss_login = isset($_POST['oss_login']) ? $_POST['oss_login'] :NULL;
+  $oss_key = isset($_POST['oss_key']) ? $_POST['oss_key'] :NULL;
+  update_option('oss_serverurl', $oss_url);
+  update_option('oss_indexname', $oss_indexname);
+  update_option('oss_login', $oss_login);
+  update_option('oss_key', $oss_key);
+  opensearchserver_display_messages('OpenSearchServer Instance Settings has been updated');
+}
+
+function opensearchserver_admin_set_query_settings() {
+  $delete = isset($_POST['oss_delete']) ? $_POST['oss_delete'] :NULL;
+  $delete_action = isset($_POST['opensearchserver_delete']) ? $_POST['opensearchserver_delete'] :NULL;
+  if($delete !=NULL && $delete_action === 'Delete') {
+    $facets = get_option('oss_facet');
+    foreach ($facets as $key => $facet) {
+      if(trim($facet) == trim($delete)) {
+        unset($facets[$key]);
+      }
+    }
+    update_option('oss_facet', $facets);
+  }else {
+    $oss_query = isset($_POST['oss_query']) ? $_POST['oss_query'] : NULL;
+    if (isset($oss_query)) {
+      $oss_query = trim($oss_query);
+      if (strlen($oss_query) == 0) {
+        $oss_query = opensearchserver_default_query();
+      }
+    }
+    $oss_facet = isset($_POST['oss_facet']) ? $_POST['oss_facet'] : NULL;
+    $oss_spell = isset($_POST['oss_spell']) ? $_POST['oss_spell'] : NULL;
+    $oss_spell_algo = isset($_POST['oss_spell_algo']) ? $_POST['oss_spell_algo'] : NULL;
+    update_option('oss_query', $oss_query);
+    if($oss_facet != 'none') {
+      if(get_option('oss_facet')) {
+        $facet = get_option('oss_facet');
+      }else {
+        $facet = array();
+      }
+      if (!in_array($oss_facet, $facet)) {
+        array_push($facet,$oss_facet);
+      }
+      update_option('oss_facet', $facet);
+    }
+    $oss_multi_filter = isset($_POST['oss_multi_filter']) ? $_POST['oss_multi_filter'] : NULL;
+    update_option('oss_multi_filter', $oss_multi_filter);
+    $oss_facet_behavior = isset($_POST['oss_facet_behavior']) ? $_POST['oss_facet_behavior'] : NULL;
+    update_option('oss_facet_behavior', $oss_facet_behavior);
+    update_option('oss_spell', $oss_spell);
+    update_option('oss_spell_algo', $oss_spell_algo);
+    $oss_language = isset($_POST['oss_language']) ? $_POST['oss_language'] : NULL;
+    update_option('oss_language', $oss_language);
+    $oss_phonetic = isset($_POST['oss_phonetic']) ? $_POST['oss_phonetic'] : NULL;
+    update_option('oss_phonetic', $oss_phonetic);
+    $oss_display_user = isset($_POST['oss_display_user']) ? $_POST['oss_display_user'] : NULL;
+    update_option('oss_display_user', $oss_display_user);
+    $oss_display_category = isset($_POST['oss_display_category']) ? $_POST['oss_display_category'] : NULL;
+    update_option('oss_display_category', $oss_display_category);
+    $oss_display_type = isset($_POST['oss_display_type']) ? $_POST['oss_display_type'] : NULL;
+    update_option('oss_display_type', $oss_display_type);
+    opensearchserver_display_messages('OpenSearchServer Query Settings has been updated.');
+  }
+}
+
+function opensearchserver_admin_set_index_settings() {
+  $post_oss_submit = $_POST['opensearchserver_submit'];
+  if ($post_oss_submit == 'Update Index Settings »') {
+    foreach (get_post_types() as $post_type) {
+      $post_form_type = (int)$_POST['oss_index_types_'.$post_type];
+      update_option('oss_index_types_'.$post_type, $post_form_type);
+    }
+    opensearchserver_display_messages('OpenSearchServer Index Settings has been updated.');
+  } else {
+    $is_index_created = opensearchserver_create_index();
+    opensearchserver_display_messages('Index '.get_option('oss_indexname').' Created successfully');
+  }
+}
+
+function opensearchserver_admin_set_custom_fields_settings() {
+  $oss_custom_field = isset($_POST['oss_custom_field']) ? $_POST['oss_custom_field'] :NULL;
+  update_option('oss_custom_field', $oss_custom_field);
+  opensearchserver_display_messages('OpenSearchServer Custom Fields Settings has been updated.');
+}
+
+function opensearchserver_admin_set_reindex() {
+  $oss_index_from = isset($_POST['oss_index_from']) ? $_POST['oss_index_from'] : NULL;
+  $oss_index_to = isset($_POST['oss_index_to']) ? $_POST['oss_index_to'] : NULL;
+  update_option('oss_index_from', $oss_index_from);
+  update_option('oss_index_to', $oss_index_to);
+  $index_success = opensearchserver_reindex_site(NULL,NULL, $oss_index_from, $oss_index_to);
+  opensearchserver_display_messages('Re indexing has been finished successfully.');
+}
 /*
  * The admin page settings actions
 */
@@ -385,111 +481,46 @@ function opensearchserver_admin_page() {
   $fields = opensearchserver_get_fields();
   $facet_behaviour = array('separate_query'=>'Separate query','no_separate_query'=>'No separate query');
   $spellcheck_fields = array(
-      'none'=>'Select',
-      'title' => 'Title',
-      'content' =>'Content');
+    'none'=>'Select',
+    'title' => 'Title',
+    'content' =>'Content');
   $spellcheck_algo = array(
-      'JaroWinklerDistance' => 'JaroWinklerDistance',
-      'LevensteinDistance' => 'LevensteinDistance',
-      'NGramDistance' => 'NGramDistance');
+    'JaroWinklerDistance' => 'JaroWinklerDistance',
+    'LevensteinDistance' => 'LevensteinDistance',
+    'NGramDistance' => 'NGramDistance');
   $languages = array(
-      ''   => 'Undefined',
-      'ar' => 'Arabic',
-      'zh' => 'Chinese',
-      'da' => 'Danish',
-      'nl' => 'Dutch',
-      'en' => 'English',
-      'fi' => 'Finnish',
-      'fr' => 'French',
-      'de' => 'German',
-      'hu' => 'Hungarian',
-      'it' => 'Italian',
-      'no' => 'Norwegian',
-      'pt' => 'Portuguese',
-      'ro' => 'Romanian',
-      'ru' => 'Russian',
-      'es' => 'Spanish',
-      'sv' => 'Swedish',
-      'tr' => 'Turkish'
+    ''   => 'Undefined',
+    'ar' => 'Arabic',
+    'zh' => 'Chinese',
+    'da' => 'Danish',
+    'nl' => 'Dutch',
+    'en' => 'English',
+    'fi' => 'Finnish',
+    'fr' => 'French',
+    'de' => 'German',
+    'hu' => 'Hungarian',
+    'it' => 'Italian',
+    'no' => 'Norwegian',
+    'pt' => 'Portuguese',
+    'ro' => 'Romanian',
+    'ru' => 'Russian',
+    'es' => 'Spanish',
+    'sv' => 'Swedish',
+    'tr' => 'Turkish'
   );
 
 
   $action = isset($_POST['oss_submit']) ? $_POST['oss_submit'] :NULL;
-  if($action == 'settings') {
-    $oss_url = isset($_POST['oss_serverurl']) ? $_POST['oss_serverurl'] :NULL;
-    $oss_indexname = isset($_POST['oss_indexname']) ? $_POST['oss_indexname'] :NULL;
-    $oss_login = isset($_POST['oss_login']) ? $_POST['oss_login'] :NULL;
-    $oss_key = isset($_POST['oss_key']) ? $_POST['oss_key'] :NULL;
-    update_option('oss_serverurl', $oss_url);
-    update_option('oss_indexname', $oss_indexname);
-    update_option('oss_login', $oss_login);
-    update_option('oss_key', $oss_key);
-    opensearchserver_display_messages('OpenSearchServer Settings has been updated');
-  }
-  if($action == 'query_settings') {
-    $delete = isset($_POST['oss_delete']) ? $_POST['oss_delete'] :NULL;
-    $delete_action = isset($_POST['opensearchserver_delete']) ? $_POST['opensearchserver_delete'] :NULL;
-    if($delete !=NULL && $delete_action === 'Delete') {
-      $facets = get_option('oss_facet');
-      foreach ($facets as $key => $facet) {
-        if(trim($facet) == trim($delete)) {
-          unset($facets[$key]);
-        }
-      }
-      update_option('oss_facet', $facets);
-    }else {
-      $oss_query = isset($_POST['oss_query']) ? $_POST['oss_query'] : NULL;
-      if (isset($oss_query)) {
-        $oss_query = trim($oss_query);
-        if (strlen($oss_query) == 0) {
-          $oss_query = opensearchserver_default_query();
-        }
-      }
-      $oss_facet = isset($_POST['oss_facet']) ? $_POST['oss_facet'] : NULL;
-      $oss_spell = isset($_POST['oss_spell']) ? $_POST['oss_spell'] : NULL;
-      $oss_spell_algo = isset($_POST['oss_spell_algo']) ? $_POST['oss_spell_algo'] : NULL;
-      update_option('oss_query', $oss_query);
-      if($oss_facet != 'none') {
-        if(get_option('oss_facet')) {
-          $facet = get_option('oss_facet');
-        }else {
-          $facet = array();
-        }
-        if (!in_array($oss_facet, $facet)) {
-          array_push($facet,$oss_facet);
-        }
-        update_option('oss_facet', $facet);
-      }
-      $oss_multi_filter = isset($_POST['oss_multi_filter']) ? $_POST['oss_multi_filter'] : NULL;
-      update_option('oss_multi_filter', $oss_multi_filter);
-      $oss_facet_behavior = isset($_POST['oss_facet_behavior']) ? $_POST['oss_facet_behavior'] : NULL;
-      update_option('oss_facet_behavior', $oss_facet_behavior);
-      update_option('oss_spell', $oss_spell);
-      update_option('oss_spell_algo', $oss_spell_algo);
-      $oss_language = isset($_POST['oss_language']) ? $_POST['oss_language'] : NULL;
-      update_option('oss_language', $oss_language);
-      $oss_phonetic = isset($_POST['oss_phonetic']) ? $_POST['oss_phonetic'] : NULL;
-      update_option('oss_phonetic', $oss_phonetic);
-      opensearchserver_display_messages('OpenSearchServer Settings has been updated.');
-    }
-
-  }
-  if($action == 'index_settings') {
-    $is_index_created = opensearchserver_create_index();
-    opensearchserver_display_messages('Index '.get_option('oss_indexname').' Created successfully');
-  }
-  if($action == 'custom_field_settings') {
-    $oss_custom_field = isset($_POST['oss_custom_field']) ? $_POST['oss_custom_field'] :NULL;
-    update_option('oss_custom_field', $oss_custom_field);
-    opensearchserver_display_messages('OpenSearchServer Settings has been updated.');
-  }
-  if($action == 'opensearchserver_reindex') {
-    $oss_index_from = isset($_POST['oss_index_from']) ? $_POST['oss_index_from'] : NULL;
-    $oss_index_to = isset($_POST['oss_index_to']) ? $_POST['oss_index_to'] : NULL;
-    update_option('oss_index_from', $oss_index_from);
-    update_option('oss_index_to', $oss_index_to);
-    $index_success = opensearchserver_reindex_site(NULL,NULL, $oss_index_from, $oss_index_to);
-    opensearchserver_display_messages('Re indexing has been finished successfully.');
+  if ($action == 'settings') {
+    opensearchserver_admin_set_instance_settings();
+  } else if ($action == 'query_settings') {
+    opensearchserver_admin_set_query_settings();
+  } else if ($action == 'index_settings') {
+    opensearchserver_admin_set_index_settings();
+  }else  if ($action == 'custom_field_settings') {
+    opensearchserver_admin_set_custom_fields_settings();
+  } if ($action == 'opensearchserver_reindex') {
+    opensearchserver_admin_set_reindex();
   }
   ?>
 <div class="wrap">
@@ -537,16 +568,15 @@ function opensearchserver_admin_page() {
 									placeholder="9bc6aceeb43965b02b1d28a5201924e2" size="50"
 									value="<?php print get_option('oss_key');?>" /><br />
 							</p>
-							<input type="hidden" name="oss_submit" id="oss_submit"
-								value="settings" />
+							<input type="hidden" name="oss_submit" value="settings" />
 							<p>
 								<input type="submit" name="opensearchserver_submit"
-									value="Update Settings »" class="button-primary" />
+									value="Update Instance Settings »" class="button-primary" />
 							</p>
 						</div>
 					</form>
 				</div>
-				<div class="postbox closed" id="second">
+				<div class="postbox" id="second">
 					<div class="handlediv" title="Click to toggle">
 						<br />
 					</div>
@@ -569,7 +599,7 @@ function opensearchserver_admin_page() {
 								</textarea>
 							</p>
 							<p>
-								<label for="oss_query">Facet field</label>:<br /> <select
+								<label for="oss_facet">Facet field</label>:<br /> <select
 									name="oss_facet">
 									<?php
 									foreach ($fields as $key => $field) {
@@ -596,7 +626,7 @@ function opensearchserver_admin_page() {
 									  ?>
 									<tr>
 										<td><?php print $fields[$facet]; ?></td>
-										<td><input type="hidden" name="oss_delete" id="oss_submit"
+										<td><input type="hidden" name="oss_delete"
 											value="<?php print $facet; ?>" /> <input type="submit"
 											name="opensearchserver_delete" value="Delete"
 											class="button-secondary" /></td>
@@ -606,10 +636,10 @@ function opensearchserver_admin_page() {
 							</table>
 							<?php }?>
 							<p>
-								<label for="oss_facet_behavior">Facet behavior
-								</label>:<br /> <select name="oss_facet_behavior"><?php
-								$facet_option = get_option('oss_facet_behavior');
-								foreach ($facet_behaviour as $key => $field) {
+								<label for="oss_facet_behavior">Facet behavior </label>:<br /> <select
+									name="oss_facet_behavior"><?php
+									$facet_option = get_option('oss_facet_behavior');
+									foreach ($facet_behaviour as $key => $field) {
 								  $selected = '';
 								  if($facet_behaviour[$facet_option] == $field) {
 								    $selected = 'selected="selected"';
@@ -627,7 +657,7 @@ function opensearchserver_admin_page() {
 								<?php checked( 1 == get_option('oss_multi_filter')); ?> />
 							</p>
 							<p>
-								<label for="oss_query">SpellCheck field</label>:<br /> <select
+								<label for="oss_spell">SpellCheck field</label>:<br /> <select
 									name="oss_spell"><?php
 									$facet = get_option('oss_spell');
 									foreach ($spellcheck_fields as $key => $field) {
@@ -681,15 +711,26 @@ function opensearchserver_admin_page() {
 									<?php checked( 1 == get_option('oss_phonetic')); ?> />
 							</p>
 							<p>
-								<input type="hidden" name="oss_submit" id="oss_submit"
-									value="query_settings" /> <input type="submit"
-									name="opensearchserver_submit" value="Update Options »"
-									class="button-primary" />
+								Display:&nbsp;<input type="checkbox" name="oss_display_user"
+									value="1"
+									<?php checked( 1 == get_option('oss_display_user')); ?> />&nbsp;<label
+									for="oss_display_user">user</label>&nbsp;&nbsp;<input
+									type="checkbox" name="oss_display_category" value="1"
+									<?php checked( 1 == get_option('oss_display_category')); ?> />&nbsp;<label
+									for="oss_display_category">category</label>&nbsp;&nbsp;<input
+									type="checkbox" name="oss_display_type" value="1"
+									<?php checked( 1 == get_option('oss_display_type')); ?> />&nbsp;<label
+									for="oss_display_type">type</label>
+							</p>
+							<p>
+								<input type="hidden" name="oss_submit" value="query_settings" />
+								<input type="submit" name="opensearchserver_submit"
+									value="Update Query Settings »" class="button-primary" />
 							</p>
 						</form>
 					</div>
 				</div>
-				<div class="postbox closed" id="third">
+				<div class="postbox" id="third">
 					<div class="handlediv" title="Click to toggle">
 						<br />
 					</div>
@@ -700,19 +741,28 @@ function opensearchserver_admin_page() {
 						<form id="index_settings" name="index_settings" method="post"
 							action="">
 							<p>
-								<label for="oss_create_index">Create an index</label>: <input
-									type="text" name="oss_indexname_create" id="oss_indexname"
-									placeholder="opensearchserver_wordpress" size="50"
-									value="<?php print get_option('oss_indexname');?>"
-									disabled="disabled" /> <input type="hidden" name="oss_submit"
-									id="oss_submit" value="index_settings" /><input type="submit"
-									name="opensearchserver_submit" value="Create Index"
-									class="button-secondary" />
+								<label for="oss_index_types">Check which type will be indexed:</label><br />
+								<?php
+								foreach (get_post_types() as $post_type) {
+                                  $checkTypeName = 'oss_index_types_'.$post_type;
+                                  ?>
+								<input type="checkbox" name="<?php print $checkTypeName;?>"
+									value="1" <?php checked( 1 == get_option($checkTypeName)); ?> />&nbsp;<label
+									for="oss_index_types"><?php print $post_type;?> </label><br />
+								<?php } ?>
+							</p>
+							<p>
+								<input type="hidden" name="oss_submit" value="index_settings" />
+								<input type="submit" name="opensearchserver_submit"
+									value="Update Index Settings »" class="button-primary" /> <input
+									type="submit" name="opensearchserver_submit"
+									value="(Re-)Create the index" class="button-secondary" />
+
 							</p>
 						</form>
 					</div>
 				</div>
-				<div class="postbox closed" id="fourth">
+				<div class="postbox" id="fourth">
 					<div class="handlediv" title="Click to toggle">
 						<br />
 					</div>
@@ -735,34 +785,44 @@ function opensearchserver_admin_page() {
 								</textarea>
 							</p>
 							<p>
-								<input type="hidden" name="oss_submit" id="oss_submit"
+								<input type="hidden" name="oss_submit"
 									value="custom_field_settings" /><input type="submit"
-									name="opensearchserver_submit" value="Update Settings »"
-									class="button-primary" /><br />
+									name="opensearchserver_submit"
+									value="Update Custom Fields Settings »" class="button-primary" /><br />
 							</p>
 						</form>
 					</div>
 
 				</div>
-				<form id="reindex_settings" name="reindex_settings" method="post"
-					action="">
-					<p>
-						<label for="oss_index_from">From index</label>:<br /> <input
-							type="text" name="oss_index_from" id="oss_index_from" size="15"
-							value="<?php print get_option('oss_index_from');?>" /> <br />
-					</p>
-					<p>
-						<label for="oss_index_to">To index</label>:<br /> <input
-							type="text" name="oss_index_to" id="oss_index_to" size="15"
-							value="<?php print get_option('oss_index_to');?>" /> <br />
-					</p>
-					<p>
-						<input type="hidden" name="oss_submit" id="oss_submit"
-							value="opensearchserver_reindex" /> <input type="submit"
-							name="opensearchserver_submit" value="Synchronize / Re-Index"
-							class="button-primary" />
-					</p>
-				</form>
+				<div class="postbox" id="fifth">
+					<div class="handlediv" title="Click to toggle">
+						<br />
+					</div>
+					<h3 class="hndle">
+						<span>Indexation </span>
+					</h3>
+					<div class="inside">
+						<form id="reindex_settings" name="reindex_settings" method="post"
+							action="">
+							<p>
+								<label for="oss_index_from">From index</label>:<br /> <input
+									type="text" name="oss_index_from" id="oss_index_from" size="15"
+									value="<?php print get_option('oss_index_from');?>" /> <br />
+							</p>
+							<p>
+								<label for="oss_index_to">To index</label>:<br /> <input
+									type="text" name="oss_index_to" id="oss_index_to" size="15"
+									value="<?php print get_option('oss_index_to');?>" /> <br />
+							</p>
+							<p>
+								<input type="hidden" name="oss_submit"
+									value="opensearchserver_reindex" /> <input type="submit"
+									name="opensearchserver_submit" value="Synchronize / Re-Index"
+									class="button-primary" />
+							</p>
+						</form>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>

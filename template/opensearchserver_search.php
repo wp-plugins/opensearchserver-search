@@ -19,6 +19,9 @@ get_header();
 		</form>
 	</div>
 	<?php
+	$displayUser = get_option('oss_display_user') == 1;
+	$displayCategory = get_option('oss_display_category') == 1;
+	$displayType = get_option('oss_display_type') == 1;
 	$query_fq_parm = isset($_REQUEST['fq']) ? $_REQUEST['fq'] : NULL;
 	$query = get_search_query();
 	$oss_result = opensearchserver_getsearchresult($query, FALSE, TRUE);
@@ -158,15 +161,19 @@ get_header();
 	 if($url) {?>
 				<a href="<?php print $url;?>"><?php print $url;?> </a>
 				<?php }
-				if($type && $user ) {
-
-				  print $type."	By	".$user;
-				  if($categories != NULL || $categories != '') {
-				    print ' in '. $categories. '<br/>';
-				  }else {
-				    print '<br/>';
-				  }
-				}?>
+				if ($displayType || $displayUser || $displayCategory) {
+                  print '<br/>';
+                }
+                if ($type && $displayType) {
+                  print $type;
+				}
+				if ($user && $displayUser) {
+                  print ' by '.$user;
+                }
+                if (categories != null && $categories != '' && $displayCategory) {
+                  print ' in '.categories;
+                }
+                ?>
 			</div>
 		</div>
 		<?php
