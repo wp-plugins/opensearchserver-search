@@ -17,6 +17,7 @@ require_once 'lib/oss_search.class.php';
 require_once 'lib/oss_autocompletion.class.php';
 require_once 'lib/oss_delete.class.php';
 require_once 'lib/oss_searchtemplate.class.php';
+require_once 'lib/oss_monitor.class.php';
 require_once 'opensearchserver_admin.php';
 require_once 'opensearchserver_search_functions.php';
 
