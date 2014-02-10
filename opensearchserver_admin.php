@@ -41,7 +41,7 @@ function opensearchserver_create_index() {
   opensearchserver_query_template($custom_fields);
   opensearchserver_spellcheck_query_template();
   $autocompletion = opensearchserver_getautocomplete_instance();
-  $autocompletion_name = get_option('oss_indexname'). '_autocomplete';
+  $autocompletion_name = 'autocomplete';
   $autocompletion->createAutocompletion($autocompletion_name, 'contentExact');
   return TRUE;
 }
