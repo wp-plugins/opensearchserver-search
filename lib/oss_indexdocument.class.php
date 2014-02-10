@@ -1,23 +1,23 @@
 <?php
 /*
- *  This file is part of OpenSearchServer.
+ *  This file is part of OpenSearchServer PHP Client.
 *
-*  Copyright (C) 2008-2012 Emmanuel Keller / Jaeksoft
+*  Copyright (C) 2008-2013 Emmanuel Keller / Jaeksoft
 *
 *  http://www.open-search-server.com
 *
-*  OpenSearchServer is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
+*  OpenSearchServer PHP Client is free software: you can redistribute it and/or modify
+*  it under the terms of the GNU Lesser General Public License as published by
 *  the Free Software Foundation, either version 3 of the License, or
 *  (at your option) any later version.
 *
-*  OpenSearchServer is distributed in the hope that it will be useful,
+*  OpenSearchServer PHP Client is distributed in the hope that it will be useful,
 *  but WITHOUT ANY WARRANTY; without even the implied warranty of
 *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
+*  GNU Lesser General Public License for more details.
 *
-*  You should have received a copy of the GNU General Public License
-*  along with OpenSearchServer.  If not, see <http://www.gnu.org/licenses/>.
+*  You should have received a copy of the GNU Lesser General Public License
+*  along with OpenSearchServer PHP Client.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
@@ -39,7 +39,7 @@ class OssIndexDocument extends ArrayObject {
    * @param string $language ISO 639-1 format (en, de, fr, ...)
    * @return OssIndexDocument_Document
    */
-  public function newDocument($language = NULL) {
+  public function newDocument($language = '') {
     $document = new OssIndexDocument_Document($this, $language);
     $this->append($document);
 
@@ -99,12 +99,15 @@ class OssIndexDocument_Document extends ArrayObject {
   /** @var Array<OSS_DocumentField> */
   private $fieldByName = array();
 
+  /**  @var Array<URL> */
+  private $binaries = array();
+
   /**
    * @param OssIndexDocument $indexDocument
    * @param string $language ISO 639-1 format (en, de, fr, ...)
    * @return OSS_DocumentNode
-   */
-  public function __construct(OssIndexDocument $indexDocument, $language = NULL) {
+  */
+  public function __construct(OssIndexDocument $indexDocument, $language = '') {
     $this->indexDocument = $indexDocument;
     $this->setLanguage($language);
   }
@@ -118,7 +121,7 @@ class OssIndexDocument_Document extends ArrayObject {
   public function setLanguage($language) {
     static $supportedLanguages = NULL;
 
-    if ($language === NULL || $language == '') {
+    if ($language === NULL) {
       $this->language = $language;
       return NULL;
     }
@@ -165,6 +168,15 @@ class OssIndexDocument_Document extends ArrayObject {
       $field->addValues($values);
     }
     return $field;
+  }
+
+  /**
+   * Add a binary entry for an external file to index
+   * @param URI $uri The URL to the file to index
+   * @param string $faultTolerant
+   */
+  public function newBinaryUrl($uri, $faultTolerant = true) {
+    $this->binaries[] = new OssIndexDocument_BinaryUrl($uri, $faultTolerant);
   }
 
   /**
@@ -217,6 +229,10 @@ class OssIndexDocument_Document extends ArrayObject {
       $field = $field->__toString();
       $data .= $field;
     }
+    foreach ($this->binaries as $binary) {
+      $data .= $binary->__toString();
+    }
+
     if (empty($data)) {
       return NULL;
     }
@@ -391,5 +407,27 @@ class OssIndexDocument_Value {
     return $return . '><![CDATA[' . $data . ']]></value>';
   }
 
+}
+
+/**
+ * @author Emmanuel Keller
+ * @package OpenSearchServer
+ */
+class OssIndexDocument_BinaryUrl  {
+
+  /**  @var The URL for retrieving the file to index */
+  private $uri;
+
+  /**  @var The behavior in case of error when indexing the file */
+  private $faultTolerant;
+
+  public function __construct($uri, $faultTolerant = true) {
+    $this->uri = $uri;
+    $this->faultTolerant = $faultTolerant;
+  }
+
+  public function __toString() {
+    return '<binary url="'.$this->uri.'" faultTolerant="'.($this->faultTolerant ? 'yes' : 'no').'"/>';
+  }
 }
 ?>

@@ -1,23 +1,23 @@
 <?php
 /*
- *  This file is part of OpenSearchServer.
+ *  This file is part of OpenSearchServer PHP Client.
 *
-*  Copyright (C) 2008-2012 Emmanuel Keller / Jaeksoft
+*  Copyright (C) 2008-2014 Emmanuel Keller / Jaeksoft
 *
 *  http://www.open-search-server.com
 *
-*  OpenSearchServer is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
+*  OpenSearchServer PHP Client is free software: you can redistribute it and/or modify
+*  it under the terms of the GNU Lesser General Public License as published by
 *  the Free Software Foundation, either version 3 of the License, or
 *  (at your option) any later version.
 *
-*  OpenSearchServer is distributed in the hope that it will be useful,
+*  OpenSearchServer PHP Client is distributed in the hope that it will be useful,
 *  but WITHOUT ANY WARRANTY; without even the implied warranty of
 *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
+*  GNU Lesser General Public License for more details.
 *
-*  You should have received a copy of the GNU General Public License
-*  along with OpenSearchServer.  If not, see <http://www.gnu.org/licenses/>.
+*  You should have received a copy of the GNU Lesser General Public License
+*  along with OpenSearchServer PHP Client.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 
@@ -40,11 +40,15 @@ class OssSearch extends OssSearchAbstract {
   protected $rows;
   protected $lang;
   protected $filter;
+  protected $negativeFilter;
   protected $field;
   protected $sort;
   protected $operator;
   protected $collapse;
   protected $facet;
+  protected $join;
+  protected $joinFilter;
+  protected $joinNegativeFilter;
 
   /**
    * @param $enginePath The URL to access the OSS Engine
@@ -59,8 +63,12 @@ class OssSearch extends OssSearchAbstract {
 
     $this->field  = array();
     $this->filter  = array();
+    $this->negativeFilter  = array();
     $this->sort    = array();
     $this->facet  = array();
+    $this->join = array();
+    $this->joinFilter  = array();
+    $this->joinNegativeFilter  = array();
     $this->query = NULL;
     $this->lang = NULL;
     $this->operator = NULL;
@@ -108,6 +116,14 @@ class OssSearch extends OssSearchAbstract {
    */
   public function filter($filter = NULL) {
     $this->filter[] = $filter;
+    return $this;
+  }
+
+  /**
+   * @return OssSearch
+   */
+  public function negativeFilter($negativeFilter = NULL) {
+    $this->negativeFilter[] = $negativeFilter;
     return $this;
   }
 
@@ -177,6 +193,47 @@ class OssSearch extends OssSearchAbstract {
     return $this;
   }
 
+  /**
+   * @param string $filter
+   * @return OssSearch
+   */
+  public function addJoin($key, $value) {
+  	$this->join[$key] = $value;
+  	return $this;
+  }
+  
+  /**
+   * @return OssSearch
+   */
+  public function join($position, $value) {
+    $intpos = (int) $position;
+    $this->join['jq'.$intpos] = $value;
+    return $this;
+  }
+
+  /**
+   * @return OssSearch
+   */
+  public function joinFilter($position, $filter = NULL) {
+    $intpos = (int) $position;
+    if (!array_key_exists($intpos, $this->joinFilter)) {
+      $this->joinFilter[$intpos] = array();
+    }
+    $this->joinFilter[$intpos][] = $filter;
+    return $this;
+  }
+
+  /**
+   * @return OssSearch
+   */
+  public function joinNegativeFilter($position, $negativeFilter = NULL) {
+    $intpos = (int) $position;
+    if (!array_key_exists($intpos, $this->joinNegativeFilter)) {
+      $this->joinFilter[$intpos] = array();
+    }
+    $this->joinNegativeFilter[$intpos][] = $negativeFilter;
+    return $this;
+  }
 
   protected function addParams($queryChunks = NULL) {
 
@@ -216,6 +273,14 @@ class OssSearch extends OssSearchAbstract {
       $queryChunks[] = 'fq=' . urlencode($filter);
     }
 
+    // Negative Filters
+    foreach ((array) $this->negativeFilter as $negativeFilter) {
+      if (empty($negativeFilter)) {
+        continue;
+      }
+      $queryChunks[] = 'fqn=' . urlencode($negativeFilter);
+    }
+
     // Fields
     foreach ((array)$this->field as $field) {
       if (empty($field)) continue;
@@ -236,6 +301,31 @@ class OssSearch extends OssSearchAbstract {
         $facet .= '(' . $options['min'] . ')';
       }
       $queryChunks[] = $facet;
+    }
+
+    // Join query parameter
+    foreach ((array)$this->join as $key => $value) {
+      $queryChunks[] = $key.'='.urlencode($value);
+    }
+
+    // Join filters
+    foreach ((array) $this->joinFilter as $position => $filters) {
+      foreach ((array) $filters as $filter) {
+        if (empty($filter)) {
+          continue;
+        }
+        $queryChunks[] = 'jq'.$position.'.fq=' . urlencode($filter);
+      }
+    }
+
+    // Join negative Filters
+    foreach ((array) $this->joinNegativeFilter as $position => $negativeFilters) {
+      foreach ((array) $negativeFilters as $negativeFilter) {
+        if (empty($negativeFilter)) {
+          continue;
+        }
+        $queryChunks[] = 'jq'.$position.'.fqn=' . urlencode($negativeFilter);
+      }
     }
 
     // Collapsing

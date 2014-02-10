@@ -1,23 +1,23 @@
 <?php
 /*
- *  This file is part of OpenSearchServer.
+ *  This file is part of OpenSearchServer PHP Client.
 *
-*  Copyright (C) 2008-2012 Emmanuel Keller / Jaeksoft
+*  Copyright (C) 2008-2013 Emmanuel Keller / Jaeksoft
 *
 *  http://www.open-search-server.com
 *
-*  OpenSearchServer is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
+*  OpenSearchServer PHP Client is free software: you can redistribute it and/or modify
+*  it under the terms of the GNU Lesser General Public License as published by
 *  the Free Software Foundation, either version 3 of the License, or
 *  (at your option) any later version.
 *
-*  OpenSearchServer is distributed in the hope that it will be useful,
+*  OpenSearchServer PHP Client is distributed in the hope that it will be useful,
 *  but WITHOUT ANY WARRANTY; without even the implied warranty of
 *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
+*  GNU Lesser General Public License for more details.
 *
-*  You should have received a copy of the GNU General Public License
-*  along with OpenSearchServer.  If not, see <http://www.gnu.org/licenses/>.
+*  You should have received a copy of the GNU Lesser General Public License
+*  along with OpenSearchServer PHP Client.  If not, see <http://www.gnu.org/licenses/>.
 */
 if (!extension_loaded('curl')) {
   trigger_error("OssApi won't work whitout curl extension", E_USER_ERROR); die();
@@ -60,9 +60,15 @@ class OssApi extends OssAbstract {
   const API_INDEX    = 'index';
   const API_ENGINE   = 'engine';
   const API_PATTERN  = 'pattern';
+  const API_MONITOR  = 'monitor';
   const INDEX_TEMPLATE_EMPTY  = 'empty_index';
 
   const API_AUTOCOMPLETION = 'autocompletion';
+  
+  /* The new REST API for autocompletion*/
+  const REST_API_AUTOCOMPLETION = 'services/rest/index/{index_name}/autocompletion/{autocompletion_name}?field={field_name}&rows={rows}';
+  const REST_API_AUTOCOMPLETION_BUILD = 'services/rest/index/{index_name}/autocompletion/{autocompletion_name}';
+  
 
   /** @var int Default timeout (specified in seconds) for CURLOPT_TIMEOUT option. See curl documentation */
   const DEFAULT_QUERY_TIMEOUT = 0;
@@ -100,7 +106,7 @@ class OssApi extends OssAbstract {
    * @param $enginePath The URL to access the OSS Engine
    * @param $index The index name
    * @return OssApi
-   */
+  */
   public function __construct($enginePath, $index = NULL, $login = NULL, $apiKey = NULL) {
     $this->init($enginePath, $index, $login, $apiKey);
   }
@@ -113,7 +119,7 @@ class OssApi extends OssAbstract {
    * It's expected to be in the same directory as OssApi.class.php.
    */
   public function select() {
-    return new OssSearch($this->enginePath, NULL, NULL, $this->login, $this->apiKey);
+    return new OssSearch($this->enginePath, $this->index, NULL, NULL, $this->login, $this->apiKey);
   }
 
   /**

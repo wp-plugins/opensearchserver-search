@@ -2,7 +2,7 @@
 /*
  *  This file is part of OpenSearchServer PHP Client.
 *
-*  Copyright (C) 2008-2013 Emmanuel Keller / Jaeksoft
+*  Copyright (C) 2008-2014 Emmanuel Keller / Jaeksoft
 *
 *  http://www.open-search-server.com
 *
@@ -27,21 +27,21 @@
 
 require_once(dirname(__FILE__).'/oss_abstract.class.php');
 
-class OssDelete extends OssAbstract {
+class OssMonitor extends OssAbstract {
 
-  public function __construct($enginePath, $index = NULL, $login = NULL, $apiKey = NULL) {
-    $this->init($enginePath, $index, $login, $apiKey);
+  public function __construct($enginePath, $login = NULL, $apiKey = NULL) {
+    $this->init($enginePath, NULL, $login, $apiKey);
   }
 
-  public function delete($query) {
-    $params = array('q' => $query);
-    $return = $this->queryServerXML(OssApi::API_DELETE, $params);
-    if ($return === FALSE) {
-      return FALSE;
-    }
-    return TRUE;
+  public function get_oss_version() {
+  	$return = $this->queryServerXML(OssApi::API_MONITOR, NULL);
+  	$version_xpath  = $return->xpath("system/version");
+  	$version_string = $version_xpath[0]['value']; 
+  	preg_match_all('/OpenSearchServer v(.*?)-/',$version_string,$matches); 
+  	if($matches[1][0] != NULL) {
+  		return $matches[1][0];
+  	}
+  	return NULL;
   }
-
-
 }
 ?>

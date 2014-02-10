@@ -17,6 +17,9 @@ function opensearchserver_getdelete_instance() {
 function opensearchserver_getautocomplete_instance() {
   return new OssAutocompletion(get_option('oss_serverurl'), get_option('oss_indexname'), get_option('oss_login'), get_option('oss_key'));
 }
+function opensearchserver_getmonitor_instance() {
+  return new OssMonitor(get_option('oss_serverurl'), get_option('oss_login'), get_option('oss_key'));
+}
 
 
 /**
@@ -37,6 +40,9 @@ function opensearchserver_create_index() {
   opensearchserver_create_schema($custom_fields);
   opensearchserver_query_template($custom_fields);
   opensearchserver_spellcheck_query_template();
+  $autocompletion = opensearchserver_getautocomplete_instance();
+  $autocompletion_name = get_option('oss_indexname'). '_autocomplete';
+  $autocompletion->createAutocompletion($autocompletion_name, 'contentExact');
   return TRUE;
 }
 
@@ -277,10 +283,18 @@ function opensearchserver_optimize() {
 }
 
 function opensearchserver_autocompletionBuild() {
+  $oss_monitor = opensearchserver_getmonitor_instance();
+  $version = $oss_monitor->get_oss_version();
   $autocompletion = opensearchserver_getautocomplete_instance();
-  $autocompletion->autocompletionSet('contentExact');
-  $autocompletion->autocompletionBuild();
+  if($version < 1.5) {	 
+    $autocompletion->autocompletionSet('contentExact');
+    $autocompletion->autocompletionBuild();
+  }else {
+  	$autocompletion_name = 'autocomplete';
+    $autocompletion->autocompletionBuildREST($autocompletion_name);
+  }
 }
+
 
 function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang, $post, $customFields) {
   $user = get_userdata($post->post_author);
@@ -448,7 +462,7 @@ function opensearchserver_admin_set_query_settings() {
 
 function opensearchserver_admin_set_index_settings() {
   $post_oss_submit = $_POST['opensearchserver_submit'];
-  if ($post_oss_submit == 'Update Index Settings »') {
+  if ($post_oss_submit == 'Update Index Settings') {
     foreach (get_post_types() as $post_type) {
       $post_form_type = (int)$_POST['oss_index_types_'.$post_type];
       update_option('oss_index_types_'.$post_type, $post_form_type);
@@ -571,7 +585,7 @@ function opensearchserver_admin_page() {
 							<input type="hidden" name="oss_submit" value="settings" />
 							<p>
 								<input type="submit" name="opensearchserver_submit"
-									value="Update Instance Settings »" class="button-primary" />
+									value="Update Instance Settings" class="button-primary" />
 							</p>
 						</div>
 					</form>
@@ -725,7 +739,7 @@ function opensearchserver_admin_page() {
 							<p>
 								<input type="hidden" name="oss_submit" value="query_settings" />
 								<input type="submit" name="opensearchserver_submit"
-									value="Update Query Settings »" class="button-primary" />
+									value="Update Query Settings" class="button-primary" />
 							</p>
 						</form>
 					</div>
@@ -754,7 +768,7 @@ function opensearchserver_admin_page() {
 							<p>
 								<input type="hidden" name="oss_submit" value="index_settings" />
 								<input type="submit" name="opensearchserver_submit"
-									value="Update Index Settings »" class="button-primary" /> <input
+									value="Update Index Settings" class="button-primary" /> <input
 									type="submit" name="opensearchserver_submit"
 									value="(Re-)Create the index" class="button-secondary" />
 
@@ -788,7 +802,7 @@ function opensearchserver_admin_page() {
 								<input type="hidden" name="oss_submit"
 									value="custom_field_settings" /><input type="submit"
 									name="opensearchserver_submit"
-									value="Update Custom Fields Settings »" class="button-primary" /><br />
+									value="Update Custom Fields Settings" class="button-primary" /><br />
 							</p>
 						</form>
 					</div>
