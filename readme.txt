@@ -74,6 +74,8 @@ A: Check that you server is enabled with CURL extension else install it.
 2. An example of search result.
 
 == Changelog ==
+= 1.2.3 =
+* New Autocompletion REST API
 
 = 1.2.2 =
 * Select which type of post will be indexed
