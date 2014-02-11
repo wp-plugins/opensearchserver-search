@@ -66,7 +66,12 @@ A: Check the credential is correct that you have create in OpenSearchServer inst
 
 Q: I get an error when I install opensearchserver "Fatal error: OSS_API won't work without curl extension in "opensearchserver-search\OSS_API.class.php" on line 23"
 
-A: Check that you server is enabled with CURL extension else install it. 
+A: Check that you server is enabled with CURL extension else install it.
+ 
+Q: How to customize/style the search page.
+
+A: Copy the file opensearchserver_search.php from the directory wp-content/plugins/opensearchserver-search to your current theme folder (wp-content/themes/twentyfourteen).
+   Customize the layout as per your needs.
 
 == Screenshots ==
 

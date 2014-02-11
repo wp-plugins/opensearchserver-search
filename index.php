@@ -29,10 +29,15 @@ function opensearchserver_admin_actions() {
 }
 
 function opensearchserver_load_scripts_styles() {
+  global $wp_version;
   wp_register_script( 'opensearchserver', plugins_url('opensearchserver-search') .'/js/opensearchserver.js' );
   wp_enqueue_script( 'opensearchserver' );
   wp_register_style( 'opensearchserver-style', plugins_url('opensearchserver-search')  . '/css/oss-style.css');
   wp_enqueue_style('opensearchserver-style');
+  if($wp_version >= 3.8 ) {
+  	wp_register_style( 'opensearchserver-style-latest', plugins_url('opensearchserver-search')  . '/css/oss-style-latest.css');
+  	wp_enqueue_style('opensearchserver-style-latest');
+  }
   wp_enqueue_script( 'jQuery' );
 }
 
