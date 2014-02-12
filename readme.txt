@@ -2,7 +2,7 @@
 Contributors: ekeller,naveenann
 Tags: search,search engine,opensearchserver, full-text, phonetic, filter, facet, indexation, auto-completion
 Requires at least: 3.0.1
-Tested up to: 3.5.1
+Tested up to: 3.8.1
 Stable tag: 1.2.3
 License: GPLv2 or later
 
