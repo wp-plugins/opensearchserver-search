@@ -1,167 +1,12 @@
-/* OpenSearchServer result page */
-#oss-quick-open {
-	font-size: 100%;
-}
-
-.oss-content {
-	font-size: 100%;
-	color: #222222;
-}
-
-.oss-title {
-	font-size: 110%;
-	color: #1122CC;
-}
-
-.oss-url {
-	font-size: 90%;
-	color: #009933;
-}
-
-#oss-no-of-doc {
-	padding-left: 200px;
-	padding-bottom: 15px;
-}
-
-#oss-results {
-	padding-left: 200px;
-}
-
-.oss-result {
-	padding-bottom: 10px;
-}
-
-#oss-keyword {
-	width: 400px;
-}
-
-#oss-filter {
-	margin: 0;
-	padding: 0;
-	clear: both;
-	float: left;
-	margin-left: 5px;
-	margin-right: 5px;
-	width: 180px;
-}
-
-.oss-filter-title {
-	font-size: 110%;
-}
-
-.oss-bold {
-	font-weight: bold;
-}
-
-#oss-paging {
-	margin: 0;
-	padding: 0;
-	text-align: center;
-}
-
-#oss-search-form #keyword {
-	border: 1px solid #ccc;
-	width: 570px;
-	height: 25px;
-}
-
-#oss-submit {
-	cursor: default;
-	display: inline-block;
-}
-
 #oss-search-form form {
-	padding-left: 200px;
-}
-
-#oss-search {
-	width: 100%;
-	font-size: 100%;
-	font-style: normal;
-	font-size-adjust: none;
-	line-height: 1.5;
-}
-
-.oss-autocomplete_link {
-	font-size: 100%;
-	background-color: #FFFFFF;
-	padding: 2px 6px 2px 6px;
-}
-
-.oss-autocomplete_link_over {
-	font-size: 100%;
-	background-color: #99BBFF;
-	padding: 2px 6px 2px 6px;
-}
-
-#oss-autocomplete {
-	margin: 0;
-	width: 380px;
-	float: left;
-	cursor: pointer !important;
-}
-
-#oss-autocompletelist {
-	background-color: #FFFFFF;
 	text-align: left;
-	z-index: 1000;
-	position: absolute;
-	width: 380px;
-	border: 1px solid #99BBFF;
+	margin-left: 10%;
 }
-
-#oss-page {
-	padding-left: 10px;
-}
-
-#oss-facets-menu {
-	vertical-align: middle;
-	margin: 0;
-	list-style: none;
-}
-
-#oss-facets {
-	padding-top: 10px;
-}
-
-.oss-facets-li a {
-	color: #222222;
-}
-
-.oss-facets-li {
-	padding-left: 10px;
-	margin-top: 0;
-}
-
-#oss-facets-menu li:hover {
-	background: #EEEEEE;
-}
-
-#oss-facets-menu li a {
-	text-decoration: none;
-}
-
-.oss-submenu {
-	display: none;
-	list-style: none;
-	padding-left: 15px;
-	margin: 0;
-}
-
-.oss-top-nav  a {
-	color: #000000;
-}
-
-#oss-menu-selected  a {
-	color: #DD4B39;
-	cursor: pointer;
-}
-
-#oss-head a {
-	font-size: 120%;
-	color: #1122CC;
-	margin-top: 0;
-	clear: both;
+.oss-search {
+	margin-top:2%;
+	margin-left:10%;
+	margin-right:10%;
+	width:70%;
 }
 
 #oss-nav {
@@ -183,4 +28,43 @@
 
 #oss-nav li:hover {
 	background: #EEEEEE;
+}
+#oss-filter {
+ width:150px;
+ float:left;
+}
+#oss-results{
+
+ overflow:hidden;
+}
+
+.oss-autocomplete_link {
+	background-color: #FFFFFF;
+	padding: 2px 6px 2px 6px;
+}
+
+.oss-autocomplete_link_over {
+	background-color: #99BBFF;
+	padding: 2px 6px 2px 6px;
+}
+
+#oss-autocomplete {
+	margin: 0;
+	float: left;
+	cursor: pointer !important;
+}
+
+#oss-autocompletelist {
+	background-color: #FFFFFF;
+	text-align: left;
+	z-index: 1000;
+	position: absolute;
+	width: 493px;
+	border: 1px solid #99BBFF;
+}
+.oss-logo {
+	text-align:right;
+}
+.oss-result {
+	margin-top: 15px;
 }

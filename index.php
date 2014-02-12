@@ -51,8 +51,8 @@ function  opensearchserver_search() {
     include_once('autocomplete.php');
     exit;
   }else {
-    if (file_exists(TEMPLATEPATH . '/oss_search.php')) {
-      include_once(TEMPLATEPATH . '/oss_search.php');
+    if (file_exists(TEMPLATEPATH . '/opensearchserver_search.php')) {
+      include_once(TEMPLATEPATH . '/opensearchserver_search.php');
     } else if (file_exists(dirname(__FILE__) . '/template/opensearchserver_search.php')) {
       include_once('template/opensearchserver_search.php');
     } else {
