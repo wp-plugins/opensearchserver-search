@@ -152,7 +152,8 @@ function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
 }
 
 function opensearchserver_clean_query($query) {
-  $escapechars = array('\\', '^', '~', ':', '(', ')', '{', '}', '[', ']' , '&', '||', '!', '*', '?','039;','\'','#');
+  $clean_query_options = get_option('oss_clean_query');
+  $escapechars = explode(' ', $clean_query_options);
   foreach ($escapechars as $escchar)  {
     $query = str_replace($escchar, ' ', $query);
   }

@@ -456,6 +456,8 @@ function opensearchserver_admin_set_query_settings() {
     update_option('oss_display_category', $oss_display_category);
     $oss_display_type = isset($_POST['oss_display_type']) ? $_POST['oss_display_type'] : NULL;
     update_option('oss_display_type', $oss_display_type);
+	$oss_clean_query = isset($_POST['oss_clean_query']) ? $_POST['oss_clean_query'] : NULL;
+	update_option('oss_clean_query', $oss_clean_query);
     opensearchserver_display_messages('OpenSearchServer Query Settings has been updated.');
   }
 }
@@ -735,6 +737,14 @@ function opensearchserver_admin_page() {
 									type="checkbox" name="oss_display_type" value="1"
 									<?php checked( 1 == get_option('oss_display_type')); ?> />&nbsp;<label
 									for="oss_display_type">type</label>
+							</p>
+							<p>
+								<label for="opensearchserver_clean_query">
+									Special characters to remove (Special characters are delimited by space)
+								</label> :<br /> <input type="text" name="oss_clean_query"
+									id="oss_clean_query" placeholder="# $ ! @"
+									size="50" value="<?php print get_option('oss_clean_query');?>" />
+								<br />
 							</p>
 							<p>
 								<input type="hidden" name="oss_submit" value="query_settings" />
