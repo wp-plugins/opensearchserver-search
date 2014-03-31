@@ -165,7 +165,7 @@ function opensearchserver_add_facets_search($search) {
   $facets = get_option('oss_facet');
   if (isset($facets) && $facets != null) {
     foreach ($facets as $facet) {
-      $search->facet($facet, 1);
+      $search->facet($facet, 1, TRUE);
     }
   }
   return $search;

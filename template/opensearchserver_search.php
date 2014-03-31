@@ -54,7 +54,12 @@ get_header(); ?>
         <div class="oss-filter-title">
             <?php
             $fields = opensearchserver_get_fields();
-            print ucfirst($fields[$facet]);?>
+			if(isset($fields[$facet])) {
+            	print ucfirst($fields[$facet]);
+			}else {
+				print ucfirst($facet);
+			}
+            ?>
         </div>
         <ul class="oss-nav">
             <li class="oss-top-nav"><a
@@ -80,7 +85,7 @@ get_header(); ?>
             </a>
             </li>
             <?php }
-            }
+			}
             ?>
         </ul>
         <?php
@@ -171,7 +176,7 @@ get_header(); ?>
                   print ' by '.$user;
                 }
                 if ($categories != null && $categories != '' && $displayCategory) {
-                  print ' in '.categories;
+                  print ' in '.$categories;
                 }
                 ?>
             </div>

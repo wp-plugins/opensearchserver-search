@@ -81,6 +81,8 @@ function opensearchserver_create_schema($custom_fields) {
   opensearchserver_setField($schema,$schema_xml,'allContent','TextAnalyzer','no','yes','no','yes','no');
   opensearchserver_setField($schema,$schema_xml,'categories','TextAnalyzer','yes','yes','no','yes','no');
   opensearchserver_setField($schema,$schema_xml,'categoriesExact',NULL,'yes','yes','no','yes','no');
+  opensearchserver_setField($schema,$schema_xml,'tags','TextAnalyzer','yes','yes','no','yes','no');
+  opensearchserver_setField($schema,$schema_xml,'tagsExact',NULL,'yes','yes','no','yes','no');
   if (isset($custom_fields) && $custom_fields != null) {
     $custom_fields_array = explode(',', $custom_fields);
     foreach ($custom_fields_array as $field) {
@@ -125,6 +127,7 @@ function opensearchserver_query_template($custom_fields) {
   $query_template->setReturnField('search','user_name');
   $query_template->setReturnField('search','user_email');
   $query_template->setReturnField('search','categories');
+  $query_template->setReturnField('search','tags');
   if (isset($custom_fields) && $custom_fields != null) {
     $custom_fields_array = explode(',', $custom_fields);
     foreach ($custom_fields_array as $field) {
@@ -322,16 +325,29 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
   $categories_data= '';
 
   // Handling categories
-  $categories_data = null;
+  $categories_data = NULL;
   $categories = get_the_category($post->ID);
   if ($categories != NULL) {
     foreach( $categories as $category ) {
-      $categories_data .= $category->cat_name.' ';
-      $document->newField('categories', $category->cat_name);
-      $document->newField('categoriesExact', $category->cat_name);
+      $categories_data .= $category->cat_name.' , ';
     }
-    $categories = null;
+	$document->newField('categories', $categories_data);
+    $document->newField('categoriesExact', $categories_data);
+    $categories = NULL;
   }
+  
+  //Handling tags
+  $tags_data = NULL;
+  $tags = get_the_tags($post->ID);
+    if ($tags != NULL) {
+      foreach($tags as $tag) {
+		$tags_data .= $tag->name.' , ';
+      }
+      $document->newField('tags', $tags_data);
+      $document->newField('tagsExact', $tags_data);
+      $tags_data = NULL;
+	  $tags = NULL;
+    }
 
   // Handling custom fields
   $custom_clean_all='';
@@ -391,7 +407,8 @@ function opensearchserver_get_fields() {
     'id' => 'ID',
     'type' => 'Type',
     'timestamp' => 'TimeStamp',
-    'categoriesExact' => 'Categories');
+    'tags' => 'Tags',
+    'categories' => 'Categories');
 }
 
 function opensearchserver_admin_set_instance_settings() {
@@ -405,7 +422,19 @@ function opensearchserver_admin_set_instance_settings() {
   update_option('oss_key', $oss_key);
   opensearchserver_display_messages('OpenSearchServer Instance Settings has been updated');
 }
-
+function opensearchserver_update_facet_settings($facet_field) {
+  if($facet_field != 'none' || $facet_field != NULL) {
+    if(get_option('oss_facet')) {
+      $facet = get_option('oss_facet');
+    }else {
+      $facet = array();
+    }
+    if (!in_array($facet_field, $facet)) {
+      array_push($facet,$facet_field);
+    }
+    update_option('oss_facet', $facet);
+  }
+}
 function opensearchserver_admin_set_query_settings() {
   $delete = isset($_POST['oss_delete']) ? $_POST['oss_delete'] :NULL;
   $delete_action = isset($_POST['opensearchserver_delete']) ? $_POST['opensearchserver_delete'] :NULL;
@@ -428,17 +457,12 @@ function opensearchserver_admin_set_query_settings() {
     $oss_facet = isset($_POST['oss_facet']) ? $_POST['oss_facet'] : NULL;
     $oss_spell = isset($_POST['oss_spell']) ? $_POST['oss_spell'] : NULL;
     $oss_spell_algo = isset($_POST['oss_spell_algo']) ? $_POST['oss_spell_algo'] : NULL;
+	$oss_custom_facet = isset($_POST['oss_custom_facet']) ? $_POST['oss_custom_facet'] : NULL;
     update_option('oss_query', $oss_query);
     if($oss_facet != 'none') {
-      if(get_option('oss_facet')) {
-        $facet = get_option('oss_facet');
-      }else {
-        $facet = array();
-      }
-      if (!in_array($oss_facet, $facet)) {
-        array_push($facet,$oss_facet);
-      }
-      update_option('oss_facet', $facet);
+      opensearchserver_update_facet_settings($oss_facet);
+    }else{
+    	opensearchserver_update_facet_settings($oss_custom_facet);
     }
     $oss_multi_filter = isset($_POST['oss_multi_filter']) ? $_POST['oss_multi_filter'] : NULL;
     update_option('oss_multi_filter', $oss_multi_filter);
@@ -615,7 +639,7 @@ function opensearchserver_admin_page() {
 								</textarea>
 							</p>
 							<p>
-								<label for="oss_facet">Facet field</label>:<br /> <select
+								<label for="oss_facet">Facet field </label>:<br /><select
 									name="oss_facet">
 									<?php
 									foreach ($fields as $key => $field) {
@@ -624,7 +648,12 @@ function opensearchserver_admin_page() {
 										<?php print $field;?>
 									</option>
 									<?php }?>
-								</select> <input type="submit" name="opensearchserver_add"
+								</select>
+								<label for="oss_facet_field">or write a fieldname : </label>
+								<input type="text" name="oss_custom_facet"
+									id="oss_custom_facet" placeholder="fieldname"
+									size="10" /> 
+								<input type="submit" name="opensearchserver_add"
 									value="Add" class="button-secondary" /><br />
 							</p>
 							<?php $facets = get_option('oss_facet');
@@ -640,13 +669,23 @@ function opensearchserver_admin_page() {
 									<?php
 									foreach($facets as $facet) {
 									  ?>
-									<tr>
+									<?php if($fields[$facet])  { ?>
+										<tr>
 										<td><?php print $fields[$facet]; ?></td>
 										<td><input type="hidden" name="oss_delete"
 											value="<?php print $facet; ?>" /> <input type="submit"
 											name="opensearchserver_delete" value="Delete"
 											class="button-secondary" /></td>
 									</tr>
+									<?php }else {?>
+										<tr>
+										<td><?php print $facet; ?></td>
+										<td><input type="hidden" name="oss_delete"
+											value="<?php print $facet; ?>" /> <input type="submit"
+											name="opensearchserver_delete" value="Delete"
+											class="button-secondary" /></td>
+									</tr>
+									<?php }?>
 									<?php }?>
 								</tbody>
 							</table>
