@@ -328,8 +328,9 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
   $categories_data = NULL;
   $categories = get_the_category($post->ID);
   if ($categories != NULL) {
-    foreach( $categories as $category ) {
-      $categories_data .= $category->cat_name.' , ';
+    $categories_data = array();
+  	foreach( $categories as $category ) {
+      $categories_data[] = $category->cat_name;
     }
 	$document->newField('categories', $categories_data);
     $document->newField('categoriesExact', $categories_data);
@@ -340,8 +341,9 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
   $tags_data = NULL;
   $tags = get_the_tags($post->ID);
     if ($tags != NULL) {
+      $tags_data = array();
       foreach($tags as $tag) {
-		$tags_data .= $tag->name.' , ';
+	  	$tags_data[] = $tag->name;
       }
       $document->newField('tags', $tags_data);
       $document->newField('tagsExact', $tags_data);
@@ -482,6 +484,8 @@ function opensearchserver_admin_set_query_settings() {
     update_option('oss_display_type', $oss_display_type);
 	$oss_clean_query = isset($_POST['oss_clean_query']) ? $_POST['oss_clean_query'] : NULL;
 	update_option('oss_clean_query', $oss_clean_query);
+	$oss_clean_query_enable = isset($_POST['oss_clean_query_enable']) ? $_POST['oss_clean_query_enable'] : NULL;
+	update_option('oss_clean_query_enable', $oss_clean_query_enable);
     opensearchserver_display_messages('OpenSearchServer Query Settings has been updated.');
   }
 }
@@ -568,7 +572,7 @@ function opensearchserver_admin_page() {
 	<h2>
 		<?php print 'OpenSearchServer'; ?>
 	</h2>
-	<div class="postbox-container" style="width: 100%">
+	<div class="postbox-container" id="opensearchserver_admin" style="width: 100%">
 		<div class="metabox-holder">
 			<div class="meta-box-sortables">
 				<div class="postbox" id="first">
@@ -624,23 +628,26 @@ function opensearchserver_admin_page() {
 						<span>Query settings </span>
 					</h3>
 					<div class="inside">
-						<p>Enter the template query, or leave empty to use the default one</p>
-						<form id="query_settings" name="query_settings" method="post"
+                    <p>Enter the template query, or leave empty to use the default one</p>
+                        
+                        <form id="query_settings" name="query_settings" method="post"
 							action="">
+                            <fieldset><legend>Query template</legend>
+                            
 							<p>
 								<label for="oss_query">OpenSearchServer query template</label>:<br />
-								<textarea rows="10" cols="100" name="oss_query" wrap="off">
-									<?php
+								<textarea rows="7" cols="80" name="oss_query" wrap="off"><?php
 									if (trim(get_option('oss_query'))) {
                                     print stripslashes(get_option('oss_query'));
                                   }else {
 									print opensearchserver_default_query();
-								  }?>
-								</textarea>
+								  }?></textarea>
 							</p>
+                            </fieldset>
 							<p>
-								<label for="oss_facet">Facet field </label>:<br /><select
-									name="oss_facet">
+                            <fieldset><legend>Facets</legend>
+								<label for="oss_facet">Facet field </label>: <select
+									name="oss_facet" id="oss_facet">
 									<?php
 									foreach ($fields as $key => $field) {
 									  ?>
@@ -649,10 +656,10 @@ function opensearchserver_admin_page() {
 									</option>
 									<?php }?>
 								</select>
-								<label for="oss_facet_field">or write a fieldname : </label>
+								<label for="oss_custom_facet">or write a fieldname for an existing field of the schema: </label>
 								<input type="text" name="oss_custom_facet"
 									id="oss_custom_facet" placeholder="fieldname"
-									size="10" /> 
+									size="20" /> 
 								<input type="submit" name="opensearchserver_add"
 									value="Add" class="button-secondary" /><br />
 							</p>
@@ -677,7 +684,7 @@ function opensearchserver_admin_page() {
 											name="opensearchserver_delete" value="Delete"
 											class="button-secondary" /></td>
 									</tr>
-									<?php }else {?>
+									<?php }elseif(!empty($facet)) {?>
 										<tr>
 										<td><?php print $facet; ?></td>
 										<td><input type="hidden" name="oss_delete"
@@ -691,8 +698,8 @@ function opensearchserver_admin_page() {
 							</table>
 							<?php }?>
 							<p>
-								<label for="oss_facet_behavior">Facet behavior </label>:<br /> <select
-									name="oss_facet_behavior"><?php
+								<label for="oss_facet_behavior">Facet behavior </label>: <select
+									name="oss_facet_behavior" id="oss_facet_behavior"><?php
 									$facet_option = get_option('oss_facet_behavior');
 									foreach ($facet_behaviour as $key => $field) {
 								  $selected = '';
@@ -707,12 +714,16 @@ function opensearchserver_admin_page() {
 								</select>
 							</p>
 							<p>
-								<label for="oss_enable_multi_filter">Enable multiple filter</label>:
-								<input type="checkbox" name="oss_multi_filter" value="1"
-								<?php checked( 1 == get_option('oss_multi_filter')); ?> />
+								<input type="checkbox" id="oss_multi_filter" name="oss_multi_filter" value="1"
+                                <?php checked( 1 == get_option('oss_multi_filter')); ?> />
+                                 <label for="oss_multi_filter">Enable multiple filter</label>
+								
 							</p>
+                            </fieldset>
+                            
+                            <fieldset><legend>SpellCheck</legend>
 							<p>
-								<label for="oss_spell">SpellCheck field</label>:<br /> <select
+								<label for="oss_spell">SpellCheck field</label>: <select
 									name="oss_spell"><?php
 									$facet = get_option('oss_spell');
 									foreach ($spellcheck_fields as $key => $field) {
@@ -729,7 +740,7 @@ function opensearchserver_admin_page() {
 							
 							
 							<p>
-								<label for="oss_spell_algo">SpellCheck algorithm</label>:<br />
+								<label for="oss_spell_algo">SpellCheck algorithm</label>: 
 								<select name="oss_spell_algo"><?php
 								$facet = get_option('oss_spell_algo');
 								foreach ($spellcheck_algo as $key => $field) {
@@ -744,8 +755,11 @@ function opensearchserver_admin_page() {
 									<?php }?>
 								</select>
 							</p>
+                            </fieldset>
+                            
+                            <fieldset><legend>Other options</legend>
 							<p>
-								<label for="oss_language">Default language</label>:<br /> <select
+								<label for="oss_language">Default language</label>: <select
 									name="oss_language"><?php
 									$opt = get_option('oss_language');
 									foreach ($languages as $key => $field) {
@@ -761,9 +775,10 @@ function opensearchserver_admin_page() {
 								</select>
 							</p>
 							<p>
-								<label for="oss_phonetic">Enable phonetic</label>: <input
+								<input
 									type="checkbox" name="oss_phonetic" value="1"
 									<?php checked( 1 == get_option('oss_phonetic')); ?> />
+                                     <label for="oss_phonetic">Enable phonetic</label>
 							</p>
 							<p>
 								Display:&nbsp;<input type="checkbox" name="oss_display_user"
@@ -777,14 +792,23 @@ function opensearchserver_admin_page() {
 									<?php checked( 1 == get_option('oss_display_type')); ?> />&nbsp;<label
 									for="oss_display_type">type</label>
 							</p>
-							<p>
-								<label for="opensearchserver_clean_query">
-									Special characters to remove (Special characters are delimited by space)
-								</label> :<br /> <input type="text" name="oss_clean_query"
-									id="oss_clean_query" placeholder="# $ ! @"
-									size="50" value="<?php print get_option('oss_clean_query');?>" />
-								<br />
-							</p>
+                            </fieldset>
+							<fieldset><legend>Clean query</legend>
+                                <p>
+	                                <input type="checkbox" id="oss_clean_query_enable" 
+                                        value="1" name="oss_clean_query_enable"
+                                        <?php checked( 1 == get_option('oss_clean_query_enable')); ?>  />
+                                    <label for="oss_clean_query_enable">Enable escaping of special characters</label>
+	                            </p>
+                                <p>
+                                    <label for="oss_clean_query">
+										Special characters to remove <span class="help">(separated by space)</span> :
+									</label> <br /> <input type="text" name="oss_clean_query"
+										id="oss_clean_query" placeholder="# $ ! @"
+										size="50" value="<?php print htmlspecialchars(stripslashes(get_option('oss_clean_query')));?>" />
+                                        <br/><span class="help">If escaping is enabled and no special characters is written here it will default to: \\ ^ ~ ( ) { } [ ] & || ! * ? 039; ' #</span>
+    							</p>
+                            </fieldset>
 							<p>
 								<input type="hidden" name="oss_submit" value="query_settings" />
 								<input type="submit" name="opensearchserver_submit"
@@ -804,7 +828,7 @@ function opensearchserver_admin_page() {
 						<form id="index_settings" name="index_settings" method="post"
 							action="">
 							<p>
-								<label for="oss_index_types">Check which type will be indexed:</label><br />
+								<label for="oss_index_types">Choose type of content to index:</label><br />
 								<?php
 								foreach (get_post_types() as $post_type) {
                                   $checkTypeName = 'oss_index_types_'.$post_type;
@@ -825,7 +849,7 @@ function opensearchserver_admin_page() {
 						</form>
 					</div>
 				</div>
-				<div class="postbox" id="fourth">
+				<div class="postbox closed" id="fourth">
 					<div class="handlediv" title="Click to toggle">
 						<br />
 					</div>
@@ -840,12 +864,10 @@ function opensearchserver_admin_page() {
 									Field Template. Get useful information <a target="_blank"
 									href="http://wordpress.org/extend/plugins/custom-field-template/">here</a>
 								</label>:<br />
-								<textarea rows="10" cols="100" name="oss_custom_field"
-									wrap="off">
-									<?php
+								<textarea rows="5" cols="80" name="oss_custom_field"
+									wrap="off"><?php
 									print stripslashes(get_option('oss_custom_field'));
-									?>
-								</textarea>
+									?></textarea>
 							</p>
 							<p>
 								<input type="hidden" name="oss_submit"

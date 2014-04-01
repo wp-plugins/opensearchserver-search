@@ -1,0 +1,4 @@
+#opensearchserver_admin fieldset { border:1px solid #DBDADA; padding:10px 20px 20px 20px; width:60%; min-width:500px; margin:30px 0 20px 0;  background:#FDFDFD; }
+#opensearchserver_admin fieldset p { margin:5px 0 5px 0; }
+#opensearchserver_admin legend { font-weight: bold; font-size:1.1em; padding:5px 10px; border-left:1px solid #DBDADA;}
+.help { font-style:italic; color:grey; }

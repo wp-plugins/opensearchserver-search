@@ -153,11 +153,19 @@ function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
 
 function opensearchserver_clean_query($query) {
   $clean_query_options = get_option('oss_clean_query');
-  $escapechars = explode(' ', $clean_query_options);
-  foreach ($escapechars as $escchar)  {
-    $query = str_replace($escchar, ' ', $query);
+  $clean_query_enable = get_option('oss_clean_query_enable');
+  if($clean_query_enable) {
+		$escapechars = explode(' ', stripslashes($clean_query_options));
+		$query = html_entity_decode($query, ENT_COMPAT);
+	  	//defaults to a pre-configured list of escapechars
+	  	if(empty($escapechars)) {
+		  	$escapechars = array('\\', '^', '~', '(', ')', '{', '}', '[', ']' , '&', '||', '!', '*', '?','039;','\'','#');
+	  	}
+	  	foreach ($escapechars as $escchar)  {
+		    $query = str_replace($escchar, ' ', $query);
+	  	}
+	  	$query = trim($query);
   }
-  $query = trim($query);
   return $query;
 }
 
@@ -165,7 +173,9 @@ function opensearchserver_add_facets_search($search) {
   $facets = get_option('oss_facet');
   if (isset($facets) && $facets != null) {
     foreach ($facets as $facet) {
-      $search->facet($facet, 1, TRUE);
+      if(!empty($facet)) {
+      	$search->facet($facet, 1, TRUE);
+      }
     }
   }
   return $search;

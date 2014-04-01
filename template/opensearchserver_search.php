@@ -49,6 +49,7 @@ get_header(); ?>
         <?php $facets = get_option('oss_facet');
         if (isset($facets) && $facets != null) {
         foreach ($facets as $facet) {
+          if(!empty($facet)) {
           $facet_results = $oss_result_facets->getFacet($facet);
           ?>
         <div class="oss-filter-title">
@@ -90,17 +91,22 @@ get_header(); ?>
         </ul>
         <?php
     }
+	}
 }?>
     </div>
     <?php }?>
     <?php if($oss_sp == 1 || $oss_results->getResultFound() <= 0) {
       ?>
     <div>
-        No documents containing all your search terms were found.<br /> Your
-        Search Keyword <b><?php print "'    ".$query. " '";?> </b> did not match
-        any document<br />Suggestions:<br /> - Make sure all words are spelled
-        correctly.<br /> - Try different keywords.<br /> -Try more general
-        keywords.<br />
+        <p>No documents containing all your search terms were found.</p>
+        <p>Your searched keywords <b><?php print "'    ".$query. " '";?> </b> did not match
+        any document.</p>
+        <p>Suggestions:</p>
+        <ul>
+            <li>Make sure all words are spelled correctly.</li>
+            <li>Try different keywords.</li>
+            <li>Try more general keywords.</li>
+        </ul>
     </div>
     <?php
     }else {

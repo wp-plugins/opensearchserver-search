@@ -62,6 +62,7 @@ function  opensearchserver_search() {
 }
 
 function opensearchserver_install() {
+	update_option('oss_clean_query_enable', 1);
 }
 
 function opensearchserver_uninstall() {
@@ -89,6 +90,13 @@ function opensearchserver_do_while_posting($post_id,$post) {
     opensearchserver_delete_document($delete);
   }
 }
+function opensearchserver_admin_register_head() {
+    $siteurl = get_option('siteurl');
+    $url = $siteurl . '/wp-content/plugins/' . basename(dirname(__FILE__)) . '/css/admin-style.css';
+    echo "<link rel='stylesheet' type='text/css' href='$url' />\n";
+}
+add_action('admin_head', 'opensearchserver_admin_register_head');
+
 register_activation_hook(__FILE__,'opensearchserver_install');
 register_deactivation_hook( __FILE__, 'opensearchserver_uninstall');
 add_action('save_post','opensearchserver_do_while_posting',10,2);
