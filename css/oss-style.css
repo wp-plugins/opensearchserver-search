@@ -68,3 +68,12 @@
 .oss-result {
 	margin-top: 15px;
 }
+
+.oss-bold { 
+	font-weight:bold;
+}
+.oss-facet-number-docs {
+	color:#A6A8A6;
+	font-weight: normal;
+	font-size:0.9em;
+}

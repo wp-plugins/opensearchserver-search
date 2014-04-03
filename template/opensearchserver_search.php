@@ -82,7 +82,7 @@ get_header(); ?>
             }else {
                 $link .= '&fq='. $fqParm;
             }
-            ?> <a class="<?php print $css_class;?>" href="<?php print $link; ?>"><?php print $value.'('.$values.')';?>
+            ?> <a class="<?php print $css_class;?>" href="<?php print $link; ?>"><?php print $value.' <span class="oss-facet-number-docs">('.$values.')</span>';?>
             </a>
             </li>
             <?php }
