@@ -83,6 +83,9 @@ function opensearchserver_create_schema($custom_fields) {
   opensearchserver_setField($schema,$schema_xml,'categoriesExact',NULL,'yes','yes','no','yes','no');
   opensearchserver_setField($schema,$schema_xml,'tags','TextAnalyzer','yes','yes','no','yes','no');
   opensearchserver_setField($schema,$schema_xml,'tagsExact',NULL,'yes','yes','no','yes','no');
+  if (opensearchserver_is_wpml_usable()) {
+    opensearchserver_setField($schema,$schema_xml,'language',NULL,'no','yes','no','no','no');
+  }
   if (isset($custom_fields) && $custom_fields != null) {
     $custom_fields_array = explode(',', $custom_fields);
     foreach ($custom_fields_array as $field) {
@@ -322,6 +325,11 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
   $document->newField('user_name', $user->user_nicename);
   $document->newField('user_email', $user->user_email);
   $document->newField('user_email', $user->user_url);
+  if (opensearchserver_is_wpml_usable()) {
+    $post_language_information = wpml_get_language_information($post->ID);
+  	$document->newField('language', $post_language_information['locale']);
+  }
+  
   $categories_data= '';
 
   // Handling categories
@@ -399,18 +407,28 @@ function opensearchserver_default_query() {
 }
 
 function opensearchserver_get_fields() {
-  return array('none'=>'Select',
-    'title' => 'Title',
-    'content' =>'Content',
-    'url' => 'Url',
-    'user_name' => 'User Name',
-    'user_email' => 'User Email',
-    'user_url' => 'User URL',
-    'id' => 'ID',
-    'type' => 'Type',
-    'timestamp' => 'TimeStamp',
-    'tags' => 'Tags',
-    'categories' => 'Categories');
+  $fields = array(
+  		'none'=>'Select',
+	    'title' => 'Title',
+	    'content' =>'Content',
+	    'url' => 'Url',
+	    'user_name' => 'User Name',
+	    'user_email' => 'User Email',
+	    'user_url' => 'User URL',
+	    'id' => 'ID',
+	    'type' => 'Type',
+	    'timestamp' => 'TimeStamp',
+	    'tags' => 'Tags',
+	    'categories' => 'Categories'
+  	);
+  if (opensearchserver_is_wpml_usable()) {
+  	$fields['language'] = 'Language';
+  }
+  return $fields;  
+}
+
+function opensearchserver_is_wpml_usable() {
+	return (opensearchserver_is_plugin_active('sitepress-multilingual-cms/sitepress.php') && get_option('oss_enable_translation_wpml'));
 }
 
 function opensearchserver_admin_set_instance_settings() {
@@ -502,6 +520,10 @@ function opensearchserver_admin_set_index_settings() {
     $is_index_created = opensearchserver_create_index();
     opensearchserver_display_messages('Index '.get_option('oss_indexname').' Created successfully');
   }
+  
+  $oss_enable_translation_wpml = isset($_POST['oss_enable_translation_wpml']) ? $_POST['oss_enable_translation_wpml'] : NULL;
+  update_option('oss_enable_translation_wpml', $oss_enable_translation_wpml);
+    
 }
 
 function opensearchserver_admin_set_custom_fields_settings() {
@@ -838,14 +860,31 @@ function opensearchserver_admin_page() {
 									for="oss_index_types"><?php print $post_type;?> </label><br />
 								<?php } ?>
 							</p>
-							<p>
-								<input type="hidden" name="oss_submit" value="index_settings" />
-								<input type="submit" name="opensearchserver_submit"
-									value="Update Index Settings" class="button-primary" /> <input
-									type="submit" name="opensearchserver_submit"
-									value="(Re-)Create the index" class="button-secondary" />
+                            
+                            <?php if(opensearchserver_is_plugin_active('sitepress-multilingual-cms/sitepress.php')) : ?>
+                                <fieldset>
+                                    <legend>Translation with WPML</legend>
+                                    <p>
+                                        <input type="checkbox" value="1" 
+                                            name="oss_enable_translation_wpml" id="oss_enable_translation_wpml" 
+                                            <?php checked( 1 == get_option('oss_enable_translation_wpml')); ?>
+                                            />
+                                        <label for="oss_enable_translation_wpml">Enable translation management with plugin WPML</label>
+                                    </p>
+                                    <p>
+                                        <span class="help">This will index language information for each content. Index re-creation and synchronization will be needed.</span>
+                                        <br/><span class="help">Facet "Language" must be added in list of facets to make use of this information.</span>
+                                    </p>
+                                </fieldset>
+                             <?php endif;?>
+                             <p>
+                                <input type="hidden" name="oss_submit" value="index_settings" />
+                                <input type="submit" name="opensearchserver_submit"
+                                    value="Update Index Settings" class="button-primary" /> <input
+                                    type="submit" name="opensearchserver_submit"
+                                    value="(Re-)Create the index" class="button-secondary" />
 
-							</p>
+                            </p>
 						</form>
 					</div>
 				</div>

@@ -1,4 +1,11 @@
 <?php
+
+function opensearchserver_is_plugin_active($plugin_var) {
+	$return_var = in_array( $plugin_var. '/' .$plugin_var. '.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) );
+	$return_var2 = in_array( $plugin_var, apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) );
+    return $return_var || $return_var2;
+}
+
 function opensearchserver_getsearch_instance($rows, $start) {
   return new OssSearch(get_option('oss_serverurl'), get_option('oss_indexname'), $rows, $start,get_option('oss_login'), get_option('oss_key'));
 }
