@@ -61,11 +61,51 @@ function  opensearchserver_search() {
   }
 }
 
-function opensearchserver_install() {
-	update_option('oss_clean_query_enable', 1);
+function opensearchserver_install($networkwide) {
+	global $wpdb;
+                 
+    if (function_exists('is_multisite') && is_multisite()) {
+        // check if it is a network activation - if so, run the activation function for each blog id
+        if ($networkwide) {
+			$old_blog = $wpdb->blogid;
+            // Get all blog ids
+            $blogids = $wpdb->get_col("SELECT blog_id FROM $wpdb->blogs");
+            foreach ($blogids as $blog_id) {
+                switch_to_blog($blog_id);
+                opensearchserver_install_one_site();
+            }
+            switch_to_blog($old_blog);
+            return;
+        }   
+    } 
+    opensearchserver_install_one_site();  
 }
 
-function opensearchserver_uninstall() {
+function opensearchserver_install_one_site() {
+	update_option('oss_clean_query_enable', 1);	
+}
+
+function opensearchserver_uninstall($networkwide) {
+	global $wpdb;
+
+	if (function_exists('is_multisite') && is_multisite()) {
+        // check if it is a network deactivation - if so, run the deactivation function for each blog id
+        if ($networkwide) {
+			$old_blog = $wpdb->blogid;
+            // Get all blog ids
+            $blogids = $wpdb->get_col("SELECT blog_id FROM $wpdb->blogs");
+            foreach ($blogids as $blog_id) {
+                switch_to_blog($blog_id);
+                opensearchserver_uninstall_one_site();
+            }
+            switch_to_blog($old_blog);
+            return;
+        }   
+    } 
+    opensearchserver_uninstall_one_site();  	
+}
+
+function opensearchserver_uninstall_one_site() {
   delete_option('oss_query');
   delete_option('oss_serverurl');
   delete_option('oss_indexname');
@@ -78,6 +118,20 @@ function opensearchserver_uninstall() {
   delete_option('oss_multi_filter');
   delete_option('oss_language');
   delete_option('oss_facet_behavior');
+  delete_option('oss_clean_query');
+  delete_option('oss_clean_query_enable');
+  delete_option('oss_display_user');
+  delete_option('oss_display_category');
+  delete_option('oss_display_type');
+  delete_option('oss_index_types_post');
+  delete_option('oss_index_types_page');
+  delete_option('oss_index_types_attachment');
+  delete_option('oss_index_types_revision');
+  delete_option('oss_index_types_nav_menu_item');
+  delete_option('oss_index_from');
+  delete_option('oss_index_to');
+  delete_option('oss_custom_field');
+  delete_option('oss_enable_translation_wpml');
 }
 
 function opensearchserver_do_while_posting($post_id,$post) {

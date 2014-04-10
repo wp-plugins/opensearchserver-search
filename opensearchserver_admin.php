@@ -192,7 +192,7 @@ function opensearchserver_reindex_site($id,$type, $from = 0, $to = 0) {
   $oss_login =  get_option('oss_login');
   $oss_key = get_option('oss_key');
   $custom_fields = get_option('oss_custom_field');
-  $lang = get_option('oss_language');
+  $lang = get_option('oss_language', '');
   $table_name_posts =$wpdb->prefix ."posts";
   $table_name_users =$wpdb->prefix ."users";
   $index_status=0;
