@@ -66,7 +66,7 @@ A: Check that the credentials used in the plugin page is correct against the one
 
 Q: I get an error when I install opensearchserver "Fatal error: OSS_API won't work without curl extension in "opensearchserver-search\OSS_API.class.php" on line 23"
 
-A: Check that CURL extension for PHP is enable on your server, else install it.
+A: Check that CURL extension for PHP is enabled on your server, else install it.
  
 Q: How to customize/style the search page.
 
