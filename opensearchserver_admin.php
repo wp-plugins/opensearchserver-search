@@ -856,8 +856,8 @@ function opensearchserver_admin_page() {
                                   $checkTypeName = 'oss_index_types_'.$post_type;
                                   ?>
 								<input type="checkbox" name="<?php print $checkTypeName;?>"
-									value="1" <?php checked( 1 == get_option($checkTypeName)); ?> />&nbsp;<label
-									for="oss_index_types"><?php print $post_type;?> </label><br />
+									value="1" <?php checked( 1 == get_option($checkTypeName)); ?> id="<?php print $checkTypeName;?>"/>&nbsp;<label
+									for="<?php print $checkTypeName;?>"><?php print $post_type;?> </label><br />
 								<?php } ?>
 							</p>
                             
