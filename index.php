@@ -134,6 +134,16 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_enable_translation_wpml');
 }
 
+// Add settings link on plugin page
+function opensearchserver_settings_link($links) { 
+  $settings_link = '<a href="plugins.php?page=opensearchserver-search/index.php">Settings</a>'; 
+  array_unshift($links, $settings_link); 
+  return $links; 
+}
+$plugin = plugin_basename(__FILE__); 
+add_filter("plugin_action_links_$plugin", 'opensearchserver_settings_link');
+
+
 function opensearchserver_do_while_posting($post_id,$post) {
   if ($post->post_type == 'post' || $post->post_type == 'page'
     && $post->post_status == 'publish') {

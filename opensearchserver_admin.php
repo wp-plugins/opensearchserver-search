@@ -86,6 +86,8 @@ function opensearchserver_create_schema($custom_fields) {
   if (opensearchserver_is_wpml_usable()) {
     opensearchserver_setField($schema,$schema_xml,'language',NULL,'no','yes','no','no','no');
   }
+  opensearchserver_setField($schema,$schema_xml,'year',NULL,'no','yes','no','no','no');
+  opensearchserver_setField($schema,$schema_xml,'year_month',NULL,'no','yes','no','no','no');
   if (isset($custom_fields) && $custom_fields != null) {
     $custom_fields_array = explode(',', $custom_fields);
     foreach ($custom_fields_array as $field) {
@@ -322,6 +324,8 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
   $document->newField('url', get_permalink($post->ID));
   $document->newField('urlExact', get_permalink($post->ID));
   $document->newField('timestamp', $post->post_date_gmt);
+  $document->newField('year',  substr($post->post_date_gmt, 0, 4));
+  $document->newField('year_month', substr($post->post_date_gmt, 0, 7));
   $document->newField('user_name', $user->user_nicename);
   $document->newField('user_email', $user->user_email);
   $document->newField('user_email', $user->user_url);
@@ -419,7 +423,9 @@ function opensearchserver_get_fields() {
 	    'type' => 'Type',
 	    'timestamp' => 'TimeStamp',
 	    'tags' => 'Tags',
-	    'categories' => 'Categories'
+	    'categories' => 'Categories',
+  		'year' => 'Year',
+  		'year_month' => 'Month'
   	);
   if (opensearchserver_is_wpml_usable()) {
   	$fields['language'] = 'Language';

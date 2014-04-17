@@ -57,21 +57,25 @@ A: Open Search Server is a search engine software developed under the GPL v3 ope
 
 Q: How to update the search index?
 
-A: Using the Reindex-Site button in the OpenSearchServer Settings page.while posting an page or an post OpenSearchServer plugin automatically indexes the 
-   Post or page
+A: Using the Reindex-Site button in the OpenSearchServer Settings page. While posting a page or a post OpenSearchServer plugin automatically indexes the 
+   post or page
    
-Q: When i click Create-index/Save button or reindex button i got an exception with Bad credential 
+Q: When I click Create-index/Save button or reindex button I got an exception saying "Bad credential" 
 
-A: Check the credential is correct that you have create in OpenSearchServer instance under the privilages tab.
+A: Check that the credentials used in the plugin page is correct against the ones created in OpenSearchServer instance, under the privilages tab.
 
 Q: I get an error when I install opensearchserver "Fatal error: OSS_API won't work without curl extension in "opensearchserver-search\OSS_API.class.php" on line 23"
 
-A: Check that you server is enabled with CURL extension else install it.
+A: Check that CURL extension for PHP is enable on your server, else install it.
  
 Q: How to customize/style the search page.
 
 A: Copy the file opensearchserver_search.php from the directory wp-content/plugins/opensearchserver-search to your current theme folder (wp-content/themes/twentyfourteen).
    Customize the layout as per your needs.
+   
+Q: Will this plugin work with a multisites installation?
+
+A: Yes, this plugin supports multisites installation.
 
 == Screenshots ==
 
