@@ -148,10 +148,11 @@ function opensearchserver_query_template($custom_fields) {
  * Function to create the spellcheck query
 */
 function opensearchserver_spellcheck_query_template() {
-  $spell_field = get_option('oss_spell').'Exact';
   $spell_algo = get_option('oss_spell_algo');
-  if($spell_field && $spell_field !='none') {
-    $spellcheck_query_template = opensearchserver_getsearchtemplate_instance();
+  $field = get_option('oss_spell');
+  if($field && $field !='none') {
+    $spell_field = get_option('oss_spell').'Exact';
+  	$spellcheck_query_template = opensearchserver_getsearchtemplate_instance();
     $spellcheck_query_template->createSpellCheckTemplate('spellcheck', '*:*', '1', $spell_field, '0.5', NULL, $spell_algo);
   }
 }
@@ -461,39 +462,126 @@ function opensearchserver_update_facet_settings($facet_field) {
     update_option('oss_facet', $facet);
   }
 }
-function opensearchserver_admin_set_query_settings() {
-  $delete = isset($_POST['oss_delete']) ? $_POST['oss_delete'] :NULL;
-  $delete_action = isset($_POST['opensearchserver_delete']) ? $_POST['opensearchserver_delete'] :NULL;
-  if($delete !=NULL && $delete_action === 'Delete') {
-    $facets = get_option('oss_facet');
-    foreach ($facets as $key => $facet) {
-      if(trim($facet) == trim($delete)) {
-        unset($facets[$key]);
-      }
+
+function opensearchserver_update_facet_label_settings($facet_field, $facet_label) {
+	if($facet_field != NULL) {
+    	$facets_labels = get_option('oss_facets_labels', array()); 
+      	$facets_labels[$facet_field] = $facet_label;
+    	update_option('oss_facets_labels', $facets_labels);
+  	}
+}
+
+/**
+ * Save custom values for one facet
+ * @param $facet_field string name of the facet
+ * @param $facet_values string custom values, separated by a pipe, one replacement by line 
+ */
+function opensearchserver_update_facet_values_settings($facet_field, $facet_values) {
+	if($facet_field != NULL) {
+    	$facets_values = get_option('oss_facets_values', array()); 
+    	$facets_values_details = array();
+    	//explode on new line
+    	$lines = explode("\n", $facet_values);
+    	if(!empty($lines)) {
+    		foreach($lines as $line) {
+    			//explode on pipe to get real value and replacement value
+    			$details = explode("|", $line);
+    			if(count($details) == 2) {
+    				$facets_values_details[$details[0]] = $details[1];
+    			}
+    		}
+    	}
+    	$facets_values[$facet_field] = $facets_values_details;
+    	update_option('oss_facets_values', $facets_values);
+  	}
+}
+
+/**
+ * Returns an array of custom values for one facets. Each array value is: <original value>|<replacement value>
+ * @param unknown_type $facet_field
+ */
+function opensearchserver_get_facet_values_string($facet_field) {
+	$facets_values = get_option('oss_facets_values', array()); 
+    $values = array();
+	if(!empty($facets_values[$facet_field])) {
+    	foreach($facets_values[$facet_field] as $original => $replacement) {
+    		$values[] = $original.'|'.$replacement;
+    	}
     }
-    update_option('oss_facet', $facets);
-  }else {
-    $oss_query = isset($_POST['oss_query']) ? $_POST['oss_query'] : NULL;
+    return $values;
+}
+
+function opensearchserver_admin_delete_facet() {
+	$delete = isset($_POST['oss_delete']) ? $_POST['oss_delete'] :NULL;
+	$delete_action = isset($_POST['opensearchserver_delete']) ? $_POST['opensearchserver_delete'] :NULL;
+	if($delete !=NULL && $delete_action === 'Delete') {
+		$facets = get_option('oss_facet');
+		foreach ($facets as $key => $facet) {
+			if(trim($facet) == trim($delete)) {
+				unset($facets[$key]);
+			}
+		}
+		update_option('oss_facet', $facets);
+	}
+}
+function opensearchserver_admin_set_query_settings() {
+	$oss_facet = isset($_POST['oss_facet']) ? $_POST['oss_facet'] : NULL;
+    $oss_custom_facet = isset($_POST['oss_custom_facet']) ? $_POST['oss_custom_facet'] : NULL;
+    if((!empty($oss_facet) && $oss_facet!='none') || !empty($oss_custom_facet)) {
+	    if($oss_facet != 'none') {
+	      	opensearchserver_update_facet_settings($oss_facet);
+	    } elseif(!empty($oss_custom_facet)){
+	    	opensearchserver_update_facet_settings($oss_custom_facet);
+	    }
+    	opensearchserver_display_messages('Field added.');
+	    return;
+    }
+	
+	$oss_query = isset($_POST['oss_query']) ? $_POST['oss_query'] : NULL;
     if (isset($oss_query)) {
       $oss_query = trim($oss_query);
       if (strlen($oss_query) == 0) {
         $oss_query = opensearchserver_default_query();
       }
     }
-    $oss_facet = isset($_POST['oss_facet']) ? $_POST['oss_facet'] : NULL;
+    update_option('oss_query', $oss_query);
+    
     $oss_spell = isset($_POST['oss_spell']) ? $_POST['oss_spell'] : NULL;
     $oss_spell_algo = isset($_POST['oss_spell_algo']) ? $_POST['oss_spell_algo'] : NULL;
-	$oss_custom_facet = isset($_POST['oss_custom_facet']) ? $_POST['oss_custom_facet'] : NULL;
-    update_option('oss_query', $oss_query);
-    if($oss_facet != 'none') {
-      opensearchserver_update_facet_settings($oss_facet);
-    }else{
-    	opensearchserver_update_facet_settings($oss_custom_facet);
+    
+    //custom facet label
+    $oss_facet_labels = isset($_POST['oss_facet_edit_labels']) ? $_POST['oss_facet_edit_labels'] : array();
+    foreach($oss_facet_labels as $field => $custom_label) {
+    	if(!empty($custom_label)) {
+      		opensearchserver_update_facet_label_settings($field, $custom_label);
+    	}
     }
+    
+    //custom values
+    $oss_facet_values = isset($_POST['oss_facet_edit_values']) ? $_POST['oss_facet_edit_values'] : array();
+    foreach($oss_facet_values as $field => $values) {
+    	opensearchserver_update_facet_values_settings($field, $values);
+    }
+    
+    //delete facets
+	$oss_facet_delete = isset($_POST['oss_facet_delete']) ? $_POST['oss_facet_delete'] : array();
+    $facets = get_option('oss_facet', array());
+    foreach($facets as $key => $facet) {
+    	if(in_array(trim($facet), $oss_facet_delete)) {
+			unset($facets[$key]);
+		}
+    }
+	if(empty($facets)) {
+		$facets = '';
+	}
+	update_option('oss_facet', $facets);
+    
     $oss_multi_filter = isset($_POST['oss_multi_filter']) ? $_POST['oss_multi_filter'] : NULL;
     update_option('oss_multi_filter', $oss_multi_filter);
     $oss_facet_behavior = isset($_POST['oss_facet_behavior']) ? $_POST['oss_facet_behavior'] : NULL;
     update_option('oss_facet_behavior', $oss_facet_behavior);
+    $oss_facet_display_count = isset($_POST['oss_facet_display_count']) ? $_POST['oss_facet_display_count'] : NULL;
+    update_option('oss_facet_display_count', $oss_facet_display_count);
     update_option('oss_spell', $oss_spell);
     update_option('oss_spell_algo', $oss_spell_algo);
     $oss_language = isset($_POST['oss_language']) ? $_POST['oss_language'] : NULL;
@@ -510,8 +598,12 @@ function opensearchserver_admin_set_query_settings() {
 	update_option('oss_clean_query', $oss_clean_query);
 	$oss_clean_query_enable = isset($_POST['oss_clean_query_enable']) ? $_POST['oss_clean_query_enable'] : NULL;
 	update_option('oss_clean_query_enable', $oss_clean_query_enable);
+	
+	//some options needs to post changes to OSS
+	$custom_fields = get_option('oss_custom_field');	
+	opensearchserver_query_template($custom_fields);
+	
     opensearchserver_display_messages('OpenSearchServer Query Settings has been updated.');
-  }
 }
 
 function opensearchserver_admin_set_index_settings() {
@@ -674,57 +766,69 @@ function opensearchserver_admin_page() {
                             </fieldset>
 							<p>
                             <fieldset><legend>Facets</legend>
-								<label for="oss_facet">Facet field </label>: <select
-									name="oss_facet" id="oss_facet">
+								<label for="oss_facet">Facet field </label>: 
+                                <select name="oss_facet" id="oss_facet">
 									<?php
-									foreach ($fields as $key => $field) {
+									$facets = get_option('oss_facet');
+									foreach ($fields as $key => $field):
+										if(!in_array($key, $facets)):
 									  ?>
-									<option value="<?php print $key;?>">
-										<?php print $field;?>
-									</option>
-									<?php }?>
+									   <option value="<?php print $key;?>">
+											<?php print $field;?>
+									   </option>
+									<?php 
+										endif;
+									endforeach;
+									?>
 								</select>
-								<label for="oss_custom_facet">or write a fieldname for an existing field of the schema: </label>
-								<input type="text" name="oss_custom_facet"
-									id="oss_custom_facet" placeholder="fieldname"
-									size="20" /> 
-								<input type="submit" name="opensearchserver_add"
-									value="Add" class="button-secondary" /><br />
+								<label for="oss_custom_facet">or write a fieldname of an existing field of the schema: </label>
+								<input type="text" name="oss_custom_facet" id="oss_custom_facet" placeholder="fieldname" size="20" /> 
+								<input type="submit" name="opensearchserver_add" value="Add" class="button-secondary" /><br />
 							</p>
-							<?php $facets = get_option('oss_facet');
-							if($facets) {?>
-							<table class="widefat" style="width: 40% !important">
+							<?php 
+								$facets_labels = get_option('oss_facets_labels');
+							if($facets):?>
+							<table class="widefat" style="width: 100% !important; min-width:600px;">
 								<thead>
 									<tr>
 										<th>Facet field list</th>
-										<th>Action</th>
+                                        <th width="60%;">Custom label and values</th>
+										<th>Delete facet</th>
 									</tr>
+                                    <tr>
+                                        <th colspan="3">
+                                            <span class="help">
+                                            <strong>Custom label: </strong>Choose another name for this facet that will be displayed on the results page.
+                                            <br/><strong>Custom values: </strong>Write one replacement by line, with this format: &lt;original value&gt;|&lt;value to display&gt;. For example "2014-02|February 2014" would replace "2014-02" by "February 2014" when displaying..</span>
+                                        </th>
+                                    </tr>
 								</thead>
 								<tbody>
 									<?php
-									foreach($facets as $facet) {
+									foreach($facets as $facet) :
+										if (!empty($facet)):
 									  ?>
-									<?php if($fields[$facet])  { ?>
 										<tr>
-										<td><?php print $fields[$facet]; ?></td>
-										<td><input type="hidden" name="oss_delete"
-											value="<?php print $facet; ?>" /> <input type="submit"
-											name="opensearchserver_delete" value="Delete"
-											class="button-secondary" /></td>
+										<td><?php  if($fields[$facet]) { print $fields[$facet]; } else { print $facet; } ?></td>
+										<td>
+	                                        <input type="text" name="oss_facet_edit_labels[<?php echo $facet?>]" placeholder="Custom label" value="<?php if(!empty($facets_labels[$facet])) { echo $facets_labels[$facet]; }?>"  style="min-width:240px;"/>
+                                            <em><a href="#" onclick="jQuery('#oss_facet_edit_values_wrapper_<?php echo $facet?>').fadeIn(); jQuery(this).toggle(); return false;">Edit custom values.</a></em>
+                                            <div style="display:none;" id="oss_facet_edit_values_wrapper_<?php echo $facet?>">
+                                                <label for="oss_facet_edit_values[<?php echo $facet?>]">Custom values:</label>
+                                                <textarea name="oss_facet_edit_values[<?php echo $facet?>]" id="oss_facet_edit_values[<?php echo $facet?>]" cols="50" rows="4"><?php print implode("\n", opensearchserver_get_facet_values_string($facet)); ?></textarea> 
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <input type="checkbox" name="oss_facet_delete[]" value="<?php print $facet; ?>" />
+                                        </td>
 									</tr>
-									<?php }elseif(!empty($facet)) {?>
-										<tr>
-										<td><?php print $facet; ?></td>
-										<td><input type="hidden" name="oss_delete"
-											value="<?php print $facet; ?>" /> <input type="submit"
-											name="opensearchserver_delete" value="Delete"
-											class="button-secondary" /></td>
-									</tr>
-									<?php }?>
-									<?php }?>
+									<?php 
+										endif;
+										endforeach;
+									?>
 								</tbody>
 							</table>
-							<?php }?>
+							<?php endif;?>
 							<p>
 								<label for="oss_facet_behavior">Facet behavior </label>: <select
 									name="oss_facet_behavior" id="oss_facet_behavior"><?php
@@ -742,9 +846,11 @@ function opensearchserver_admin_page() {
 								</select>
 							</p>
 							<p>
-								<input type="checkbox" id="oss_multi_filter" name="oss_multi_filter" value="1"
-                                <?php checked( 1 == get_option('oss_multi_filter')); ?> />
-                                 <label for="oss_multi_filter">Enable multiple filter</label>
+								<input type="checkbox" id="oss_multi_filter" name="oss_multi_filter" value="1" <?php checked( 1 == get_option('oss_multi_filter')); ?> />
+                                <label for="oss_multi_filter">Enable multiple filter</label>
+                                <br/>
+                                <input type="checkbox" id="oss_facet_display_count" name="oss_facet_display_count" value="1" <?php checked( 1 == get_option('oss_facet_display_count')); ?> />
+                                <label for="oss_facet_display_count">Display number of results for each value</label>
 								
 							</p>
                             </fieldset>

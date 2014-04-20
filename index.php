@@ -5,7 +5,7 @@
  Description: This Plugin will integrate OpenSearchServer as search engine for Wordpress.Go to <a href="plugins.php?page=opensearchserver-search/index.php">OpenSearchServer Settings</a> for OpenSearchServer Settings,
  Author: Emmanuel Keller - Naveen.A.N
  Author URI: http://open-search-server.com
- Tested up to: 3.8.1
+ Tested up to: 3.9
  Version: 1.3.2
  */
 require_once 'lib/oss_api.class.php';
@@ -27,6 +27,12 @@ require_once 'opensearchserver_search_functions.php';
 function opensearchserver_admin_actions() {
   add_submenu_page('plugins.php', 'OpenSearchServer Settings', 'OpenSearchServer', 'edit_plugins', __FILE__, 'opensearchserver_admin_page');
 }
+
+function opensearchserver_init() {
+ $plugin_dir = basename(dirname(__FILE__));
+ load_plugin_textdomain( 'opensearchserver', false, $plugin_dir . '/lang');
+}
+add_action('plugins_loaded', 'opensearchserver_init');
 
 function opensearchserver_load_scripts_styles() {
   global $wp_version;
@@ -83,6 +89,7 @@ function opensearchserver_install($networkwide) {
 
 function opensearchserver_install_one_site() {
 	update_option('oss_clean_query_enable', 1);	
+	update_option('oss_query', opensearchserver_default_query());
 }
 
 function opensearchserver_uninstall($networkwide) {
@@ -112,6 +119,8 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_login');
   delete_option('oss_key');
   delete_option('oss_facet');
+  delete_option('oss_facets_labels');
+  delete_option('oss_facets_values');
   delete_option('oss_spell');
   delete_option('oss_spell_algo');
   delete_option('oss_phonetic');

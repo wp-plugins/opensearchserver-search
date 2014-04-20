@@ -11,7 +11,7 @@ get_header(); ?>
                 id="oss-keyword" size="55"
                 onkeyup="return OpenSearchServer.autosuggest(event)"
                 autocomplete="off" /> 
-            <input type="submit" id="oss-submit" value="Search" />
+            <input type="submit" id="oss-submit" value="<?php _e("Search", 'opensearchserver'); ?>" />
             <div style="position: absolute">
                 <div id="oss-autocomplete"></div>
             </div>
@@ -46,7 +46,9 @@ get_header(); ?>
     <div class="oss-search">
     <?php if($oss_result_facets->getResultFound()>0) {?>
     <div id="oss-filter">
-        <?php $facets = get_option('oss_facet');
+        <?php 
+        $facets = get_option('oss_facet');
+        $facets_labels = get_option('oss_facets_labels');
         if (isset($facets) && $facets != null) {
         foreach ($facets as $facet) {
           if(!empty($facet)) {
@@ -54,17 +56,21 @@ get_header(); ?>
           ?>
         <div class="oss-filter-title">
             <?php
-            $fields = opensearchserver_get_fields();
-			if(isset($fields[$facet])) {
-            	print ucfirst($fields[$facet]);
-			}else {
-				print ucfirst($facet);
-			}
+            if(!empty($facets_labels[$facet])) {
+            	print $facets_labels[$facet];	
+            } else {
+	            $fields = opensearchserver_get_fields();
+				if(isset($fields[$facet])) {
+	            	print ucfirst($fields[$facet]);
+				}else {
+					print ucfirst($facet);
+				}
+            }
             ?>
         </div>
         <ul class="oss-nav">
             <li class="oss-top-nav"><a
-                href="<?php print '?s='.urlencode($query).get_multiple_filter_all_parameter($facet);?>">All</a>
+                href="<?php print '?s='.urlencode($query).get_multiple_filter_all_parameter($facet);?>"><?php _e("All", 'opensearchserver'); ?></a>
             </li>
             <?php
             if(count($facet_results) > 0 ) {
@@ -82,7 +88,7 @@ get_header(); ?>
             }else {
                 $link .= '&fq='. $fqParm;
             }
-            ?> <a class="<?php print $css_class;?>" href="<?php print $link; ?>"><?php print $value.' <span class="oss-facet-number-docs">('.$values.')</span>';?>
+            ?> <a class="<?php print $css_class;?>" href="<?php print $link; ?>"><?php print opensearchserver_get_facet_value($facet, $value); ?><?php if(get_option('oss_facet_display_count', 0) == 1) { print ' <span class="oss-facet-number-docs">('.(string)$values.')</span>'; }?>
             </a>
             </li>
             <?php }
@@ -98,14 +104,14 @@ get_header(); ?>
     <?php if($oss_sp == 1 || $oss_results->getResultFound() <= 0) {
       ?>
     <div>
-        <p>No documents containing all your search terms were found.</p>
-        <p>Your searched keywords <b><?php print "'    ".$query. " '";?> </b> did not match
-        any document.</p>
-        <p>Suggestions:</p>
+         
+        <p><?php _e("No documents containing all your search terms were found.", 'opensearchserver'); ?></p>
+        <p><?php printf(__("Your searched keywords <b>'%s'</b> did not match any document.", 'opensearchserver'), $query); ?></p>
+        <p><?php _e("Suggestions:"); ?></p>
         <ul>
-            <li>Make sure all words are spelled correctly.</li>
-            <li>Try different keywords.</li>
-            <li>Try more general keywords.</li>
+            <li><?php _e("Make sure all words are spelled correctly.", 'opensearchserver'); ?></li>
+            <li><?php _e("Try different keywords.", 'opensearchserver'); ?></li>
+            <li><?php _e("Try more general keywords.", 'opensearchserver'); ?></li>
         </ul>
     </div>
     <?php
@@ -113,14 +119,13 @@ get_header(); ?>
         ?>
 
     <div id="oss-no-of-doc">
-        <?php print $oss_results->getResultFound().' documents found ('.$oss_resultTime.' seconds)';
-        ?>
+        <?php printf(__('%1$d documents found (in %2$s seconds).', 'opensearchserver'), $oss_results->getResultFound(), $oss_resultTime); ?>
         <div id="oss-did-you-mean">
-            <?php if(isset($spellcheck_query)) { ?>
-            Showing results for <b><?php print $spellcheck_query;?> </b> Search
-            instead for <a href="?s=<?php print $query.'&sp=1'; ?>"><b><?php print $query;?>
-            </b> </a>
-            <?php }
+            <?php 
+            	if(isset($spellcheck_query)) { 
+					$originalQueryText = '<a href="?s='.$query.'&sp=1"><b>'.$query.'</b></a>';		
+            		printf(__('Showing results for <b>%1$s</b> search instead of %2$s.', 'opensearchserver'), $spellcheck_query, $originalQueryText);
+            	}
             ?>
         </div>
         <?php }?>

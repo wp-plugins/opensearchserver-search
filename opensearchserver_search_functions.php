@@ -25,7 +25,17 @@ function opensearchserver_getspellcheck($result) {
   if ($result == null)
     return null;
   $spell_field = get_option('oss_spell').'Exact';
-  return opensearchserver_getresult_instance($result)->getSpellSuggest($spell_field);
+  $suggestions = opensearchserver_getresult_instance($result)->getSpellSuggestions($spell_field);
+  $suggestionToReturn = array();
+  $maxFreq = 0;
+  foreach($suggestions as $suggestion) {
+  	$arraySuggestion = (array)$suggestion;
+  	if(!empty($arraySuggestion['@attributes']['freq']) && $arraySuggestion['@attributes']['freq'] > $maxFreq) {
+  		$maxFreq = $arraySuggestion['@attributes']['freq'];
+  		$suggestionToReturn = (string)$suggestion;
+  	}
+  }
+  return $suggestionToReturn;
 }
 
 function is_multiple_filter_enabled() {
@@ -155,7 +165,14 @@ function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
     }
     return $result;
   }
+}
 
+function opensearchserver_get_facet_value($facet_field, $value) {
+	$facets_values = get_option('oss_facets_values');
+	if(empty($facets_values[$facet_field])) {
+		return $value;
+	}
+	return (!empty($facets_values[$facet_field][(string)$value])) ? $facets_values[$facet_field][(string)$value] : $value;
 }
 
 function opensearchserver_clean_query($query) {
