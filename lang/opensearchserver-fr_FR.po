@@ -42,3 +42,31 @@ msgstr "Essayez d'autres mots-clés."
 
 msgid "Try more general keywords."
 msgstr "Essayez des mots clés plus génériques."
+
+#  result info line: type, author, categories
+msgid "%1$s by %2$s in %3$s"
+msgstr "%1$s par %2$s, catégories : %3$s"
+
+#  result info line: type, author
+msgid "%1$s by %2$s"
+msgstr "%1$s par %2$s"
+
+#  result info line: type, categories
+msgid "%1$s in %2$s"
+msgstr "%1$s, catégories : %2$s"
+
+#  result info line: author, categories
+msgid "by %1$s in %2$s"
+msgstr "par %1$s, catégories : %2$s"
+
+#  result info line: type
+msgid "type: %1$s"
+msgstr "%1$s"
+
+#  result info line: author
+msgid "by %1$s"
+msgstr "par %1$s"
+
+#  result info line: categories
+msgid "categories: %1$s"
+msgstr "catégories : %1$s"

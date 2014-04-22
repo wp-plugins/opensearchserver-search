@@ -8,7 +8,7 @@ get_header(); ?>
     <div id="oss-search-form">
         <form method="get" id="oss-searchform" action=<?php print home_url('/');?> >
             <input type="text" value="<?php print get_search_query();?>" name="s"
-                id="oss-keyword" size="55"
+                id="oss-keyword" style="width:70%;"
                 onkeyup="return OpenSearchServer.autosuggest(event)"
                 autocomplete="off" /> 
             <input type="submit" id="oss-submit" value="<?php _e("Search", 'opensearchserver'); ?>" />
@@ -174,21 +174,38 @@ get_header(); ?>
             </div>
             <div class="oss-url">
                 <?php
-     if($url) {?>
-                <a href="<?php print $url;?>"><?php print $url;?> </a>
-                <?php }
+			     if($url) :
+			     ?>
+                    <a href="<?php print $url;?>"><?php print $url;?> </a>
+                <?php 
+        		endif;
                 if ($displayType || $displayUser || $displayCategory) {
                   print '<br/>';
                 }
-                if ($type && $displayType) {
-                  print $type;
-                }
-                if ($user && $displayUser) {
-                  print ' by '.$user;
-                }
-                if ($categories != null && $categories != '' && $displayCategory) {
-                  print ' in '.$categories;
-                }
+                print '<span class="oss-result-info">';
+                //type, user, categories
+        		if ( ($type && $displayType) && ($user && $displayUser) && ($categories != null && $categories != '' && $categories != 'Uncategorized' && $displayCategory)) {
+                  printf(__('%1$s by %2$s in %3$s', 'opensearchserver'), $type, $user, $categories);
+                //type and user
+        		} elseif ( ($type && $displayType) && ($user && $displayUser)) {
+                  printf(__('%1$s by %2$s', 'opensearchserver'), $type, $user);
+                //type and categories
+        		} elseif ( ($type && $displayType) && ($categories != null && $categories != '' && $categories != 'Uncategorized' && $displayCategory)) {
+                  printf(__('%1$s in %2$s', 'opensearchserver'), $type, $categories);
+                //user and categories
+        		} elseif ( ($user && $displayUser) && ($categories != null && $categories != '' && $categories != 'Uncategorized' && $displayCategory)) {
+                  printf(__('by %1$s in %2$s', 'opensearchserver'), $user, $categories);
+                //type only
+        		} elseif ( ($type && $displayType)) {
+                  printf(__('type: %1$s', 'opensearchserver'), $type);
+                //user only
+        		}  elseif ( ($user && $displayUser)) {
+                  printf(__('by %1$s', 'opensearchserver'), $user);
+                //categories only
+        		}   elseif ( ($categories != null && $categories != '' && $categories != 'Uncategorized' && $displayCategory)) {
+                  printf(__('categories: %1$s', 'opensearchserver'), $categories);
+        		} 
+        		print '</span>';
                 ?>
             </div>
         </div>

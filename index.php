@@ -2,7 +2,7 @@
 /**
  Plugin Name: OpenSearchServer
  Plugin URI: http://wordpress.org/extend/plugins/opensearchserver-search/
- Description: This Plugin will integrate OpenSearchServer as search engine for Wordpress.Go to <a href="plugins.php?page=opensearchserver-search/index.php">OpenSearchServer Settings</a> for OpenSearchServer Settings,
+ Description: This Plugin will integrate OpenSearchServer as search engine for Wordpress. Go to <a href="plugins.php?page=opensearchserver-search/index.php">OpenSearchServer Settings</a> for OpenSearchServer Settings,
  Author: Emmanuel Keller - Naveen.A.N
  Author URI: http://open-search-server.com
  Tested up to: 3.9
@@ -48,7 +48,6 @@ function opensearchserver_load_scripts_styles() {
 }
 
 function  opensearchserver_search() {
-
   if (stripos($_SERVER['REQUEST_URI'], '/?s=') === FALSE && stripos($_SERVER['REQUEST_URI'], '/search/') === FALSE)	{
     return;
   }
@@ -90,6 +89,13 @@ function opensearchserver_install($networkwide) {
 function opensearchserver_install_one_site() {
 	update_option('oss_clean_query_enable', 1);	
 	update_option('oss_query', opensearchserver_default_query());
+	update_option('oss_index_types_post', 1);
+	update_option('oss_index_types_page', 1);
+	update_option('oss_spell', 'title');
+	update_option('oss_spell_algo', 'JaroWinklerDistance');
+	update_option('oss_display_user', 1);
+	update_option('oss_display_type', 1);
+	update_option('oss_facet_display_count', 1);
 }
 
 function opensearchserver_uninstall($networkwide) {
@@ -121,6 +127,7 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_facet');
   delete_option('oss_facets_labels');
   delete_option('oss_facets_values');
+  delete_option('oss_facet_display_count');
   delete_option('oss_spell');
   delete_option('oss_spell_algo');
   delete_option('oss_phonetic');

@@ -781,7 +781,7 @@ function opensearchserver_admin_page() {
 									endforeach;
 									?>
 								</select>
-								<label for="oss_custom_facet">or write a fieldname of an existing field of the schema: </label>
+								<label for="oss_custom_facet">or write the name of an existing field of the schema: </label>
 								<input type="text" name="oss_custom_facet" id="oss_custom_facet" placeholder="fieldname" size="20" /> 
 								<input type="submit" name="opensearchserver_add" value="Add" class="button-secondary" /><br />
 							</p>
@@ -915,14 +915,14 @@ function opensearchserver_admin_page() {
                                      <label for="oss_phonetic">Enable phonetic</label>
 							</p>
 							<p>
-								Display:&nbsp;<input type="checkbox" name="oss_display_user"
+								Display:&nbsp;<input type="checkbox" name="oss_display_user" id="oss_display_user"
 									value="1"
 									<?php checked( 1 == get_option('oss_display_user')); ?> />&nbsp;<label
 									for="oss_display_user">user</label>&nbsp;&nbsp;<input
-									type="checkbox" name="oss_display_category" value="1"
+									type="checkbox" name="oss_display_category"  id="oss_display_category" value="1"
 									<?php checked( 1 == get_option('oss_display_category')); ?> />&nbsp;<label
 									for="oss_display_category">category</label>&nbsp;&nbsp;<input
-									type="checkbox" name="oss_display_type" value="1"
+									type="checkbox" name="oss_display_type" id="oss_display_type" value="1"
 									<?php checked( 1 == get_option('oss_display_type')); ?> />&nbsp;<label
 									for="oss_display_type">type</label>
 							</p>
