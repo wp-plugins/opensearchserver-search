@@ -790,17 +790,18 @@ function opensearchserver_admin_page() {
 							if($facets):?>
 							<table class="widefat" style="width: 100% !important; min-width:600px;">
 								<thead>
-									<tr>
-										<th>Facet field list</th>
-                                        <th width="60%;">Custom label and values</th>
-										<th>Delete facet</th>
-									</tr>
                                     <tr>
                                         <th colspan="3">
                                             <span class="help">
                                             <strong>Custom label: </strong>Choose another name for this facet that will be displayed on the results page.
                                             <br/><strong>Custom values: </strong>Write one replacement by line, with this format: &lt;original value&gt;|&lt;value to display&gt;. For example "2014-02|February 2014" would replace "2014-02" by "February 2014" when displaying..</span>
                                         </th>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <th>Facet field list</th>
+                                        <th width="60%;">Custom label and values</th>
+                                        <th>Delete facet</th>
                                     </tr>
 								</thead>
 								<tbody>
@@ -812,9 +813,9 @@ function opensearchserver_admin_page() {
 										<td><?php  if($fields[$facet]) { print $fields[$facet]; } else { print $facet; } ?></td>
 										<td>
 	                                        <input type="text" name="oss_facet_edit_labels[<?php echo $facet?>]" placeholder="Custom label" value="<?php if(!empty($facets_labels[$facet])) { echo $facets_labels[$facet]; }?>"  style="min-width:240px;"/>
-                                            <em><a href="#" onclick="jQuery('#oss_facet_edit_values_wrapper_<?php echo $facet?>').fadeIn(); jQuery(this).toggle(); return false;">Edit custom values.</a></em>
+                                            <em>&nbsp;&nbsp;<a href="#" onclick="jQuery('#oss_facet_edit_values_wrapper_<?php echo $facet?>').fadeIn(); jQuery(this).toggle(); return false;">Edit custom values</a></em>
                                             <div style="display:none;" id="oss_facet_edit_values_wrapper_<?php echo $facet?>">
-                                                <label for="oss_facet_edit_values[<?php echo $facet?>]">Custom values:</label>
+                                                <label for="oss_facet_edit_values[<?php echo $facet?>]">Custom values:</label><br/>
                                                 <textarea name="oss_facet_edit_values[<?php echo $facet?>]" id="oss_facet_edit_values[<?php echo $facet?>]" cols="50" rows="4"><?php print implode("\n", opensearchserver_get_facet_values_string($facet)); ?></textarea> 
                                             </div>
                                         </td>
