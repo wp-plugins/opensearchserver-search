@@ -6,7 +6,7 @@
  Author: Emmanuel Keller - Naveen.A.N
  Author URI: http://open-search-server.com
  Tested up to: 3.9
- Version: 1.3.2
+ Version: 1.3.3
  */
 require_once 'lib/oss_api.class.php';
 require_once 'lib/oss_misc.lib.php';
