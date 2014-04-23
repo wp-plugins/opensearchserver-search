@@ -600,7 +600,7 @@ function opensearchserver_admin_set_query_settings() {
 	update_option('oss_clean_query_enable', $oss_clean_query_enable);
 	
 	//some options needs to post changes to OSS
-	if(isset($_POST['oss_query_settings_post_to_oss']) && $_POST['oss_query_settings_post_to_oss'] == 1) {
+	if(!opensearchserver_is_query_settings_not_automatic() || (isset($_POST['oss_query_settings_post_to_oss']) && $_POST['oss_query_settings_post_to_oss'] == 1)) {
 		$custom_fields = get_option('oss_custom_field');	
 		opensearchserver_query_template($custom_fields);
 	}
@@ -962,11 +962,13 @@ function opensearchserver_admin_page() {
                             </fieldset>
 							<p>
 								<input type="hidden" name="oss_submit" value="query_settings" />
-                                <div id="oss_query_settings_post_to_oss_wrapper">
-	                               <input type="checkbox" name="oss_query_settings_post_to_oss" id="oss_query_settings_post_to_oss" value="1" <?php checked(!opensearchserver_is_search_only()); ?> />&nbsp;
-	                               <label for="oss_query_settings_post_to_oss">Post query settings to OpenSearchServer instance.</label>
-	                               <br/><span class="help">If not checked, settings will only be saved localy.</span>
-                                </div>
+                                <?php if(opensearchserver_is_query_settings_not_automatic()): ?>
+                                    <div id="oss_query_settings_post_to_oss_wrapper">
+	                                   <input type="checkbox" name="oss_query_settings_post_to_oss" id="oss_query_settings_post_to_oss" value="1" <?php checked(!opensearchserver_is_search_only()); ?> />&nbsp;
+	                                   <label for="oss_query_settings_post_to_oss">Post query settings to OpenSearchServer instance.</label>
+	                                   <br/><span class="help">If not checked, settings will only be saved localy.</span>
+                                    </div>
+                                <?php endif; ?>
                                 <input type="submit" name="opensearchserver_submit" value="Update query settings" class="button-primary" />
 							</p>
 						</form>
@@ -1110,19 +1112,15 @@ function opensearchserver_admin_page() {
                                 <span class="help">In this mode, data is not sent from Wordpress to your OpenSearchServer instance. Plugin will be used
                                 for search page only. This mode can be used if data is indexed in another way (web crawler for example).</span>
                             </p>
-                            <?php 
-                            	if(!opensearchserver_is_search_only()) :
-                            ?>
                             <p>
                                 <input type="checkbox" value="1" name="oss_advanced_query_settings_not_automatic" id="oss_advanced_query_settings_not_automatic" <?php checked( 1 == get_option('oss_advanced_query_settings_not_automatic')); ?>/>
                                     <label for="oss_advanced_query_settings_not_automatic">Do not immediately post "Query Settings" to OpenSearchServer</label>
                                 <br/>
                                 <span class="help">If enabled, this option will display a checkbox at the bottom of "Query settings" section allowing to choose whether or not
                                 OpenSearchServer related settings (pattern, spell-check, ...) should be sent to your OpenSearchServer instance. <br/>If not checked, settings will only be
-                                saved localy. This may be useful if query is managed on OpenSearchServer's side Wordpress plugin should only be used to manage local options (like
+                                saved localy. This may be useful if query is managed on OpenSearchServer's side, Wordpress plugin should only be used to manage local options (like
                                 labels and custom values for facets, type of information to display for each document on the results page, etc.).</span>
                             </p>
-                            <?php endif; ?>
                             <p>
                                 <input type="hidden" name="oss_submit" value="opensearchserver_advanced_settings" /> 
                                 <input type="submit" name="opensearchserver_submit" value="Save advanced settings" class="button-primary" />
