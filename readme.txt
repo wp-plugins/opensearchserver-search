@@ -10,16 +10,18 @@ The OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full
 
 == Description ==
 
+= OpenSearchServer plugin =
+
 The OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full-text search on WordPress-based websites.
 OpenSearchServer is an high-performance search engine which includes spell-check, facet, filter, phonetic search, auto-completion.
-This plugin replaces automatically the WordPress's built-in search functionnality.
+This plugin automatically replaces WordPress built-in search functionnality.
 
-Key Features
+= Key Features =
 
- * Full-text search with phonetic support,
- * Filter search results by Facet Field,
- * Automatic suggestion with autocompletion,
- * Spellcheking with automatic substitution,
+ * **Full-text search with phonetic support**,
+ * Filter search results by **facets**,
+ * Automatic suggestion with **autocompletion**,
+ * **Spellcheking** with automatic substitution,
  * Automatically index an post when you publish an post,
  * Search through posts and pages,
  * Easy to set up with just filling a form.
@@ -51,36 +53,40 @@ Two ways to get an OpenSearchServer instance:
 
 == Frequently Asked Questions ==
 
-Q: What is OpenSearchServer?
+= What is OpenSearchServer? =
 
-A: Open Search Server is a search engine software developed under the GPL v3 open source licence. Read more on http://www.open-search-server.com
+Open Search Server is a search engine software developed under the GPL v3 open source licence. Read more on http://www.open-search-server.com
 
-Q: How to update the search index?
+= How to update the search index? =
 
-A: Using the Reindex-Site button in the OpenSearchServer Settings page. While posting a page or a post OpenSearchServer plugin automatically indexes the 
-   post or page
+Using the Reindex-Site button in the OpenSearchServer Settings page. While posting a page or a post OpenSearchServer plugin automatically indexes the post or page
    
-Q: When I click Create-index/Save button or reindex button I got an exception saying "Bad credential" 
+= When I click Create-index/Save button or reindex button I got an exception saying "Bad credential" = 
 
-A: Check that the credentials used in the plugin page is correct against the ones created in OpenSearchServer instance, under the privilages tab.
+Check that the credentials used in the plugin page is correct against the ones created in OpenSearchServer instance, under the privilages tab.
 
-Q: I get an error when I install opensearchserver "Fatal error: OSS_API won't work without curl extension in "opensearchserver-search\OSS_API.class.php" on line 23"
+= I get an error when I install opensearchserver "Fatal error: OSS_API won't work without curl extension in "opensearchserver-search\OSS_API.class.php" on line 23" =
 
-A: Check that CURL extension for PHP is enabled on your server, else install it.
+Check that CURL extension for PHP is enabled on your server, else install it.
  
-Q: How to customize/style the search page.
+= How to customize/style the search page? =
 
-A: Copy the file opensearchserver_search.php from the directory wp-content/plugins/opensearchserver-search to your current theme folder (wp-content/themes/twentyfourteen).
-   Customize the layout as per your needs.
+Copy the file opensearchserver_search.php from the directory wp-content/plugins/opensearchserver-search to your current theme folder (wp-content/themes/twentyfourteen). 
+Customize the layout as per your needs.
    
-Q: Will this plugin work with a multisites installation?
+= Will this plugin work with a multisites installation? =
 
-A: Yes, this plugin supports multisites installation.
+Yes, this plugin supports multisites installation.
+
+= I already manage my OpenSearchServer index in another way (web crawler). Can I use this plugin to plug my Wordress search page to my existing index?
+
+Yes you can: enable the "Search only" mode to switch off sending of data (new posts and pages) from Wordpress to OpenSearchServer.
 
 == Screenshots ==
 
 1. The admin page.
 2. An example of search result.
+
 == Changelog ==
 
 = 1.3.2 =
@@ -90,7 +96,6 @@ A: Yes, this plugin supports multisites installation.
 = 1.3.1 =
 * Multiple fixes.
 * Add support for multisites installation
-
 
 = 1.3 =
 * Improved admin page

@@ -234,7 +234,7 @@ function opensearchserver_reindex_site($id,$type, $from = 0, $to = 0) {
 }
 
 function opensearchserver_delete_document($query) {
-  return opensearchserver_getdelete_instance()->delete($query);
+	return opensearchserver_getdelete_instance()->delete($query);
 }
 
 function opensearchserver_start_indexing($index) {
@@ -600,10 +600,19 @@ function opensearchserver_admin_set_query_settings() {
 	update_option('oss_clean_query_enable', $oss_clean_query_enable);
 	
 	//some options needs to post changes to OSS
-	$custom_fields = get_option('oss_custom_field');	
-	opensearchserver_query_template($custom_fields);
+	if(isset($_POST['oss_query_settings_post_to_oss']) && $_POST['oss_query_settings_post_to_oss'] == 1) {
+		$custom_fields = get_option('oss_custom_field');	
+		opensearchserver_query_template($custom_fields);
+	}
 	
     opensearchserver_display_messages('OpenSearchServer Query Settings has been updated.');
+}
+
+function opensearchserver_admin_set_advanced_settings() {
+    $oss_advanced_search_only = isset($_POST['oss_advanced_search_only']) ? $_POST['oss_advanced_search_only'] : NULL;
+    update_option('oss_advanced_search_only', $oss_advanced_search_only);
+    $oss_advanced_query_settings_not_automatic = isset($_POST['oss_advanced_query_settings_not_automatic']) ? $_POST['oss_advanced_query_settings_not_automatic'] : NULL;
+    update_option('oss_advanced_query_settings_not_automatic', $oss_advanced_query_settings_not_automatic);
 }
 
 function opensearchserver_admin_set_index_settings() {
@@ -622,6 +631,16 @@ function opensearchserver_admin_set_index_settings() {
   $oss_enable_translation_wpml = isset($_POST['oss_enable_translation_wpml']) ? $_POST['oss_enable_translation_wpml'] : NULL;
   update_option('oss_enable_translation_wpml', $oss_enable_translation_wpml);
     
+}
+
+function opensearchserver_is_search_only() {
+	$search_only = get_option('oss_advanced_search_only', null);
+	return ($search_only == 1);
+}
+
+function opensearchserver_is_query_settings_not_automatic() {
+	$oss_advanced_query_settings_not_automatic = get_option('oss_advanced_query_settings_not_automatic', null);
+	return ($oss_advanced_query_settings_not_automatic == 1);
 }
 
 function opensearchserver_admin_set_custom_fields_settings() {
@@ -677,21 +696,20 @@ function opensearchserver_admin_page() {
   $action = isset($_POST['oss_submit']) ? $_POST['oss_submit'] :NULL;
   if ($action == 'settings') {
     opensearchserver_admin_set_instance_settings();
-  } else if ($action == 'query_settings') {
+  } elseif ($action == 'query_settings') {
     opensearchserver_admin_set_query_settings();
-  } else if ($action == 'index_settings') {
+  } elseif ($action == 'index_settings') {
     opensearchserver_admin_set_index_settings();
-  }else  if ($action == 'custom_field_settings') {
+  } elseif ($action == 'custom_field_settings') {
     opensearchserver_admin_set_custom_fields_settings();
-  } if ($action == 'opensearchserver_reindex') {
+  } elseif ($action == 'opensearchserver_reindex') {
     opensearchserver_admin_set_reindex();
+  } elseif ($action == 'opensearchserver_advanced_settings') {
+  	opensearchserver_admin_set_advanced_settings();
   }
   ?>
 <div class="wrap">
-	<?php screen_icon( 'options-general' ); ?>
-	<h2>
-		<?php print 'OpenSearchServer'; ?>
-	</h2>
+	<h2>OpenSearchServer</h2>
 	<div class="postbox-container" id="opensearchserver_admin" style="width: 100%">
 		<div class="metabox-holder">
 			<div class="meta-box-sortables">
@@ -794,7 +812,8 @@ function opensearchserver_admin_page() {
                                         <th colspan="3">
                                             <span class="help">
                                             <strong>Custom label: </strong>Choose another name for this facet that will be displayed on the results page.
-                                            <br/><strong>Custom values: </strong>Write one replacement by line, with this format: &lt;original value&gt;|&lt;value to display&gt;. For example "2014-02|February 2014" would replace "2014-02" by "February 2014" when displaying..</span>
+                                            <br/><strong>Custom values: </strong>Write one replacement by line, with this format: &lt;original value&gt;|&lt;value to display&gt;. 
+                                            For example "2014-02|February 2014" would replace "2014-02" by "February 2014" when displaying and "post|Blog post" would replace "post" by "Blog post".</span>
                                         </th>
                                     </tr>
                                     
@@ -825,7 +844,7 @@ function opensearchserver_admin_page() {
 									</tr>
 									<?php 
 										endif;
-										endforeach;
+									endforeach;
 									?>
 								</tbody>
 							</table>
@@ -916,16 +935,13 @@ function opensearchserver_admin_page() {
                                      <label for="oss_phonetic">Enable phonetic</label>
 							</p>
 							<p>
-								Display:&nbsp;<input type="checkbox" name="oss_display_user" id="oss_display_user"
-									value="1"
-									<?php checked( 1 == get_option('oss_display_user')); ?> />&nbsp;<label
-									for="oss_display_user">user</label>&nbsp;&nbsp;<input
-									type="checkbox" name="oss_display_category"  id="oss_display_category" value="1"
-									<?php checked( 1 == get_option('oss_display_category')); ?> />&nbsp;<label
-									for="oss_display_category">category</label>&nbsp;&nbsp;<input
-									type="checkbox" name="oss_display_type" id="oss_display_type" value="1"
-									<?php checked( 1 == get_option('oss_display_type')); ?> />&nbsp;<label
-									for="oss_display_type">type</label>
+								Display:&nbsp;
+                                    <input type="checkbox" name="oss_display_user" id="oss_display_user" value="1" <?php checked( 1 == get_option('oss_display_user')); ?> />
+                                    <label for="oss_display_user">user</label>&nbsp;&nbsp;
+                                    <input type="checkbox" name="oss_display_category"  id="oss_display_category" value="1" <?php checked( 1 == get_option('oss_display_category')); ?> />&nbsp;
+                                    <label for="oss_display_category">category</label>&nbsp;&nbsp;
+                                    <input type="checkbox" name="oss_display_type" id="oss_display_type" value="1" <?php checked( 1 == get_option('oss_display_type')); ?> />&nbsp;
+                                    <label for="oss_display_type">type</label>
 							</p>
                             </fieldset>
 							<fieldset><legend>Clean query</legend>
@@ -938,20 +954,27 @@ function opensearchserver_admin_page() {
                                 <p>
                                     <label for="oss_clean_query">
 										Special characters to remove <span class="help">(separated by space)</span> :
-									</label> <br /> <input type="text" name="oss_clean_query"
-										id="oss_clean_query" placeholder="# $ ! @"
-										size="50" value="<?php print htmlspecialchars(stripslashes(get_option('oss_clean_query')));?>" />
-                                        <br/><span class="help">If escaping is enabled and no special characters is written here it will default to: \\ ^ ~ ( ) { } [ ] & || ! * ? 039; ' #</span>
+									</label> 
+                                    <br/><input type="text" name="oss_clean_query" id="oss_clean_query" placeholder="# $ ! @" size="50" value="<?php print htmlspecialchars(stripslashes(get_option('oss_clean_query')));?>" />
+                                    <br/><span class="help">If escaping is enabled and no special characters is written here it will default to: \\ ^ ~ ( ) { } [ ] & || ! * ? 039; ' #</span>
     							</p>
                             </fieldset>
 							<p>
 								<input type="hidden" name="oss_submit" value="query_settings" />
-								<input type="submit" name="opensearchserver_submit"
-									value="Update Query Settings" class="button-primary" />
+                                <div id="oss_query_settings_post_to_oss_wrapper">
+	                               <input type="checkbox" name="oss_query_settings_post_to_oss" id="oss_query_settings_post_to_oss" value="1" <?php checked(!opensearchserver_is_search_only()); ?> />&nbsp;
+	                               <label for="oss_query_settings_post_to_oss">Post query settings to OpenSearchServer instance.</label>
+	                               <br/><span class="help">If not checked, settings will only be saved localy.</span>
+                                </div>
+                                <input type="submit" name="opensearchserver_submit" value="Update query settings" class="button-primary" />
 							</p>
 						</form>
 					</div>
 				</div>
+                
+				<?php 
+                if(!opensearchserver_is_search_only()) :
+                ?>                
 				<div class="postbox" id="third">
 					<div class="handlediv" title="Click to toggle">
 						<br />
@@ -1001,6 +1024,9 @@ function opensearchserver_admin_page() {
 						</form>
 					</div>
 				</div>
+                <?php 
+                endif;
+                ?>
 				<div class="postbox closed" id="fourth">
 					<div class="handlediv" title="Click to toggle">
 						<br />
@@ -1031,6 +1057,10 @@ function opensearchserver_admin_page() {
 					</div>
 
 				</div>
+                
+				<?php 
+                if(!opensearchserver_is_search_only()) :
+                ?>
 				<div class="postbox" id="fifth">
 					<div class="handlediv" title="Click to toggle">
 						<br />
@@ -1060,6 +1090,45 @@ function opensearchserver_admin_page() {
 						</form>
 					</div>
 				</div>
+                <?php 
+                endif;
+                ?>
+                <div class="postbox <?php if(!opensearchserver_is_search_only()) {print "closed";} ?>" id="sixth">
+                    <div class="handlediv" title="Click to toggle">
+                        <br />
+                    </div>
+                    <h3 class="hndle">
+                        <span>Advanced settings </span>
+                    </h3>
+                    <div class="inside">
+                        <form id="advanced_settings" name="advanced_settings" method="post" action="">
+                            <p>
+                                <input type="checkbox" value="1" name="oss_advanced_search_only" id="oss_advanced_search_only" <?php checked( 1 == get_option('oss_advanced_search_only')); ?>/>
+                                    <label for="oss_advanced_search_only"><em>Search only</em> mode</label>
+                                <br/>
+                                <span class="help">In this mode, data is not sent from Wordpress to your OpenSearchServer instance. Plugin will be used
+                                for search page only. This mode can be used if data is indexed in another way (web crawler for example).</span>
+                            </p>
+                            <?php 
+                            	if(!opensearchserver_is_search_only()) :
+                            ?>
+                            <p>
+                                <input type="checkbox" value="1" name="oss_advanced_query_settings_not_automatic" id="oss_advanced_query_settings_not_automatic" <?php checked( 1 == get_option('oss_advanced_query_settings_not_automatic')); ?>/>
+                                    <label for="oss_advanced_query_settings_not_automatic">Do not immediately post "Query Settings" to OpenSearchServer</label>
+                                <br/>
+                                <span class="help">If enabled, this option will display a checkbox at the bottom of "Query settings" section allowing to choose whether or not
+                                OpenSearchServer related settings (pattern, spell-check, ...) should be sent to your OpenSearchServer instance. <br/>If not checked, settings will only be
+                                saved localy. This may be useful if query is managed on OpenSearchServer's side Wordpress plugin should only be used to manage local options (like
+                                labels and custom values for facets, type of information to display for each document on the results page, etc.).</span>
+                            </p>
+                            <?php endif; ?>
+                            <p>
+                                <input type="hidden" name="oss_submit" value="opensearchserver_advanced_settings" /> 
+                                <input type="submit" name="opensearchserver_submit" value="Save advanced settings" class="button-primary" />
+                            </p>
+                        </form>
+                    </div>
+                </div>
 			</div>
 		</div>
 	</div>

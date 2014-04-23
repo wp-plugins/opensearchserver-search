@@ -148,6 +148,8 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_index_to');
   delete_option('oss_custom_field');
   delete_option('oss_enable_translation_wpml');
+  delete_option('oss_advanced_query_settings_not_automatic');
+  delete_option('oss_advanced_search_only');
 }
 
 // Add settings link on plugin page
@@ -161,6 +163,9 @@ add_filter("plugin_action_links_$plugin", 'opensearchserver_settings_link');
 
 
 function opensearchserver_do_while_posting($post_id,$post) {
+  if(opensearchserver_is_search_only()) {
+    return;
+  }
   if ($post->post_type == 'post' || $post->post_type == 'page'
     && $post->post_status == 'publish') {
     opensearchserver_reindex_site($post->ID,$post->post_type);
