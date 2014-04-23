@@ -766,14 +766,15 @@ function opensearchserver_admin_page() {
 						<span>Query settings </span>
 					</h3>
 					<div class="inside">
-                    <p>Enter the template query, or leave empty to use the default one</p>
+                    
                         
                         <form id="query_settings" name="query_settings" method="post"
 							action="">
                             <fieldset><legend>Query template</legend>
                             
-							<p>
-								<label for="oss_query">OpenSearchServer query template</label>:<br />
+							
+                            <p>Enter the template query, or leave empty to use the default one</p>
+							<p>	<label for="oss_query">OpenSearchServer query template</label>:<br />
 								<textarea rows="7" cols="80" name="oss_query" wrap="off"><?php
 									if (trim(get_option('oss_query'))) {
                                     print stripslashes(get_option('oss_query'));
