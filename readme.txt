@@ -3,7 +3,7 @@ Contributors: ekeller,naveenann
 Tags: search,search engine,opensearchserver, full-text, phonetic, filter, facet, indexation, auto-completion
 Requires at least: 3.0.1
 Tested up to: 3.9
-Stable tag: 1.3.2
+Stable tag: 1.3.3
 License: GPLv2 or later
 
 The OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full-text search on WordPress-based websites.
@@ -88,6 +88,11 @@ Yes you can: enable the "Search only" mode to switch off sending of data (new po
 2. An example of search result.
 
 == Changelog ==
+
+= 1.3.3 =
+* Search only mode 
+* Settings can be saved locally
+* Custom label and values for Year and Month filter
 
 = 1.3.2 =
 * Search results can be filtered by year and month.
