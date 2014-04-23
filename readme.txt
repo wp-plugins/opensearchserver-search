@@ -78,7 +78,7 @@ Customize the layout as per your needs.
 
 Yes, this plugin supports multisites installation.
 
-= I already manage my OpenSearchServer index in another way (web crawler). Can I use this plugin to plug my Wordress search page to my existing index?
+= I already manage my OpenSearchServer index in another way (web crawler). Can I use this plugin to plug my Wordress search page to my existing index? =
 
 Yes you can: enable the "Search only" mode to switch off sending of data (new posts and pages) from Wordpress to OpenSearchServer.
 
