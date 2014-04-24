@@ -133,6 +133,7 @@ function opensearchserver_query_template($custom_fields) {
   $query_template->setReturnField('search','user_email');
   $query_template->setReturnField('search','categories');
   $query_template->setReturnField('search','tags');
+  $query_template->setReturnField('search','timestamp');
   if (isset($custom_fields) && $custom_fields != null) {
     $custom_fields_array = explode(',', $custom_fields);
     foreach ($custom_fields_array as $field) {
@@ -447,7 +448,7 @@ function opensearchserver_admin_set_instance_settings() {
   update_option('oss_indexname', $oss_indexname);
   update_option('oss_login', $oss_login);
   update_option('oss_key', $oss_key);
-  opensearchserver_display_messages('OpenSearchServer Instance Settings has been updated');
+  opensearchserver_display_messages('OpenSearchServer Instance Settings have been updated');
 }
 function opensearchserver_update_facet_settings($facet_field) {
   if($facet_field != 'none' || $facet_field != NULL) {
@@ -594,6 +595,8 @@ function opensearchserver_admin_set_query_settings() {
     update_option('oss_display_category', $oss_display_category);
     $oss_display_type = isset($_POST['oss_display_type']) ? $_POST['oss_display_type'] : NULL;
     update_option('oss_display_type', $oss_display_type);
+    $oss_display_date = isset($_POST['oss_display_date']) ? $_POST['oss_display_date'] : NULL;
+    update_option('oss_display_date', $oss_display_date);
 	$oss_sort_timestamp = isset($_POST['oss_sort_timestamp']) ? $_POST['oss_sort_timestamp'] : NULL;
     update_option('oss_sort_timestamp', $oss_sort_timestamp);
     $oss_clean_query = isset($_POST['oss_clean_query']) ? $_POST['oss_clean_query'] : NULL;
@@ -607,7 +610,7 @@ function opensearchserver_admin_set_query_settings() {
 		opensearchserver_query_template($custom_fields);
 	}
 	
-    opensearchserver_display_messages('OpenSearchServer Query Settings has been updated.');
+    opensearchserver_display_messages('OpenSearchServer Query Settings have been updated.');
 }
 
 function opensearchserver_admin_set_advanced_settings() {
@@ -615,6 +618,8 @@ function opensearchserver_admin_set_advanced_settings() {
     update_option('oss_advanced_search_only', $oss_advanced_search_only);
     $oss_advanced_query_settings_not_automatic = isset($_POST['oss_advanced_query_settings_not_automatic']) ? $_POST['oss_advanced_query_settings_not_automatic'] : NULL;
     update_option('oss_advanced_query_settings_not_automatic', $oss_advanced_query_settings_not_automatic);
+
+    opensearchserver_display_messages('OpenSearchServer advanced settings have been updated.');
 }
 
 function opensearchserver_admin_set_index_settings() {
@@ -624,7 +629,7 @@ function opensearchserver_admin_set_index_settings() {
       $post_form_type = (int)$_POST['oss_index_types_'.$post_type];
       update_option('oss_index_types_'.$post_type, $post_form_type);
     }
-    opensearchserver_display_messages('OpenSearchServer Index Settings has been updated.');
+    opensearchserver_display_messages('OpenSearchServer Index Settings have been updated.');
   } else {
     $is_index_created = opensearchserver_create_index();
     opensearchserver_display_messages('Index '.get_option('oss_indexname').' Created successfully');
@@ -648,7 +653,7 @@ function opensearchserver_is_query_settings_not_automatic() {
 function opensearchserver_admin_set_custom_fields_settings() {
   $oss_custom_field = isset($_POST['oss_custom_field']) ? $_POST['oss_custom_field'] :NULL;
   update_option('oss_custom_field', $oss_custom_field);
-  opensearchserver_display_messages('OpenSearchServer Custom Fields Settings has been updated.');
+  opensearchserver_display_messages('OpenSearchServer Custom Fields Settings have been updated.');
 }
 
 function opensearchserver_admin_set_reindex() {
@@ -943,13 +948,15 @@ function opensearchserver_admin_page() {
 							</p>
 							<p>
 								Display:&nbsp;
-                                    <input type="checkbox" name="oss_display_user" id="oss_display_user" value="1" <?php checked( 1 == get_option('oss_display_user')); ?> />
+                                    <input type="checkbox" name="oss_display_date" id="oss_display_date" value="1" <?php checked( 1 == get_option('oss_display_date')); ?> />&nbsp;
+                                    <label for="oss_display_date">date</label>
+                                    <input type="checkbox" name="oss_display_type" id="oss_display_type" value="1" <?php checked( 1 == get_option('oss_display_type')); ?> />&nbsp;
+                                    <label for="oss_display_type">type</label>
+                                   <input type="checkbox" name="oss_display_user" id="oss_display_user" value="1" <?php checked( 1 == get_option('oss_display_user')); ?> />
                                     <label for="oss_display_user">user</label>&nbsp;&nbsp;
                                     <input type="checkbox" name="oss_display_category"  id="oss_display_category" value="1" <?php checked( 1 == get_option('oss_display_category')); ?> />&nbsp;
                                     <label for="oss_display_category">category</label>&nbsp;&nbsp;
-                                    <input type="checkbox" name="oss_display_type" id="oss_display_type" value="1" <?php checked( 1 == get_option('oss_display_type')); ?> />&nbsp;
-                                    <label for="oss_display_type">type</label>
-                                    <br/><span class="help">Choose what kind of information should be displayed below each result.</span>
+                                     <br/><span class="help">Choose what kind of information should be displayed below each result.</span>
 							</p>
                             <p>
                                 <input type="checkbox" name="oss_sort_timestamp" id="oss_sort_timestamp" value="1" <?php checked( 1 == get_option('oss_sort_timestamp')); ?> />&nbsp;

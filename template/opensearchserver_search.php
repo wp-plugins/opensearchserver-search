@@ -22,6 +22,7 @@ get_header(); ?>
     $displayUser = get_option('oss_display_user') == 1;
     $displayCategory = get_option('oss_display_category') == 1;
     $displayType = get_option('oss_display_type') == 1;
+    $displayDate = get_option('oss_display_date') == 1;
     $query_fq_parm = isset($_REQUEST['fq']) ? $_REQUEST['fq'] : null;
     $query = get_search_query();
     $oss_result = opensearchserver_getsearchresult($query, false, true);
@@ -153,7 +154,14 @@ get_header(); ?>
           $user_url = stripslashes($oss_results->getField($i, 'user_url', true));
           $type = stripslashes($oss_results->getField($i, 'type', true));
           $url = stripslashes($oss_results->getField($i, 'url', false));
-          $categories = stripslashes(implode(', ', (array)$oss_results->getField($i, 'categories', false, false, null, true)));
+          $date = stripslashes($oss_results->getField($i, 'timestamp', false));
+          $categoriesResults = $oss_results->getField($i, 'categories', false, false, null, true);
+          $categories = array();
+          foreach($categoriesResults as $cat) {
+          	$categories[] = (string)$cat;
+          }
+          $categories = implode(', ', $categories);
+          
           ?>
 
         <div class="oss-result">
@@ -186,10 +194,19 @@ get_header(); ?>
                     <a href="<?php print $url;?>"><?php print $url;?> </a>
                 <?php 
         		endif;
-                if ($displayType || $displayUser || $displayCategory) {
+                if ($displayDate || $displayType || $displayUser || $displayCategory) {
                   print '<br/>';
                 }
                 print '<span class="oss-result-info">';
+        		
+                if($displayDate) {
+					print '<span class="entry-date"><time datetime="'.$date.'">'.date(get_option('date_format'), strtotime($date)).'<time>';
+					if (($displayType && !empty($type)) || ($displayUser && !empty($user)) || ($displayCategory && !empty($categories))) {
+						print ', ';
+					}
+					print '</span>';
+        		}
+        		
                 //type, user, categories
         		if ( ($type && $displayType) && ($user && $displayUser) && ($categories != null && $categories != '' && $categories != 'Uncategorized' && $displayCategory)) {
                   printf(__('%1$s by %2$s in %3$s', 'opensearchserver'), $type, $user, $categories);
@@ -212,6 +229,7 @@ get_header(); ?>
         		}   elseif ( ($categories != null && $categories != '' && $categories != 'Uncategorized' && $displayCategory)) {
                   printf(__('categories: %1$s', 'opensearchserver'), $categories);
         		} 
+        		
         		print '</span>';
                 ?>
             </div>

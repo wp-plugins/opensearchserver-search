@@ -96,6 +96,8 @@ function opensearchserver_install_one_site() {
 	update_option('oss_display_user', 1);
 	update_option('oss_display_type', 1);
 	update_option('oss_facet_display_count', 1);
+	update_option('oss_facet_behavior','no_separate_query');
+	update_option('oss_multi_filter',1);
 }
 
 function opensearchserver_uninstall($networkwide) {
@@ -139,6 +141,7 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_display_user');
   delete_option('oss_display_category');
   delete_option('oss_display_type');
+  delete_option('oss_display_date');
   delete_option('oss_index_types_post');
   delete_option('oss_index_types_page');
   delete_option('oss_index_types_attachment');
@@ -150,6 +153,7 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_enable_translation_wpml');
   delete_option('oss_advanced_query_settings_not_automatic');
   delete_option('oss_advanced_search_only');
+  delete_option('oss_sort_timestamp');
 }
 
 function add_query_vars_filter( $vars ){
