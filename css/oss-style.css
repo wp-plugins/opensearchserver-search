@@ -67,8 +67,12 @@
 }
 .oss-result {
 	margin-top: 15px;
+	border-bottom:1px solid #efefef;
+	padding-bottom:15px;
 }
-
+.oss-result:last-child {
+    border:none;
+}
 .oss-bold { 
 	font-weight:bold;
 }

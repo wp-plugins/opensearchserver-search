@@ -90,9 +90,9 @@ Yes you can: enable the "Search only" mode to switch off sending of data (new po
 == Changelog ==
 
 = 1.3.3 =
-* Search only mode 
-* Settings can be saved locally
-* Custom label and values for Year and Month filter
+* Add search only mode 
+* Add option to send query settings to OSS or save them locally
+* Custom label and values for facets
 
 = 1.3.2 =
 * Search results can be filtered by year and month.

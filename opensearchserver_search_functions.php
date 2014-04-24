@@ -95,6 +95,7 @@ function opensearchserver_getpaging($result) {
     return $pagingArray;
   }
 }
+/*
 function get_multiple_filter_parameter() {
   $parameters = urldecode($_SERVER['QUERY_STRING']);
   $filters = array();
@@ -140,6 +141,7 @@ function get_multiple_filter_parameter_string($current_key, $current_value) {
   }
   return $filters_string;
 }
+*/
 function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
   if($query) {
     $start = isset($_REQUEST['pa']) ? $_REQUEST['pa'] : NULL;
@@ -149,17 +151,20 @@ function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
     if(!$spellcheck) {
       opensearchserver_add_facets_search($search);
       if($facet) {
-        $filters = get_multiple_filter_parameter();
-        if(count($filters)>0) {
-          foreach ($filters as $filter){
-            if($filter != 'All') {
-              $filter_split = explode(':', $filter);
-              $search->filter($filter_split[0]. ':"' .$filter_split[1]. '"');
-            }
-          }
-        }
+      	$facets = opensearchserver_get_active_facets();
+      	foreach($facets as $field => $value) {
+			$search->filter($field .':"' .$value. '"');
+      	}
       }
-      $result = $search->query($query)->template('search')->execute();
+      $oss_query = $search->query($query)->template('search');
+      if(get_query_var('sort')) {
+      	if(get_query_var('sort') == '+date') {
+      		$oss_query->sort('+timestamp');
+      	} else {
+      		$oss_query->sort('-timestamp');
+      	}
+      }
+      return $oss_query->execute();
     }else {
       $result = $search->query($query)->template('spellcheck')->execute();
     }
@@ -212,4 +217,113 @@ function opensearchserver_get_max($oss_results) {
 function opensearchserver_get_custom_fields() {
   return explode(",",get_option('oss_custom_field'));
 }
+
+/**
+ * Build full URL to search and sort
+ * @param string $sort Sort
+ */
+function opensearchserver_build_sort_url($sort = null) {
+	$url = '/?s=' . urlencode(get_search_query()) ;
+	$facets = opensearchserver_get_active_facets();
+	if(!empty($facets)) {
+		$url .= '&'.http_build_query(array('f' => $facets));
+	}
+	if(!empty($sort)) {
+		$url .= '&sort='.urlencode($sort);
+	}
+	return $url;
+}
+
+/**
+ * 
+ * Build URL part related to facets for one facet (= one field and one value).
+ * Used when displaying each facet value.
+ * 
+ * Depending on whether multiple filters are allowed or not it will merge values or 
+ * directly return value.
+ * 
+ * @param string $facetField field
+ * @param string $facetName value
+ */
+function opensearchserver_get_facet_url($facetField, $facetValue) {
+	if(is_multiple_filter_enabled()) {
+		$facets = get_query_var('f',array());
+		$facets[$facetField] = $facetValue;
+	} else {
+		$facets = array($facetField => $facetValue);
+	}
+	return http_build_query(array('f' => $facets));
+	//TODO : return http_build_query(array('f' => opensearchserver_merge_facets($existingFacetsInUrl, $facetField, $facetValue)));
+}
+
+/**
+ * 
+ * Remove from URL part related to the given facet.
+ * Used to build the "All" link for each facet.
+ * 
+ * @param string $facetField field
+ */
+function opensearchserver_get_facet_url_without_one_facet($facetField) {
+	$facets = get_query_var('f',array());
+	if(!empty($facets[$facetField])) {
+		unset($facets[$facetField]);
+	}
+	return http_build_query(array('f' => $facets));
+}
+
+/**
+ * Return current facets from URL
+ */
+function opensearchserver_get_active_facets() {
+	return get_query_var('f',array());
+}
+
+/**
+ * Tell if one particular facet (one field and one value) is currently active (= is currently in URL)
+ * @param string $facetField field
+ * @param string $facetName value
+ */
+function opensearchserver_is_facet_active($facetField, $facetName) {
+	$facets = opensearchserver_get_active_facets();
+	return (!empty($facets) && !empty($facets[$facetField]) && $facets[$facetField] == $facetName);
+}
+
+/**
+ * Complete function to work with facets. Allow several values for one facet.
+ * @TODO: add options in BO to choose which facet should be allowed to have several values.
+ */
+/*
+function opensearchserver_merge_facets($existingFilters, $facetName, $facetValue)
+{
+  if(                                                               // if this facet value already exists, exits
+      !empty($existingFilters[$facetName])                                 
+      &&    
+      (
+        (                                       
+          is_array($existingFilters[$facetName])                    // there could be several filters set on the field
+          && in_array($facetValue, $existingFilters[$facetName])    // and the given value could already be among those
+        )
+        ||  $existingFilters[$facetName] == $facetValue             // or there could be only one filter for this field
+                                                                    // which could be the given one
+      )
+  ) {
+    return $existingFilters;    
+  }
+                                                                     // given value is not already among the filters, 
+                                                                     // it needs to be added
+  if(!empty($existingFilters[$facetName])) {
+    if(is_array($existingFilters[$facetName])) {                     //    if there is already several values for this
+      $existingFilters[$facetName][] = $facetValue;                  //    field then add the given value in the array
+    }
+    else {                                                           //    if there is already one value for this field   
+      $existingFilters[$facetName] =                                 //    transform it into an array and
+              array($existingFilters[$facetName], $facetValue);      //    add the given value
+    }
+  }
+  else {                                                             // otherwise if there is no value for this field yet
+    $existingFilters[$facetName] = $facetValue;                      // simply add it          
+  }
+  return $existingFilters;      
+}
+*/
 ?>

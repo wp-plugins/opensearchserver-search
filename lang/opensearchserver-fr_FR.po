@@ -70,3 +70,15 @@ msgstr "par %1$s"
 #  result info line: categories
 msgid "categories: %1$s"
 msgstr "catégories : %1$s"
+
+msgid "Sort results by: "
+msgstr "Trier par : "
+
+msgid "relevancy"
+msgstr "pertinence"
+
+msgid "date (desc)"
+msgstr "date descendante"
+
+msgid "date (asc)"
+msgstr "date ascendante"

@@ -594,7 +594,9 @@ function opensearchserver_admin_set_query_settings() {
     update_option('oss_display_category', $oss_display_category);
     $oss_display_type = isset($_POST['oss_display_type']) ? $_POST['oss_display_type'] : NULL;
     update_option('oss_display_type', $oss_display_type);
-	$oss_clean_query = isset($_POST['oss_clean_query']) ? $_POST['oss_clean_query'] : NULL;
+	$oss_sort_timestamp = isset($_POST['oss_sort_timestamp']) ? $_POST['oss_sort_timestamp'] : NULL;
+    update_option('oss_sort_timestamp', $oss_sort_timestamp);
+    $oss_clean_query = isset($_POST['oss_clean_query']) ? $_POST['oss_clean_query'] : NULL;
 	update_option('oss_clean_query', $oss_clean_query);
 	$oss_clean_query_enable = isset($_POST['oss_clean_query_enable']) ? $_POST['oss_clean_query_enable'] : NULL;
 	update_option('oss_clean_query_enable', $oss_clean_query_enable);
@@ -739,7 +741,7 @@ function opensearchserver_admin_page() {
 							<p>
 								<label for="opensearchserver_login">OpenSearchServer login name</label>:<br />
 								<input type="text" name="oss_login" id="oss_login"
-									placeholder="admin" size="30"
+									placeholder="admin" size="50"
 									value="<?php print get_option('oss_login');?>" /> <br />
 							</p>
 
@@ -865,10 +867,14 @@ function opensearchserver_admin_page() {
 									</option>
 									<?php }?>
 								</select>
+                                <br/><span class="help">"Separate query" will run another query to get every values for each facet. You may want to choose this option when not choosing "Enable multiple filter", otherwise this could lead to have two chosen filters excluding each others.
+                                <br/>"No separate query" will show facets' values only for document matching the current filtered search.
+                                </span>
 							</p>
 							<p>
 								<input type="checkbox" id="oss_multi_filter" name="oss_multi_filter" value="1" <?php checked( 1 == get_option('oss_multi_filter')); ?> />
                                 <label for="oss_multi_filter">Enable multiple filter</label>
+                                <br/><span class="help">If enabled will allow selection of several different filter at once. Search will then return documents having every asked values (it is a boolean AND).</span>
                                 <br/>
                                 <input type="checkbox" id="oss_facet_display_count" name="oss_facet_display_count" value="1" <?php checked( 1 == get_option('oss_facet_display_count')); ?> />
                                 <label for="oss_facet_display_count">Display number of results for each value</label>
@@ -943,7 +949,12 @@ function opensearchserver_admin_page() {
                                     <label for="oss_display_category">category</label>&nbsp;&nbsp;
                                     <input type="checkbox" name="oss_display_type" id="oss_display_type" value="1" <?php checked( 1 == get_option('oss_display_type')); ?> />&nbsp;
                                     <label for="oss_display_type">type</label>
+                                    <br/><span class="help">Choose what kind of information should be displayed below each result.</span>
 							</p>
+                            <p>
+                                <input type="checkbox" name="oss_sort_timestamp" id="oss_sort_timestamp" value="1" <?php checked( 1 == get_option('oss_sort_timestamp')); ?> />&nbsp;
+                                <label for="oss_sort_timestamp">Display link to sort results by date</label>
+                            </p>
                             </fieldset>
 							<fieldset><legend>Clean query</legend>
                                 <p>

@@ -152,6 +152,13 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_advanced_search_only');
 }
 
+function add_query_vars_filter( $vars ){
+  $vars[] = "sort";
+  $vars[] = "f";
+  return $vars;
+}
+
+
 // Add settings link on plugin page
 function opensearchserver_settings_link($links) { 
   $settings_link = '<a href="plugins.php?page=opensearchserver-search/index.php">Settings</a>'; 
@@ -188,4 +195,5 @@ add_action('save_post','opensearchserver_do_while_posting',10,2);
 add_action('wp_enqueue_scripts','opensearchserver_load_scripts_styles' );
 add_action('admin_menu', 'opensearchserver_admin_actions');
 add_action('template_redirect', 'opensearchserver_search');
+add_filter( 'query_vars', 'add_query_vars_filter' )
 ?>
