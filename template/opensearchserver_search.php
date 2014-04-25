@@ -69,7 +69,7 @@ get_header(); ?>
 		            }
 		            ?>
 	           </div>
-	           <ul class="oss-nav">
+	           <ul class="oss-nav <?php if (get_option('oss_display_use_radio_buttons')) { print 'oss-nav-radio'; }?>">
 		            <li class="oss-top-nav">
                         <a href="<?php print '?s='.urlencode($query).'&'.opensearchserver_get_facet_url_without_one_facet($facet);?>">
                         	<?php _e("All", 'opensearchserver'); ?>
@@ -80,17 +80,27 @@ get_header(); ?>
 		              foreach ($facet_results as $values) :
 		                $value = (string)$values['name'];
 		                $css_class = 'oss-link';
-		                $link = "?s=".$query.'&'. opensearchserver_get_facet_url($facet, $value)
+		                $link = "/?s=".$query.'&'. opensearchserver_get_facet_url($facet, $value)
 		                ?>
 			            <li>
 				            <?php 
-    							if (opensearchserver_is_facet_active($facet, $value)) {
-					              $css_class .= ' oss-bold';
-    							}
-				            ?> 
-			                <a class="<?php print $css_class;?>" href="<?php print $link; ?>">
-			                	<?php print opensearchserver_get_facet_value($facet, $value); ?><?php if(get_option('oss_facet_display_count', 0) == 1) { print ' <span class="oss-facet-number-docs">('.(string)$values.')</span>'; }?>
-				            </a>
+							if (opensearchserver_is_facet_active($facet, $value)) {
+								$css_class .= ' oss-bold';
+							}
+				            
+    						if (get_option('oss_display_use_radio_buttons')) :	
+    						?> 
+                                <input <?php if (opensearchserver_is_facet_active($facet, $value)) { print 'checked="checked"'; } ?> type="radio" id="<?php print urlencode($facet.'_'.$value); ?>"/>
+                                <label for=""<?php print urlencode($facet.'_'.$value); ?>">
+                                    <a class="opensearchserver_display_use_radio_buttons" href="<?php print $link; ?>">
+                                    	<?php print opensearchserver_get_facet_value($facet, $value); ?><?php if(get_option('oss_facet_display_count', 0) == 1) { print ' <span class="oss-facet-number-docs">('.(string)$values.')</span>'; }?>
+                                    </a>
+                                </label> 
+                            <?php else : ?>
+				                <a class="<?php print $css_class;?>" href="<?php print $link; ?>">
+				                	<?php print opensearchserver_get_facet_value($facet, $value); ?><?php if(get_option('oss_facet_display_count', 0) == 1) { print ' <span class="oss-facet-number-docs">('.(string)$values.')</span>'; }?>
+					            </a>
+                            <?php endif; ?>
 			            </li>
 		            <?php 
 		            	endforeach;
@@ -122,12 +132,14 @@ get_header(); ?>
         ?>
     <div id="oss-no-of-doc" class="oss-<?php echo $oss_results->getResultFound() ?>-results">
         <?php printf(__('%1$d documents found (in %2$s seconds).', 'opensearchserver'), $oss_results->getResultFound(), $oss_resultTime); ?>
-        <div id="oss-sort">
-            <span class="oss-sort-label"><?php _e('Sort results by: ', 'opensearchserver'); ?>
-            <a class="<?php if(!get_query_var('sort')) { print 'oss-bold'; } ?>" href="<?php print opensearchserver_build_sort_url(''); ?>"><?php _e('relevancy', 'opensearchserver'); ?></a> -
-            <a class="<?php if(get_query_var('sort') == '-date') { print 'oss-bold'; } ?>" href="<?php print opensearchserver_build_sort_url('-date'); ?>"><?php _e('date (desc)', 'opensearchserver'); ?></a> -
-            <a class="<?php if(get_query_var('sort') == '+date') { print 'oss-bold'; } ?>" href="<?php print opensearchserver_build_sort_url('+date'); ?>"><?php _e('date (asc)', 'opensearchserver'); ?></a>
-        </div>
+        <?php if(get_option('oss_sort_timestamp') == 1 ) :?>
+            <div id="oss-sort">
+	            <span class="oss-sort-label"><?php _e('Sort results by: ', 'opensearchserver'); ?>
+	            <a class="<?php if(!get_query_var('sort')) { print 'oss-bold'; } ?>" href="<?php print opensearchserver_build_sort_url(''); ?>"><?php _e('relevancy', 'opensearchserver'); ?></a> -
+	            <a class="<?php if(get_query_var('sort') == '-date') { print 'oss-bold'; } ?>" href="<?php print opensearchserver_build_sort_url('-date'); ?>"><?php _e('date (desc)', 'opensearchserver'); ?></a> -
+	            <a class="<?php if(get_query_var('sort') == '+date') { print 'oss-bold'; } ?>" href="<?php print opensearchserver_build_sort_url('+date'); ?>"><?php _e('date (asc)', 'opensearchserver'); ?></a>
+	        </div>
+        <?php endif;?>
         <div id="oss-did-you-mean">
             <?php 
             	if(isset($spellcheck_query)) { 

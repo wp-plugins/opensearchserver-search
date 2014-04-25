@@ -36,7 +36,7 @@ add_action('plugins_loaded', 'opensearchserver_init');
 
 function opensearchserver_load_scripts_styles() {
   global $wp_version;
-  wp_register_script( 'opensearchserver', plugins_url('opensearchserver-search') .'/js/opensearchserver.js' );
+  wp_register_script( 'opensearchserver', plugins_url('opensearchserver-search') .'/js/opensearchserver.js', array( 'jquery' ) );
   wp_enqueue_script( 'opensearchserver' );
   wp_register_style( 'opensearchserver-style', plugins_url('opensearchserver-search')  . '/css/oss-style.css');
   wp_enqueue_style('opensearchserver-style');
@@ -45,6 +45,7 @@ function opensearchserver_load_scripts_styles() {
   	wp_enqueue_style('opensearchserver-style-latest');
   }
   wp_enqueue_script( 'jQuery' );
+  
 }
 
 function  opensearchserver_search() {

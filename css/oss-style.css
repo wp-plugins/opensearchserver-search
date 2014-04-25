@@ -22,6 +22,14 @@
 	padding-left: 10px;
 }
 
+.oss-nav.oss-nav-radio {
+	margin-left:0;
+}
+.oss-nav.oss-nav-radio li { 
+	list-style-type:none; 
+	padding-left:0;
+}
+
 #oss-nav li a {
 	text-decoration: none;
 }

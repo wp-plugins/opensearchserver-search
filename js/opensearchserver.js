@@ -134,3 +134,10 @@ OpenSearchServer.setKeywords = function(value) {
 		dv.focus();
 	}
 };
+
+jQuery(function($) {
+	//facet with radio button, click on radio button must simulate click on link
+	$('.oss-nav-radio input[type=radio]').click(function(e) {
+		window.location.href = $(this).siblings('label').children('a').attr('href');
+	})
+});

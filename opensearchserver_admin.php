@@ -597,6 +597,8 @@ function opensearchserver_admin_set_query_settings() {
     update_option('oss_display_type', $oss_display_type);
     $oss_display_date = isset($_POST['oss_display_date']) ? $_POST['oss_display_date'] : NULL;
     update_option('oss_display_date', $oss_display_date);
+    $oss_display_use_radio_buttons = isset($_POST['oss_display_use_radio_buttons']) ? $_POST['oss_display_use_radio_buttons'] : NULL;
+    update_option('oss_display_use_radio_buttons', $oss_display_use_radio_buttons);
 	$oss_sort_timestamp = isset($_POST['oss_sort_timestamp']) ? $_POST['oss_sort_timestamp'] : NULL;
     update_option('oss_sort_timestamp', $oss_sort_timestamp);
     $oss_clean_query = isset($_POST['oss_clean_query']) ? $_POST['oss_clean_query'] : NULL;
@@ -883,7 +885,9 @@ function opensearchserver_admin_page() {
                                 <br/>
                                 <input type="checkbox" id="oss_facet_display_count" name="oss_facet_display_count" value="1" <?php checked( 1 == get_option('oss_facet_display_count')); ?> />
                                 <label for="oss_facet_display_count">Display number of results for each value</label>
-								
+                                <br/>
+                                <input type="checkbox" value="1" name="oss_display_use_radio_buttons" id="oss_display_use_radio_buttons" <?php checked( 1 == get_option('oss_display_use_radio_buttons')); ?>/>
+                                <label for="oss_display_use_radio_buttons">Use radio buttons instead of list bullets for facets</label>
 							</p>
                             </fieldset>
                             
@@ -984,7 +988,7 @@ function opensearchserver_admin_page() {
                                     <div id="oss_query_settings_post_to_oss_wrapper">
 	                                   <input type="checkbox" name="oss_query_settings_post_to_oss" id="oss_query_settings_post_to_oss" value="1" <?php checked(!opensearchserver_is_search_only()); ?> />&nbsp;
 	                                   <label for="oss_query_settings_post_to_oss">Post query settings to OpenSearchServer instance.</label>
-	                                   <br/><span class="help">If not checked, settings will only be saved localy.</span>
+	                                   <br/><span class="help">If not checked, settings will only be saved localy and nothing will be posted to OpenSearchServer instance. Useful for example to edit custom label of a facet.</span>
                                     </div>
                                 <?php endif; ?>
                                 <input type="submit" name="opensearchserver_submit" value="Update query settings" class="button-primary" />
