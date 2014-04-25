@@ -80,7 +80,7 @@ get_header(); ?>
 		              foreach ($facet_results as $values) :
 		                $value = (string)$values['name'];
 		                $css_class = 'oss-link';
-		                $link = "/?s=".$query.'&'. opensearchserver_get_facet_url($facet, $value)
+		                $link = "?s=".$query.'&'. opensearchserver_get_facet_url($facet, $value)
 		                ?>
 			            <li>
 				            <?php 
