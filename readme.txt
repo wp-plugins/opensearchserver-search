@@ -90,7 +90,8 @@ Yes you can: enable the "Search only" mode to switch off sending of data (new po
 == Changelog ==
 
 = 1.3.4 =
-* UI Enhancements  
+* UI Enhancements
+* Sort by date feature. 
 
 = 1.3.3 =
 * Add search only mode 

@@ -223,7 +223,7 @@ function opensearchserver_get_custom_fields() {
  * @param string $sort Sort
  */
 function opensearchserver_build_sort_url($sort = null) {
-	$url = '/?s=' . urlencode(get_search_query()) ;
+	$url = '?s=' . urlencode(get_search_query()) ;
 	$facets = opensearchserver_get_active_facets();
 	if(!empty($facets)) {
 		$url .= '&'.http_build_query(array('f' => $facets));
