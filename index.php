@@ -155,6 +155,8 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_advanced_query_settings_not_automatic');
   delete_option('oss_advanced_search_only');
   delete_option('oss_sort_timestamp');
+  delete_option('oss_log_enable');
+  delete_option('oss_log_ip');
 }
 
 function add_query_vars_filter( $vars ){

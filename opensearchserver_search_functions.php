@@ -164,6 +164,13 @@ function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
       		$oss_query->sort('-timestamp');
       	}
       }
+      
+      if(get_option('oss_log_enable')) {
+      	$oss_query->setLog(true);
+      	if(get_option('oss_log_ip')) {
+      		$oss_query->setCustomLog(1,$_SERVER['REMOTE_ADDR']);
+      	}
+      }
       return $oss_query->execute();
     }else {
       $result = $search->query($query)->template('spellcheck')->execute();

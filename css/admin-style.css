@@ -5,5 +5,7 @@
 #opensearchserver_admin a { color:grey; text-decoration:underline;  }
 #opensearchserver_admin a:hover { text-decoration:none; }
 #opensearchserver_admin table .help { font-size:0.9em;}
+#opensearchserver_admin table th { font-weight:bold; }
+#opensearchserver_admin table th .help { font-weight:normal; }
 #opensearchserver_admin table tbody td { border-bottom:1px solid #efefef; border-left:1px solid #efefef; }
 #opensearchserver_admin #oss_query_settings_post_to_oss_wrapper { border-top:1px solid #ececec; padding:10px 0 0 0; margin:5px 0 10px 0; }
