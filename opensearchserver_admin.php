@@ -79,8 +79,6 @@ function opensearchserver_create_schema($custom_fields) {
   opensearchserver_setField($schema,$schema_xml,'user_email',NULL,'yes','yes','yes','no','no');
   opensearchserver_setField($schema,$schema_xml,'user_url',NULL,'no','yes','yes','no','no');
   opensearchserver_setField($schema,$schema_xml,'allContent','TextAnalyzer','no','yes','no','yes','no');
-  opensearchserver_setField($schema,$schema_xml,'categories','TextAnalyzer','yes','yes','no','yes','no');
-  opensearchserver_setField($schema,$schema_xml,'categoriesExact',NULL,'yes','yes','no','yes','no');
   opensearchserver_setField($schema,$schema_xml,'tags','TextAnalyzer','yes','yes','no','yes','no');
   opensearchserver_setField($schema,$schema_xml,'tagsExact',NULL,'yes','yes','no','yes','no');
   if (opensearchserver_is_wpml_usable()) {
@@ -88,6 +86,14 @@ function opensearchserver_create_schema($custom_fields) {
   }
   opensearchserver_setField($schema,$schema_xml,'year',NULL,'no','yes','no','no','no');
   opensearchserver_setField($schema,$schema_xml,'year_month',NULL,'no','yes','no','no','no');
+  //Add taxonomies schema
+  $taxonomies=get_taxonomies('','names'); 
+    foreach ($taxonomies as $taxonomy ) {
+      $check_taxonomy_name = 'oss_taxonomy_'.$taxonomy;
+       if(get_option($check_taxonomy_name)==1) {
+          opensearchserver_setField($schema,$schema_xml,'taxonomy_'.$taxonomy,NULL,'no','yes','no','yes','no');
+       }
+    }
   if (isset($custom_fields) && $custom_fields != null) {
     $custom_fields_array = explode(',', $custom_fields);
     foreach ($custom_fields_array as $field) {
@@ -131,7 +137,6 @@ function opensearchserver_query_template($custom_fields) {
   $query_template->setReturnField('search','type');
   $query_template->setReturnField('search','user_name');
   $query_template->setReturnField('search','user_email');
-  $query_template->setReturnField('search','categories');
   $query_template->setReturnField('search','tags');
   $query_template->setReturnField('search','timestamp');
   if (isset($custom_fields) && $custom_fields != null) {
@@ -335,21 +340,21 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
     $post_language_information = wpml_get_language_information($post->ID);
   	$document->newField('language', $post_language_information['locale']);
   }
-  
-  $categories_data= '';
-
-  // Handling categories
-  $categories_data = NULL;
-  $categories = get_the_category($post->ID);
-  if ($categories != NULL) {
-    $categories_data = array();
-  	foreach( $categories as $category ) {
-      $categories_data[] = $category->cat_name;
+  $taxonomies=get_taxonomies('','names'); 
+    foreach ($taxonomies as $taxonomy ) {
+      $check_taxonomy_name = 'oss_taxonomy_'.$taxonomy;
+       if(get_option($check_taxonomy_name)==1) {
+          $terms = get_the_terms( $post->ID, $taxonomy);
+          if ( $terms && ! is_wp_error( $terms ) ) {
+                $taxonomy_data = array();
+                foreach ( $terms as $term ) {
+                  $taxonomy_data[] = $term->name;
+                }
+          }
+           $document->newField('taxonomy_'.$taxonomy, $taxonomy_data);
+       }
     }
-	$document->newField('categories', $categories_data);
-    $document->newField('categoriesExact', $categories_data);
-    $categories = NULL;
-  }
+  
   
   //Handling tags
   $tags_data = NULL;
@@ -389,14 +394,12 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
   }
   // Build all content field
   $all_content = opensearchserver_stripInvalidXml(strip_tags($post->post_title)). ' '.$content;
-  if ($categories_data) {
-    $all_content = strip_tags($all_content.' '.$categories_data);
-  }
+  
   if ($custom_clean_all) {
     $all_content .= ' ' .$custom_clean_all;
     $custom_clean_all = null;
   }
-  $document->newField("allContent", strip_tags($all_content.' '.$categories_data));
+  $document->newField("allContent", strip_tags($all_content));
 }
 
 function opensearchserver_default_query() {
@@ -425,7 +428,6 @@ function opensearchserver_get_fields() {
 	    'type' => 'Type',
 	    'timestamp' => 'TimeStamp',
 	    'tags' => 'Tags',
-	    'categories' => 'Categories',
   		'year' => 'Year',
   		'year_month' => 'Month'
   	);
@@ -573,7 +575,7 @@ function opensearchserver_admin_set_query_settings() {
 		}
     }
 	if(empty($facets)) {
-		$facets = array();
+		$facets = '';
 	}
 	update_option('oss_facet', $facets);
     
@@ -605,10 +607,6 @@ function opensearchserver_admin_set_query_settings() {
 	update_option('oss_clean_query', $oss_clean_query);
 	$oss_clean_query_enable = isset($_POST['oss_clean_query_enable']) ? $_POST['oss_clean_query_enable'] : NULL;
 	update_option('oss_clean_query_enable', $oss_clean_query_enable);
-	$oss_log_enable = isset($_POST['oss_log_enable']) ? $_POST['oss_log_enable'] : NULL;
-	update_option('oss_log_enable', $oss_log_enable);
-	$oss_log_ip = isset($_POST['oss_log_ip']) ? $_POST['oss_log_ip'] : NULL;
-	update_option('oss_log_ip', $oss_log_ip);
 	
 	//some options needs to post changes to OSS
 	if(!opensearchserver_is_query_settings_not_automatic() || (isset($_POST['oss_query_settings_post_to_oss']) && $_POST['oss_query_settings_post_to_oss'] == 1)) {
@@ -634,6 +632,11 @@ function opensearchserver_admin_set_index_settings() {
     foreach (get_post_types() as $post_type) {
       $post_form_type = (int)$_POST['oss_index_types_'.$post_type];
       update_option('oss_index_types_'.$post_type, $post_form_type);
+    }
+    $taxonomies=get_taxonomies('','names'); 
+    foreach ($taxonomies as $taxonomy ) {
+      $check_taxonomy_name = (int)$_POST['oss_taxonomy_'.$taxonomy];
+      update_option('oss_taxonomy_'.$taxonomy, $check_taxonomy_name);
     }
     opensearchserver_display_messages('OpenSearchServer Index Settings have been updated.');
   } else {
@@ -931,7 +934,46 @@ function opensearchserver_admin_page() {
 							</p>
                             </fieldset>
                             
-                            
+                            <fieldset><legend>Other options</legend>
+							<p>
+								<label for="oss_language">Default language</label>: <select
+									name="oss_language"><?php
+									$opt = get_option('oss_language');
+									foreach ($languages as $key => $field) {
+									  $selected = '';
+									  if($opt == $key) {
+									    $selected = 'selected="selected"';
+									  }
+									  ?>
+									<option value="<?php print $key;?>" <?php print $selected;?>>
+										<?php print $field;?>
+									</option>
+									<?php }?>
+								</select>
+							</p>
+							<p>
+								<input
+									type="checkbox" name="oss_phonetic" value="1"
+									<?php checked( 1 == get_option('oss_phonetic')); ?> />
+                                     <label for="oss_phonetic">Enable phonetic</label>
+							</p>
+							<p>
+								Display:&nbsp;
+                                    <input type="checkbox" name="oss_display_date" id="oss_display_date" value="1" <?php checked( 1 == get_option('oss_display_date')); ?> />&nbsp;
+                                    <label for="oss_display_date">date</label>
+                                    <input type="checkbox" name="oss_display_type" id="oss_display_type" value="1" <?php checked( 1 == get_option('oss_display_type')); ?> />&nbsp;
+                                    <label for="oss_display_type">type</label>
+                                   <input type="checkbox" name="oss_display_user" id="oss_display_user" value="1" <?php checked( 1 == get_option('oss_display_user')); ?> />
+                                    <label for="oss_display_user">user</label>&nbsp;&nbsp;
+                                    <input type="checkbox" name="oss_display_category"  id="oss_display_category" value="1" <?php checked( 1 == get_option('oss_display_category')); ?> />&nbsp;
+                                    <label for="oss_display_category">category</label>&nbsp;&nbsp;
+                                     <br/><span class="help">Choose what kind of information should be displayed below each result.</span>
+							</p>
+                            <p>
+                                <input type="checkbox" name="oss_sort_timestamp" id="oss_sort_timestamp" value="1" <?php checked( 1 == get_option('oss_sort_timestamp')); ?> />&nbsp;
+                                <label for="oss_sort_timestamp">Display link to sort results by date</label>
+                            </p>
+                            </fieldset>
 							<fieldset><legend>Clean query</legend>
                                 <p>
 	                                <input type="checkbox" id="oss_clean_query_enable" 
@@ -947,69 +989,6 @@ function opensearchserver_admin_page() {
                                     <br/><span class="help">If escaping is enabled and no special characters is written here it will default to: \\ ^ ~ ( ) { } [ ] & || ! * ? 039; ' #</span>
     							</p>
                             </fieldset>
-                            
-                            
-                            <fieldset><legend>Logs</legend>
-                                <p>
-                                    <input type="checkbox" id="oss_log_enable" 
-                                        value="1" name="oss_log_enable"
-                                        <?php checked( 1 == get_option('oss_log_enable')); ?> />
-                                    <label for="oss_log_enable">Enable logging of queries in OpenSearchServer</label>
-                                    <br/><span class="help">Reports can be viewed in OpenSearchServer in tab "Report".</span>
-                                </p>
-                                
-                                <div id="oss_logs_custom" style="<?php if(get_option('oss_log_enable') != 1) { echo 'display:none'; }?>">
-                                    <p><strong>Custom logs:</strong></p>
-	                                <p>
-	                                    <input type="checkbox" id="oss_log_ip" 
-	                                        value="1" name="oss_log_ip"
-	                                        <?php checked( 1 == get_option('oss_log_ip')); ?>  />
-	                                    <label for="oss_log_ip">Log IP (<code>$_SERVER['REMOTE_ADDR']</code>)</label>
-	                                </p>
-                                </div>
-                            </fieldset>
-                            
-                            <fieldset><legend>Other options</legend>
-                            <p>
-                                <label for="oss_language">Default language</label>: <select
-                                    name="oss_language"><?php
-                                    $opt = get_option('oss_language');
-                                    foreach ($languages as $key => $field) {
-                                      $selected = '';
-                                      if($opt == $key) {
-                                        $selected = 'selected="selected"';
-                                      }
-                                      ?>
-                                    <option value="<?php print $key;?>" <?php print $selected;?>>
-                                        <?php print $field;?>
-                                    </option>
-                                    <?php }?>
-                                </select>
-                            </p>
-                            <p>
-                                <input
-                                    type="checkbox" name="oss_phonetic" value="1"
-                                    <?php checked( 1 == get_option('oss_phonetic')); ?> />
-                                     <label for="oss_phonetic">Enable phonetic</label>
-                            </p>
-                            <p>
-                                Display:&nbsp;
-                                    <input type="checkbox" name="oss_display_date" id="oss_display_date" value="1" <?php checked( 1 == get_option('oss_display_date')); ?> />&nbsp;
-                                    <label for="oss_display_date">date</label>
-                                    <input type="checkbox" name="oss_display_type" id="oss_display_type" value="1" <?php checked( 1 == get_option('oss_display_type')); ?> />&nbsp;
-                                    <label for="oss_display_type">type</label>
-                                   <input type="checkbox" name="oss_display_user" id="oss_display_user" value="1" <?php checked( 1 == get_option('oss_display_user')); ?> />
-                                    <label for="oss_display_user">user</label>&nbsp;&nbsp;
-                                    <input type="checkbox" name="oss_display_category"  id="oss_display_category" value="1" <?php checked( 1 == get_option('oss_display_category')); ?> />&nbsp;
-                                    <label for="oss_display_category">category</label>&nbsp;&nbsp;
-                                     <br/><span class="help">Choose what kind of information should be displayed below each result.</span>
-                            </p>
-                            <p>
-                                <input type="checkbox" name="oss_sort_timestamp" id="oss_sort_timestamp" value="1" <?php checked( 1 == get_option('oss_sort_timestamp')); ?> />&nbsp;
-                                <label for="oss_sort_timestamp">Display link to sort results by date</label>
-                            </p>
-                            </fieldset>
-                            
 							<p>
 								<input type="hidden" name="oss_submit" value="query_settings" />
                                 <?php if(opensearchserver_is_query_settings_not_automatic()): ?>
@@ -1039,15 +1018,31 @@ function opensearchserver_admin_page() {
 						<form id="index_settings" name="index_settings" method="post"
 							action="">
 							<p>
-								<label for="oss_index_types">Choose type of content to index:</label><br />
-								<?php
-								foreach (get_post_types() as $post_type) {
-                                  $checkTypeName = 'oss_index_types_'.$post_type;
-                                  ?>
-								<input type="checkbox" name="<?php print $checkTypeName;?>"
-									value="1" <?php checked( 1 == get_option($checkTypeName)); ?> id="<?php print $checkTypeName;?>"/>&nbsp;<label
-									for="<?php print $checkTypeName;?>"><?php print $post_type;?> </label><br />
-								<?php } ?>
+								<fieldset>
+                  <legend>Content-Type to index</legend>
+  								<?php
+  								foreach (get_post_types() as $post_type) {
+                    $checkTypeName = 'oss_index_types_'.$post_type;
+                  ?>
+  								<input type="checkbox" name="<?php print $checkTypeName;?>"
+  									value="1" <?php checked( 1 == get_option($checkTypeName)); ?> id="<?php print $checkTypeName;?>"/>&nbsp;<label
+  									for="<?php print $checkTypeName;?>"><?php print $post_type;?> </label><br />
+  								<?php } ?>
+                </fieldset>
+                <fieldset>
+                  <legend>Taxonomies to index</legend>
+                  <?php 
+                    $taxonomies=get_taxonomies('','names'); 
+                    foreach ($taxonomies as $taxonomy ) {
+                      $check_taxonomy_name = 'oss_taxonomy_'.$taxonomy;
+                      ?>
+                      <input type="checkbox" name="<?php print $check_taxonomy_name;?>"
+                    value="1" <?php checked( 1 == get_option($check_taxonomy_name)); ?> id="<?php print $check_taxonomy_name;?>"/>&nbsp;<label
+                    for="<?php print $taxonomy;?>"><?php print $taxonomy;?> </label><br />
+                  <?php 
+                    }
+                  ?>
+                </fieldset>
 							</p>
                             
                             <?php if(opensearchserver_is_plugin_active('sitepress-multilingual-cms/sitepress.php')) : ?>
@@ -1182,10 +1177,6 @@ function opensearchserver_admin_page() {
 		</div>
 	</div>
 </div>
-
-<script type="text/javascript">
-    jQuery('#oss_log_enable').click(function(e) { jQuery('#oss_logs_custom').toggle();});
-</script>
 <?php
 opensearchserver_add_toogle();
 }
@@ -1200,7 +1191,7 @@ function opensearchserver_add_toogle() {
 	jQuery('.postbox div.handlediv').click( function() { jQuery(jQuery(this).parent().get(0)).toggleClass('closed'); } );
 	jQuery('.postbox h3').click( function() { jQuery(jQuery(this).parent().get(0)).toggleClass('closed'); } );
 	jQuery('.postbox.close-me').each(function(){
-	   jQuery(this).addClass("closed");
+	jQuery(this).addClass("closed");
 	});
 	//-->
 	</script>
