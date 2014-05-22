@@ -87,11 +87,11 @@ function opensearchserver_create_schema($custom_fields) {
   opensearchserver_setField($schema,$schema_xml,'year',NULL,'no','yes','no','no','no');
   opensearchserver_setField($schema,$schema_xml,'year_month',NULL,'no','yes','no','no','no');
   //Add taxonomies schema
-  $taxonomies=get_taxonomies('','names');
+  $taxonomies = get_taxonomies('','names');
   foreach ($taxonomies as $taxonomy ) {
   	$check_taxonomy_name = 'oss_taxonomy_'.$taxonomy;
   	if(get_option($check_taxonomy_name)==1) {
-  		opensearchserver_setField($schema,$schema_xml,'taxonomy_'.$taxonomy,NULL,'no','yes','no','yes','no');
+  		opensearchserver_setField($schema,$schema_xml,'taxonomy_'.$taxonomy,'TextAnalyzer','yes','yes','no','yes','no');
   	}
   }
   if (isset($custom_fields) && $custom_fields != null) {
@@ -139,6 +139,13 @@ function opensearchserver_query_template($custom_fields) {
   $query_template->setReturnField('search','user_email');
   $query_template->setReturnField('search','tags');
   $query_template->setReturnField('search','timestamp');
+  $taxonomies = get_taxonomies('','names');
+  foreach ($taxonomies as $taxonomy ) {
+  	$check_taxonomy_name = 'oss_taxonomy_'.$taxonomy;
+  	if(get_option($check_taxonomy_name)==1) {
+  		$query_template->setReturnField('search','taxonomy_'.$taxonomy);
+  	}
+  }
   if (isset($custom_fields) && $custom_fields != null) {
     $custom_fields_array = explode(',', $custom_fields);
     foreach ($custom_fields_array as $field) {
@@ -601,16 +608,19 @@ function opensearchserver_admin_set_query_settings() {
     update_option('oss_display_date', $oss_display_date);
     $oss_display_use_radio_buttons = isset($_POST['oss_display_use_radio_buttons']) ? $_POST['oss_display_use_radio_buttons'] : NULL;
     update_option('oss_display_use_radio_buttons', $oss_display_use_radio_buttons);
-	$oss_sort_timestamp = isset($_POST['oss_sort_timestamp']) ? $_POST['oss_sort_timestamp'] : NULL;
+	  $oss_sort_timestamp = isset($_POST['oss_sort_timestamp']) ? $_POST['oss_sort_timestamp'] : NULL;
     update_option('oss_sort_timestamp', $oss_sort_timestamp);
     $oss_clean_query = isset($_POST['oss_clean_query']) ? $_POST['oss_clean_query'] : NULL;
-	update_option('oss_clean_query', $oss_clean_query);
-	$oss_clean_query_enable = isset($_POST['oss_clean_query_enable']) ? $_POST['oss_clean_query_enable'] : NULL;
-	update_option('oss_clean_query_enable', $oss_clean_query_enable);
-	$oss_log_enable = isset($_POST['oss_log_enable']) ? $_POST['oss_log_enable'] : NULL;
-	update_option('oss_log_enable', $oss_log_enable);
-	$oss_log_ip = isset($_POST['oss_log_ip']) ? $_POST['oss_log_ip'] : NULL;
-	update_option('oss_log_ip', $oss_log_ip);
+  	update_option('oss_clean_query', $oss_clean_query);
+  	$oss_clean_query_enable = isset($_POST['oss_clean_query_enable']) ? $_POST['oss_clean_query_enable'] : NULL;
+  	update_option('oss_clean_query_enable', $oss_clean_query_enable);
+  	$oss_log_enable = isset($_POST['oss_log_enable']) ? $_POST['oss_log_enable'] : NULL;
+  	update_option('oss_log_enable', $oss_log_enable);
+  	$oss_log_ip = isset($_POST['oss_log_ip']) ? $_POST['oss_log_ip'] : NULL;
+  	update_option('oss_log_ip', $oss_log_ip);
+
+    $oss_taxonomy_display = isset($_POST['oss_taxonomy_display']) ? $_POST['oss_taxonomy_display'] : NULL;
+    update_option('oss_taxonomy_display', $oss_taxonomy_display);
 	
 	//some options needs to post changes to OSS
 	if(!opensearchserver_is_query_settings_not_automatic() || (isset($_POST['oss_query_settings_post_to_oss']) && $_POST['oss_query_settings_post_to_oss'] == 1)) {
@@ -1014,6 +1024,26 @@ function opensearchserver_admin_page() {
                             <p>
                                 <input type="checkbox" name="oss_sort_timestamp" id="oss_sort_timestamp" value="1" <?php checked( 1 == get_option('oss_sort_timestamp')); ?> />&nbsp;
                                 <label for="oss_sort_timestamp">Display link to sort results by date</label>
+                            </p>
+                             <p>
+                                <label for="oss_taxonomy_display">Taxonomy to be displayed on Result</label>: <select
+                                    name="oss_taxonomy_display"><?php
+                                    $taxonomies=get_taxonomies('','names'); 
+                                     $opt = get_option('oss_taxonomy_display');
+                                      foreach ($taxonomies as $taxonomy ) {
+                                          $selected = '';
+                                        $check_taxonomy_name = 'oss_taxonomy_'.$taxonomy;
+                                          if(get_option($check_taxonomy_name)==1) {
+                                            if($opt == $taxonomy) {
+                                                $selected = 'selected="selected"';
+                                            }
+                                      ?>
+                                    <option value="<?php print $taxonomy;?>" <?php print $selected;?>>
+                                        <?php print $taxonomy;?>
+                                    </option>
+                                    <?php }
+                                    }?>
+                                </select>
                             </p>
                             </fieldset>
                             

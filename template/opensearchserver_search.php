@@ -167,13 +167,14 @@ get_header(); ?>
           $type = stripslashes($oss_results->getField($i, 'type', true));
           $url = stripslashes($oss_results->getField($i, 'url', false));
           $date = stripslashes($oss_results->getField($i, 'timestamp', false));
-          $categoriesResults = $oss_results->getField($i, 'categories', false, false, null, true);
           $categories = array();
-          foreach($categoriesResults as $cat) {
-          	$categories[] = (string)$cat;
-          }
-          $categories = implode(', ', $categories);
-          
+          $taxonomy_field = get_option('oss_taxonomy_display');
+          $taxonomy_data = array();
+          $taxonomies = $oss_results->getField($i, 'taxonomy_'.$taxonomy_field, false, false, null, true);
+          foreach ($taxonomies as $taxonomy) {
+			$taxonomy_data[] = (string)$taxonomy;
+		  }
+          $categories = implode(', ', $taxonomy_data);
           ?>
 
         <div class="oss-result">
