@@ -57,8 +57,8 @@ function  opensearchserver_search() {
     include_once('autocomplete.php');
     exit;
   }else {
-    if (file_exists(STYLESHEETPATH . '/opensearchserver_search.php')) {
-      include_once(STYLESHEETPATH . '/opensearchserver_search.php');
+    if (file_exists(TEMPLATEPATH . '/opensearchserver_search.php')) {
+      include_once(TEMPLATEPATH . '/opensearchserver_search.php');
     } else if (file_exists(dirname(__FILE__) . '/template/opensearchserver_search.php')) {
       include_once('template/opensearchserver_search.php');
     } else {
@@ -99,6 +99,8 @@ function opensearchserver_install_one_site() {
 	update_option('oss_facet_display_count', 1);
 	update_option('oss_facet_behavior','no_separate_query');
 	update_option('oss_multi_filter',1);
+    update_option('oss_taxonomy_category',1);
+    update_option('oss_taxonomy_display',1);
 }
 
 function opensearchserver_uninstall($networkwide) {
@@ -140,7 +142,6 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_clean_query');
   delete_option('oss_clean_query_enable');
   delete_option('oss_display_user');
-  delete_option('oss_display_category');
   delete_option('oss_display_type');
   delete_option('oss_display_date');
   delete_option('oss_index_types_post');
@@ -157,6 +158,12 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_sort_timestamp');
   delete_option('oss_log_enable');
   delete_option('oss_log_ip');
+  delete_option('oss_display_category');
+  $taxonomies=get_taxonomies('','names'); 
+    foreach ($taxonomies as $taxonomy ) {
+      $check_taxonomy_name = 'oss_taxonomy_'.$taxonomy;
+          delete_option($check_taxonomy_name);
+    }
 }
 
 function add_query_vars_filter( $vars ){

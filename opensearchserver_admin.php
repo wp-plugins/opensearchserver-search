@@ -600,8 +600,6 @@ function opensearchserver_admin_set_query_settings() {
     update_option('oss_phonetic', $oss_phonetic);
     $oss_display_user = isset($_POST['oss_display_user']) ? $_POST['oss_display_user'] : NULL;
     update_option('oss_display_user', $oss_display_user);
-    $oss_display_category = isset($_POST['oss_display_category']) ? $_POST['oss_display_category'] : NULL;
-    update_option('oss_display_category', $oss_display_category);
     $oss_display_type = isset($_POST['oss_display_type']) ? $_POST['oss_display_type'] : NULL;
     update_option('oss_display_type', $oss_display_type);
     $oss_display_date = isset($_POST['oss_display_date']) ? $_POST['oss_display_date'] : NULL;
@@ -1017,8 +1015,6 @@ function opensearchserver_admin_page() {
                                     <label for="oss_display_type">type</label>
                                    <input type="checkbox" name="oss_display_user" id="oss_display_user" value="1" <?php checked( 1 == get_option('oss_display_user')); ?> />
                                     <label for="oss_display_user">user</label>&nbsp;&nbsp;
-                                    <input type="checkbox" name="oss_display_category"  id="oss_display_category" value="1" <?php checked( 1 == get_option('oss_display_category')); ?> />&nbsp;
-                                    <label for="oss_display_category">category</label>&nbsp;&nbsp;
                                      <br/><span class="help">Choose what kind of information should be displayed below each result.</span>
                             </p>
                             <p>
