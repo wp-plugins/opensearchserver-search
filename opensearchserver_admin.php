@@ -600,13 +600,15 @@ function opensearchserver_admin_set_query_settings() {
     update_option('oss_phonetic', $oss_phonetic);
     $oss_display_user = isset($_POST['oss_display_user']) ? $_POST['oss_display_user'] : NULL;
     update_option('oss_display_user', $oss_display_user);
+    $oss_display_category = isset($_POST['oss_display_category']) ? $_POST['oss_display_category'] : NULL; 
+    update_option('oss_display_category', $oss_display_category); 
     $oss_display_type = isset($_POST['oss_display_type']) ? $_POST['oss_display_type'] : NULL;
     update_option('oss_display_type', $oss_display_type);
     $oss_display_date = isset($_POST['oss_display_date']) ? $_POST['oss_display_date'] : NULL;
     update_option('oss_display_date', $oss_display_date);
     $oss_display_use_radio_buttons = isset($_POST['oss_display_use_radio_buttons']) ? $_POST['oss_display_use_radio_buttons'] : NULL;
     update_option('oss_display_use_radio_buttons', $oss_display_use_radio_buttons);
-	  $oss_sort_timestamp = isset($_POST['oss_sort_timestamp']) ? $_POST['oss_sort_timestamp'] : NULL;
+	$oss_sort_timestamp = isset($_POST['oss_sort_timestamp']) ? $_POST['oss_sort_timestamp'] : NULL;
     update_option('oss_sort_timestamp', $oss_sort_timestamp);
     $oss_clean_query = isset($_POST['oss_clean_query']) ? $_POST['oss_clean_query'] : NULL;
   	update_option('oss_clean_query', $oss_clean_query);
@@ -616,10 +618,9 @@ function opensearchserver_admin_set_query_settings() {
   	update_option('oss_log_enable', $oss_log_enable);
   	$oss_log_ip = isset($_POST['oss_log_ip']) ? $_POST['oss_log_ip'] : NULL;
   	update_option('oss_log_ip', $oss_log_ip);
-
     $oss_taxonomy_display = isset($_POST['oss_taxonomy_display']) ? $_POST['oss_taxonomy_display'] : NULL;
     update_option('oss_taxonomy_display', $oss_taxonomy_display);
-	
+
 	//some options needs to post changes to OSS
 	if(!opensearchserver_is_query_settings_not_automatic() || (isset($_POST['oss_query_settings_post_to_oss']) && $_POST['oss_query_settings_post_to_oss'] == 1)) {
 		$custom_fields = get_option('oss_custom_field');	
@@ -650,6 +651,8 @@ function opensearchserver_admin_set_index_settings() {
     	$check_taxonomy_name = (int)$_POST['oss_taxonomy_'.$taxonomy];
     	update_option('oss_taxonomy_'.$taxonomy, $check_taxonomy_name);
     }
+    $oss_enable_autoindexation = isset($_POST['oss_enable_autoindexation']) ? $_POST['oss_enable_autoindexation'] : NULL;
+    update_option('oss_enable_autoindexation', (int)$oss_enable_autoindexation);
     opensearchserver_display_messages('OpenSearchServer Index Settings have been updated.');
   } else {
     $is_index_created = opensearchserver_create_index();
@@ -1013,8 +1016,10 @@ function opensearchserver_admin_page() {
                                     <label for="oss_display_date">date</label>
                                     <input type="checkbox" name="oss_display_type" id="oss_display_type" value="1" <?php checked( 1 == get_option('oss_display_type')); ?> />&nbsp;
                                     <label for="oss_display_type">type</label>
-                                   <input type="checkbox" name="oss_display_user" id="oss_display_user" value="1" <?php checked( 1 == get_option('oss_display_user')); ?> />
+                                    <input type="checkbox" name="oss_display_user" id="oss_display_user" value="1" <?php checked( 1 == get_option('oss_display_user')); ?> />
                                     <label for="oss_display_user">user</label>&nbsp;&nbsp;
+                                    <input type="checkbox" name="oss_display_category" id="oss_display_category" value="1" <?php checked( 1 == get_option('oss_display_category')); ?> />
+                                    <label for="oss_display_category">Chosen taxonomy (see list below)</label>
                                      <br/><span class="help">Choose what kind of information should be displayed below each result.</span>
                             </p>
                             <p>
@@ -1098,6 +1103,11 @@ function opensearchserver_admin_page() {
 				                    }
 				                  ?>
 				              </fieldset>
+                      <fieldset>
+                         <legend>Auto Indexation </legend>
+                         <input type="checkbox" name="oss_enable_autoindexation" id="oss_enable_autoindexation" value="1" <?php checked( 1 == get_option('oss_enable_autoindexation')); ?> />
+                         <label for="oss_enable_autoindexation">Enable automatic indexation when content are added, edited or deleted.</label>
+                      </fieldset>
 							</p>
                             
                             <?php if(opensearchserver_is_plugin_active('sitepress-multilingual-cms/sitepress.php')) : ?>

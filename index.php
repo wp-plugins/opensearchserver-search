@@ -159,6 +159,7 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_log_enable');
   delete_option('oss_log_ip');
   delete_option('oss_display_category');
+  delete_option('oss_enable_autoindexation');
   $taxonomies=get_taxonomies('','names'); 
     foreach ($taxonomies as $taxonomy ) {
       $check_taxonomy_name = 'oss_taxonomy_'.$taxonomy;
@@ -182,13 +183,21 @@ function opensearchserver_settings_link($links) {
 $plugin = plugin_basename(__FILE__); 
 add_filter("plugin_action_links_$plugin", 'opensearchserver_settings_link');
 
+function is_content_type_allowed($post_type) {
+    foreach (get_post_types() as $post_type) {
+      $content_type = 'oss_index_types_'.$post_type;
+        if(get_option($content_type) == 1) {
+          return TRUE;
+        }
+    }
+   return FALSE;
+}
 
 function opensearchserver_do_while_posting($post_id,$post) {
   if(opensearchserver_is_search_only()) {
     return;
   }
-  if ($post->post_type == 'post' || $post->post_type == 'page'
-    && $post->post_status == 'publish') {
+  if (is_content_type_allowed($post->post_type) && get_option('oss_enable_autoindexation') == 1 && $post->post_status == 'publish') {
     opensearchserver_reindex_site($post->ID,$post->post_type);
   }
   else {
