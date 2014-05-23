@@ -92,6 +92,7 @@ function opensearchserver_create_schema($custom_fields) {
   	$check_taxonomy_name = 'oss_taxonomy_'.$taxonomy;
   	if(get_option($check_taxonomy_name)==1) {
   		opensearchserver_setField($schema,$schema_xml,'taxonomy_'.$taxonomy,'TextAnalyzer','yes','yes','no','yes','no');
+      opensearchserver_setField($schema,$schema_xml,'taxonomy_'.$taxonomy.'_notAnalyzed',NULL,'no','yes','yes','yes','no');
   	}
   }
   if (isset($custom_fields) && $custom_fields != null) {
@@ -144,6 +145,7 @@ function opensearchserver_query_template($custom_fields) {
   	$check_taxonomy_name = 'oss_taxonomy_'.$taxonomy;
   	if(get_option($check_taxonomy_name)==1) {
   		$query_template->setReturnField('search','taxonomy_'.$taxonomy);
+      $query_template->setReturnField('search','taxonomy_'.$taxonomy.'_notAnalyzed');
   	}
   }
   if (isset($custom_fields) && $custom_fields != null) {
@@ -351,15 +353,16 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
   $taxonomies=get_taxonomies('','names'); 
     foreach ($taxonomies as $taxonomy ) {
       $check_taxonomy_name = 'oss_taxonomy_'.$taxonomy;
+      $taxonomy_data = array();
        if(get_option($check_taxonomy_name)==1) {
           $terms = get_the_terms( $post->ID, $taxonomy);
           if ( $terms && ! is_wp_error( $terms ) ) {
-                $taxonomy_data = array();
                 foreach ( $terms as $term ) {
                   $taxonomy_data[] = $term->name;
                 }
           }
            $document->newField('taxonomy_'.$taxonomy, $taxonomy_data);
+           $document->newField('taxonomy_'.$taxonomy.'_notAnalyzed', $taxonomy_data);
        }
     }
   
@@ -608,7 +611,7 @@ function opensearchserver_admin_set_query_settings() {
     update_option('oss_display_date', $oss_display_date);
     $oss_display_use_radio_buttons = isset($_POST['oss_display_use_radio_buttons']) ? $_POST['oss_display_use_radio_buttons'] : NULL;
     update_option('oss_display_use_radio_buttons', $oss_display_use_radio_buttons);
-	$oss_sort_timestamp = isset($_POST['oss_sort_timestamp']) ? $_POST['oss_sort_timestamp'] : NULL;
+	  $oss_sort_timestamp = isset($_POST['oss_sort_timestamp']) ? $_POST['oss_sort_timestamp'] : NULL;
     update_option('oss_sort_timestamp', $oss_sort_timestamp);
     $oss_clean_query = isset($_POST['oss_clean_query']) ? $_POST['oss_clean_query'] : NULL;
   	update_option('oss_clean_query', $oss_clean_query);
@@ -1106,7 +1109,8 @@ function opensearchserver_admin_page() {
                       <fieldset>
                          <legend>Auto Indexation </legend>
                          <input type="checkbox" name="oss_enable_autoindexation" id="oss_enable_autoindexation" value="1" <?php checked( 1 == get_option('oss_enable_autoindexation')); ?> />
-                         <label for="oss_enable_autoindexation">Enable automatic indexation when content are added, edited or deleted.</label>
+                         <label for="oss_enable_autoindexation">Enable automatic indexation when content are added, edited or deleted.</label><br>
+                         <span class="help"> If this option is disabled content will only be indexed when button 'Synchronize / Re-index' is pressed </span>
                       </fieldset>
 							</p>
                             

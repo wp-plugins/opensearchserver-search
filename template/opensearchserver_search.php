@@ -171,12 +171,15 @@ get_header(); ?>
           $taxonomy_field = get_option('oss_taxonomy_display');
           $taxonomy_data = array();
           $taxonomies = $oss_results->getField($i, 'taxonomy_'.$taxonomy_field, false, false, null, true);
-          if($taxonomies) {
-          	foreach ($taxonomies as $taxonomy) {
-				$taxonomy_data[] = (string)$taxonomy;
-		  	}
-          }
-          $categories = implode(', ', $taxonomy_data);
+          if(!is_array($taxonomies)) {
+              $categories = (string)$taxonomies[0];
+          }else {
+            foreach ($taxonomies as $taxonomy) {
+  			       $taxonomy_data[] = (string)$taxonomy;
+  		      }
+            $categories = implode(', ', $taxonomy_data);
+         }
+        
           ?>
 
         <div class="oss-result">
