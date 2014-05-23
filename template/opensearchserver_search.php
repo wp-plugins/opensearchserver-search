@@ -171,9 +171,11 @@ get_header(); ?>
           $taxonomy_field = get_option('oss_taxonomy_display');
           $taxonomy_data = array();
           $taxonomies = $oss_results->getField($i, 'taxonomy_'.$taxonomy_field, false, false, null, true);
-          foreach ($taxonomies as $taxonomy) {
-			$taxonomy_data[] = (string)$taxonomy;
-		  }
+          if($taxonomies) {
+          	foreach ($taxonomies as $taxonomy) {
+				$taxonomy_data[] = (string)$taxonomy;
+		  	}
+          }
           $categories = implode(', ', $taxonomy_data);
           ?>
 
