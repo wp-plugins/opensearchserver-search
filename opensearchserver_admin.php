@@ -1101,7 +1101,7 @@ function opensearchserver_admin_page() {
 				                      ?>
 				                      <input type="checkbox" name="<?php print $check_taxonomy_name;?>"
 				                    value="1" <?php checked( 1 == get_option($check_taxonomy_name)); ?> id="<?php print $check_taxonomy_name;?>"/>&nbsp;<label
-				                    for="<?php print $taxonomy;?>"><?php print $taxonomy;?> </label><br />
+				                    for="<?php print $check_taxonomy_name;?>"><?php print $taxonomy;?> </label><br />
 				                  <?php 
 				                    }
 				                  ?>
@@ -1132,10 +1132,23 @@ function opensearchserver_admin_page() {
                              <?php endif;?>
                              <p>
                                 <input type="hidden" name="oss_submit" value="index_settings" />
-                                <input type="submit" name="opensearchserver_submit"
-                                    value="Update Index Settings" class="button-primary" /> <input
+                                
+                                 <br/>
+                                 <span class="help"><strong>Which button should I click?</strong></span>
+                                 <br/><br/>
+                                 <span class="help">If you changed "Content-types to index" or "Auto indexation" settings you will only need to update index settings.</span>
+                                 <br/>
+                                 <span class="help">However, if you updated "Taxonomies to index" settings you will first need to save your settings and then press "(Re-)Create index" button (as specific fields need to be created in index's schema).</span>
+                                 <br/><span class="help">If you did not create your index yet or wish to completly re-create it you need to press the "(Re-)Create index" button.</span> 
+                                 <br/><br/>
+                                 <input type="submit" name="opensearchserver_submit"
+                                    value="Update Index Settings" class="button-primary" />
+                                   
+                                <input
+                                    onclick="return confirm('This will erase current indexed data and totally re-create your index, are you sure?');"
                                     type="submit" name="opensearchserver_submit"
-                                    value="(Re-)Create the index" class="button-secondary" />
+                                    value="(Re-)Create index" class="button-secondary" />
+                                <br/><span class="help">When clicking "(Re-)Create index" you may want to click "Synchronize / Re-index" afterwards to re-populate index.</span>
 
                             </p>
 						</form>
