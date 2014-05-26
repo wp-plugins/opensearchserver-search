@@ -226,6 +226,22 @@ function opensearchserver_get_custom_fields() {
 }
 
 /**
+ * Return ID of content in WP.
+ * For example:
+ *   - id (from OSS) = post_56
+ *   - type = post
+ *   ==> will return 56
+ * @param unknown_type $id string
+ * @param unknown_type $type string
+ */
+function opensearchserver_get_wp_id($id = null, $type = null) {
+	if(!empty($id) && !empty($type)) {
+		return str_replace($type.'_', '', $id);
+	}
+	return null;
+}
+
+/**
  * Build full URL to search and sort
  * @param string $sort Sort
  */

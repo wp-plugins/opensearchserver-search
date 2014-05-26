@@ -81,6 +81,11 @@ function opensearchserver_create_schema($custom_fields) {
   opensearchserver_setField($schema,$schema_xml,'allContent','TextAnalyzer','no','yes','no','yes','no');
   opensearchserver_setField($schema,$schema_xml,'tags','TextAnalyzer','yes','yes','no','yes','no');
   opensearchserver_setField($schema,$schema_xml,'tagsExact',NULL,'yes','yes','no','yes','no');
+  
+  opensearchserver_setField($schema,$schema_xml,'thumbnail_url',NULL,'no','yes','no','no','no');
+  opensearchserver_setField($schema,$schema_xml,'thumbnail_width',NULL,'no','yes','no','no','no');
+  opensearchserver_setField($schema,$schema_xml,'thumbnail_height',NULL,'no','yes','no','no','no');
+  
   if (opensearchserver_is_wpml_usable()) {
     opensearchserver_setField($schema,$schema_xml,'language',NULL,'no','yes','no','no','no');
   }
@@ -134,12 +139,16 @@ function opensearchserver_query_template($custom_fields) {
     $query_template->setSnippetField('search','contentPhonetic', 300, 'b', NULL, 'SentenceFragmenter');
   }
   $query_template->setReturnField('search','url');
+  $query_template->setReturnField('search','id');
   $query_template->setReturnField('search','user_url');
   $query_template->setReturnField('search','type');
   $query_template->setReturnField('search','user_name');
   $query_template->setReturnField('search','user_email');
   $query_template->setReturnField('search','tags');
   $query_template->setReturnField('search','timestamp');
+  $query_template->setReturnField('search','thumbnail_url');
+  $query_template->setReturnField('search','thumbnail_width');
+  $query_template->setReturnField('search','thumbnail_height');
   $taxonomies = get_taxonomies('','names');
   foreach ($taxonomies as $taxonomy ) {
   	$check_taxonomy_name = 'oss_taxonomy_'.$taxonomy;
@@ -345,6 +354,19 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
   $document->newField('user_name', $user->user_nicename);
   $document->newField('user_email', $user->user_email);
   $document->newField('user_email', $user->user_url);
+  
+  //Handling post's thumbnail
+  $post_thumbnail_id = get_post_thumbnail_id( $post->ID );
+  if(!empty($post_thumbnail_id)) {
+  	$image = wp_get_attachment_image_src($post_thumbnail_id, 'large');
+  	if(!empty($image)) {
+  		list($src, $width, $height) = $image;
+  	  	$document->newField('thumbnail_url', $src);
+  		$document->newField('thumbnail_width', $width);
+  		$document->newField('thumbnail_height', $height);
+  	}
+  }
+  
   if (opensearchserver_is_wpml_usable()) {
     $post_language_information = wpml_get_language_information($post->ID);
   	$document->newField('language', $post_language_information['locale']);
@@ -1139,7 +1161,7 @@ function opensearchserver_admin_page() {
                                  <span class="help">If you changed "Content-types to index" or "Auto indexation" settings you will only need to update index settings.</span>
                                  <br/>
                                  <span class="help">However, if you updated "Taxonomies to index" settings you will first need to save your settings and then press "(Re-)Create index" button (as specific fields need to be created in index's schema).</span>
-                                 <br/><span class="help">If you did not create your index yet or wish to completly re-create it you need to press the "(Re-)Create index" button.</span> 
+                                 <br/><span class="help">If you did not create your index yet or wish to completely re-create it you need to press the "(Re-)Create index" button.</span> 
                                  <br/><br/>
                                  <input type="submit" name="opensearchserver_submit"
                                     value="Update Index Settings" class="button-primary" />
