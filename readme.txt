@@ -3,7 +3,7 @@ Contributors: ekeller,naveenann
 Tags: search,search engine,opensearchserver, full-text, phonetic, filter, facet, indexation, auto-completion
 Requires at least: 3.0.1
 Tested up to: 3.9
-Stable tag: 1.3.4
+Stable tag: 1.3.5
 License: GPLv2 or later
 
 The OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full-text search on WordPress-based websites.
@@ -80,7 +80,11 @@ Yes, this plugin supports multisites installation.
 
 = I already manage my OpenSearchServer index in another way (web crawler). Can I use this plugin to plug my Wordress search page to my existing index? =
 
-Yes you can: enable the "Search only" mode to switch off sending of data (new posts and pages) from Wordpress to OpenSearchServer.
+Yes you can: enable the "Search only" mode to switch off sending of data (new posts and pages) from Wordpress to OpenSearchServer. Warning: you may however need to first create your index with this plugin before enabling "Search only mode" to ensure creation of all needed schema's fields.
+
+= I get this PHP warning when saving query settings: "Warning: OSS Returned an error: "Error com.jaeksoft.searchlib.web.ServletException: com.jaeksoft.searchlib.SearchLibException: Returned field: The field: thumbnail_url does not exist" =
+
+You probably updated to a recent version without re-creating your index. You need to re-create your index and re-synchronize data.
 
 == Screenshots ==
 
@@ -88,6 +92,15 @@ Yes you can: enable the "Search only" mode to switch off sending of data (new po
 2. An example of search result.
 
 == Changelog ==
+
+= 1.3.5 =
+* Indexation of content's thumbnail
+* Indexation of multiple taxonomies
+* Categorie is now indexed like any other taxonomy
+* Chosen content type can now be automatically indexed when added / edited / deleted
+* Use STYLESHEETPATH instead of TEMPLATEPATH to be able to override template in a Child Theme
+* Add handling of OpenSearchServer logging
+* ==> **Index re-creation and synchronization may be needed**
 
 = 1.3.4 =
 * UI Enhancements

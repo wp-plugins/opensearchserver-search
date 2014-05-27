@@ -1161,7 +1161,7 @@ function opensearchserver_admin_page() {
                                  <span class="help">If you changed "Content-types to index" or "Auto indexation" settings you will only need to update index settings.</span>
                                  <br/>
                                  <span class="help">However, if you updated "Taxonomies to index" settings you will first need to save your settings and then press "(Re-)Create index" button (as specific fields need to be created in index's schema).</span>
-                                 <br/><span class="help">If you did not create your index yet or wish to completely re-create it you need to press the "(Re-)Create index" button.</span> 
+                                 <br/><br/><span class="help">If you did not create your index yet or wish to completely re-create it you need to press the "(Re-)Create index" button.</span> 
                                  <br/><br/>
                                  <input type="submit" name="opensearchserver_submit"
                                     value="Update Index Settings" class="button-primary" />
