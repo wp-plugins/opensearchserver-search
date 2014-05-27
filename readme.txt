@@ -128,7 +128,6 @@ You probably updated to a recent version without re-creating your index. You nee
 = 1.2.4 =
 * Improved Search result display.
 
-== Changelog ==
 = 1.2.3 =
 * New Autocompletion REST API
 
