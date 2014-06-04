@@ -26,7 +26,7 @@ function opensearchserver_getspellcheck($result) {
     return null;
   $spell_field = get_option('oss_spell').'Exact';
   $suggestions = opensearchserver_getresult_instance($result)->getSpellSuggestions($spell_field);
-  $suggestionToReturn = array();
+  $suggestionToReturn = '';
   $maxFreq = 0;
   foreach($suggestions as $suggestion) {
   	$arraySuggestion = (array)$suggestion;

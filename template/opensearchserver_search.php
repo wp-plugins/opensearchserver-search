@@ -47,8 +47,6 @@ get_header(); ?>
       
       $oss_resultTime = isset($oss_result) ? (float)$oss_result->result['time'] / 1000 : null;
       $max = opensearchserver_get_max($oss_results);
-      
-      
       ?>
     <div class="oss-search">
     <?php if($oss_result_facets->getResultFound()>0) {?>
@@ -182,7 +180,7 @@ get_header(); ?>
     <div>
          
         <p><?php _e("No documents containing all your search terms were found.", 'opensearchserver'); ?></p>
-        <p><?php printf(__("Your searched keywords <b>'%s'</b> did not match any document.", 'opensearchserver'), $query); ?></p>
+        <p><?php printf(__("Your searched keywords <b>'%s'</b> did not match any document.", 'opensearchserver'), $first_query); ?></p>
         <p><?php _e("Suggestions:"); ?></p>
         <ul>
             <li><?php _e("Make sure all words are spelled correctly.", 'opensearchserver'); ?></li>
