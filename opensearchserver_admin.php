@@ -613,8 +613,6 @@ function opensearchserver_admin_set_query_settings() {
     
     $oss_multi_filter = isset($_POST['oss_multi_filter']) ? $_POST['oss_multi_filter'] : NULL;
     update_option('oss_multi_filter', $oss_multi_filter);
-    $oss_facet_behavior = isset($_POST['oss_facet_behavior']) ? $_POST['oss_facet_behavior'] : NULL;
-    update_option('oss_facet_behavior', $oss_facet_behavior);
     $oss_facet_display_count = isset($_POST['oss_facet_display_count']) ? $_POST['oss_facet_display_count'] : NULL;
     update_option('oss_facet_display_count', $oss_facet_display_count);
     update_option('oss_spell', $oss_spell);
@@ -631,9 +629,9 @@ function opensearchserver_admin_set_query_settings() {
     update_option('oss_display_type', $oss_display_type);
     $oss_display_date = isset($_POST['oss_display_date']) ? $_POST['oss_display_date'] : NULL;
     update_option('oss_display_date', $oss_display_date);
-    $oss_display_use_radio_buttons = isset($_POST['oss_display_use_radio_buttons']) ? $_POST['oss_display_use_radio_buttons'] : NULL;
-    update_option('oss_display_use_radio_buttons', $oss_display_use_radio_buttons);
-	  $oss_sort_timestamp = isset($_POST['oss_sort_timestamp']) ? $_POST['oss_sort_timestamp'] : NULL;
+    $oss_advanced_facets = isset($_POST['oss_advanced_facets']) ? $_POST['oss_advanced_facets'] : NULL;
+    update_option('oss_advanced_facets', $oss_advanced_facets);
+	$oss_sort_timestamp = isset($_POST['oss_sort_timestamp']) ? $_POST['oss_sort_timestamp'] : NULL;
     update_option('oss_sort_timestamp', $oss_sort_timestamp);
     $oss_clean_query = isset($_POST['oss_clean_query']) ? $_POST['oss_clean_query'] : NULL;
   	update_option('oss_clean_query', $oss_clean_query);
@@ -906,35 +904,14 @@ function opensearchserver_admin_page() {
 								</tbody>
 							</table>
 							<?php endif;?>
-							<p>
-								<label for="oss_facet_behavior">Facet behavior </label>: <select
-									name="oss_facet_behavior" id="oss_facet_behavior"><?php
-									$facet_option = get_option('oss_facet_behavior');
-									foreach ($facet_behaviour as $key => $field) {
-								  $selected = '';
-								  if($facet_behaviour[$facet_option] == $field) {
-								    $selected = 'selected="selected"';
-								  }
-								  ?>
-									<option value="<?php print $key;?>" <?php print $selected;?>>
-										<?php print $field;?>
-									</option>
-									<?php }?>
-								</select>
-                                <br/><span class="help">"Separate query" will run another query to get every values for each facet. You may want to choose this option when not choosing "Enable multiple filter", otherwise this could lead to have two chosen filters excluding each others.
-                                <br/>"No separate query" will show facets' values only for document matching the current filtered search.
-                                </span>
-							</p>
-							<p>
-								<input type="checkbox" id="oss_multi_filter" name="oss_multi_filter" value="1" <?php checked( 1 == get_option('oss_multi_filter')); ?> />
-                                <label for="oss_multi_filter">Enable multiple filter</label>
-                                <br/><span class="help">If enabled will allow selection of several different filter at once. Search will then return documents having every asked values (it is a boolean AND).</span>
+                                <br/>
+                                <input type="checkbox" value="1" name="oss_advanced_facets" id="oss_advanced_facets" <?php checked( 1 == get_option('oss_advanced_facets')); ?>/>
+                                <label for="oss_advanced_facets">Enable advanced facets behaviour</label>
+                                <br/><span class="help">This option allows selection of multiple values for each facets.</span>
                                 <br/>
                                 <input type="checkbox" id="oss_facet_display_count" name="oss_facet_display_count" value="1" <?php checked( 1 == get_option('oss_facet_display_count')); ?> />
-                                <label for="oss_facet_display_count">Display number of results for each value</label>
+                                <label for="oss_facet_display_count">Display number of results for each facet's value</label>
                                 <br/>
-                                <input type="checkbox" value="1" name="oss_display_use_radio_buttons" id="oss_display_use_radio_buttons" <?php checked( 1 == get_option('oss_display_use_radio_buttons')); ?>/>
-                                <label for="oss_display_use_radio_buttons">Use radio buttons instead of list bullets for facets</label>
 							</p>
                             </fieldset>
                             

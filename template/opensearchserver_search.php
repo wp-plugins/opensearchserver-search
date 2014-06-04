@@ -23,95 +23,158 @@ get_header(); ?>
     $displayCategory = get_option('oss_display_category') == 1;
     $displayType = get_option('oss_display_type') == 1;
     $displayDate = get_option('oss_display_date') == 1;
+    
     $query_fq_parm = isset($_REQUEST['fq']) ? $_REQUEST['fq'] : null;
     $query = get_search_query();
     $oss_result = opensearchserver_getsearchresult($query, false, true);
-    $oss_result_facet = is_separate_filter_query() ? opensearchserver_getsearchresult($query, false, false) : $oss_result;
+    $oss_result_facet = opensearchserver_getsearchresult($query, false, false);
+    
     $oss_sp = isset($_REQUEST['sp']) ? $_REQUEST['sp'] : null;
     if (isset($oss_result) && $oss_result instanceof SimpleXMLElement && isset($oss_result_facet) && $oss_result_facet instanceof SimpleXMLElement) {
       $oss_results = opensearchserver_getresult_instance($oss_result);
       $oss_result_facets = opensearchserver_getresult_instance($oss_result_facet);
       if($oss_results->getResultFound() <= 0 && $oss_sp != 1 && get_option('oss_spell')!='none') {
         $oss_spell_result = opensearchserver_getsearchresult($query, true, null);
-        $spellcheck_query = opensearchserver_getspellcheck($oss_spell_result);
-        $oss_result =  opensearchserver_getsearchresult($spellcheck_query, false, true);
+        $first_query = $query;
+        $query = $spellcheck_query = opensearchserver_getspellcheck($oss_spell_result);
+        $oss_result = opensearchserver_getsearchresult($query, false, true);
         if (isset($oss_result) && $oss_result instanceof SimpleXMLElement && isset($oss_result_facet) && $oss_result_facet instanceof SimpleXMLElement) {
           $oss_results = opensearchserver_getresult_instance($oss_result);
-          $oss_result_facet = is_separate_filter_query() ? opensearchserver_getsearchresult($spellcheck_query, false, false) : $oss_result;
+          $oss_result_facet = opensearchserver_getsearchresult($query, false, false);
           $oss_result_facets = opensearchserver_getresult_instance($oss_result_facet);
         }
       }
+      
       $oss_resultTime = isset($oss_result) ? (float)$oss_result->result['time'] / 1000 : null;
       $max = opensearchserver_get_max($oss_results);
+      
+      
       ?>
     <div class="oss-search">
     <?php if($oss_result_facets->getResultFound()>0) {?>
     <div id="oss-filter">
+ 
         <?php 
-        $facets = get_option('oss_facet');
+        
         $facets_labels = get_option('oss_facets_labels');
-        if (isset($facets) && $facets != null) :
-        foreach ($facets as $facet) :
-          if(!empty($facet)) :
-	          $facet_results = $oss_result_facets->getFacet($facet);
-	          ?>
-	           <div class="oss-filter-title">
-		            <?php
-		            if(!empty($facets_labels[$facet])) {
-		            	print $facets_labels[$facet];	
-		            } else {
-			            $fields = opensearchserver_get_fields();
-						if(isset($fields[$facet])) {
-			            	print ucfirst($fields[$facet]);
-						}else {
-							print ucfirst($facet);
-						}
-		            }
-		            ?>
-	           </div>
-	           <ul class="oss-nav <?php if (get_option('oss_display_use_radio_buttons')) { print 'oss-nav-radio'; }?>">
-		            <li class="oss-top-nav">
+        $fields = opensearchserver_get_fields();
+        
+        //advanced facets
+        if(get_option('oss_advanced_facets')) :
+            $facets = opensearchserver_build_facets_to_display($query, $oss_results, $oss_result_facets);
+	        foreach ($facets as $facet => $facet_results) :
+	        ?>
+               <div class="oss-filter-title">
+                    <?php
+                    if(!empty($facets_labels[$facet])) {
+                        print $facets_labels[$facet];   
+                    } else {
+                        if(isset($fields[$facet])) {
+                            print ucfirst($fields[$facet]);
+                        } else {
+                            print ucfirst($facet);
+                        }
+                    }
+                    ?>
+               </div>
+               <ul class="oss-nav oss-nav-radio">
+                    <li class="oss-top-nav">
                         <a href="<?php print '?s='.urlencode($query).'&'.opensearchserver_get_facet_url_without_one_facet($facet);?>">
-                        	<?php _e("All", 'opensearchserver'); ?>
+                            <?php _e("All", 'opensearchserver'); ?>
                         </a>
-		            </li>
-		            <?php
-		            if(count($facet_results) > 0 ) :
-		              foreach ($facet_results as $values) :
-		                $value = (string)$values['name'];
-		                $css_class = 'oss-link';
-		                $link = "?s=".$query.'&'. opensearchserver_get_facet_url($facet, $value)
-		                ?>
-			            <li>
-				            <?php 
-							if (opensearchserver_is_facet_active($facet, $value)) {
-								$css_class .= ' oss-bold';
-							}
-				            
-    						if (get_option('oss_display_use_radio_buttons')) :	
-    						?> 
-                                <input <?php if (opensearchserver_is_facet_active($facet, $value)) { print 'checked="checked"'; } ?> type="radio" id="<?php print urlencode($facet.'_'.$value); ?>"/>
-                                <label for=""<?php print urlencode($facet.'_'.$value); ?>">
-                                    <a class="opensearchserver_display_use_radio_buttons" href="<?php print $link; ?>">
-                                    	<?php print opensearchserver_get_facet_value($facet, $value); ?><?php if(get_option('oss_facet_display_count', 0) == 1) { print ' <span class="oss-facet-number-docs">('.(string)$values.')</span>'; }?>
-                                    </a>
+                    </li>
+                    <?php
+                    if(count($facet_results) > 0 ) :
+                      foreach ($facet_results as $value => $count) :
+                        $css_class = 'oss-link';
+                        $link = "?s=".$query.'&'. opensearchserver_get_facet_url($facet, $value)
+                        ?>
+                        <li>
+                            <?php 
+                            if (opensearchserver_is_facet_active($facet, $value)) {
+                                $css_class .= ' oss-bold';
+                                $link = "?s=".$query.'&'. opensearchserver_get_facet_url_without_one_facet_value($facet, $value);
+                            }
+                            ?>
+                            <?php if($count > 0) : ?>
+	                            <input onclick='window.location.href = "<?php print $link; ?>";' <?php if (opensearchserver_is_facet_active($facet, $value)) { print 'checked="checked"'; } ?> type="checkbox" id="<?php print urlencode($facet.'_'.$value); ?>"/>
+	                            <label for="<?php print urlencode($facet.'_'.$value); ?>">
+	                                <a class="opensearchserver_display_use_radio_buttons <?php echo $css_class; ?>" href="<?php print $link; ?>">
+	                                    <?php print opensearchserver_get_facet_value($facet, $value); ?><?php if(get_option('oss_facet_display_count', 0) == 1) { print ' <span class="oss-facet-number-docs">('.$count.')</span>'; }?>
+	                                </a>
+	                            </label> 
+                            <?php else: ?>
+                                <input disabled="disabled" <?php if (opensearchserver_is_facet_active($facet, $value)) { print 'checked="checked"'; } ?> type="checkbox" id="<?php print urlencode($facet.'_'.$value); ?>"/>
+                                <label for="<?php print urlencode($facet.'_'.$value); ?>" class="unavailable_facet">
+                                    <?php print opensearchserver_get_facet_value($facet, $value); ?>
                                 </label> 
-                            <?php else : ?>
-				                <a class="<?php print $css_class;?>" href="<?php print $link; ?>">
-				                	<?php print opensearchserver_get_facet_value($facet, $value); ?><?php if(get_option('oss_facet_display_count', 0) == 1) { print ' <span class="oss-facet-number-docs">('.(string)$values.')</span>'; }?>
-					            </a>
                             <?php endif; ?>
-			            </li>
-		            <?php 
-		            	endforeach;
-					endif;
-		            ?>
-	        </ul>
-	        <?php
-    	endif;
-	endforeach;
-	endif;
-	?>
+                        </li>
+                    <?php 
+                        endforeach;
+                    endif;
+                    ?>
+            </ul>
+            <?php
+    		endforeach;
+    	?>
+        
+        <?php 
+        	//standard facets
+        	else: 
+	        	$facets = opensearchserver_build_facets_array($oss_results);
+		        foreach ($facets as $facet => $facet_results) :
+		        ?>
+               <div class="oss-filter-title">
+                    <?php
+                    if(!empty($facets_labels[$facet])) {
+                        print $facets_labels[$facet];   
+                    } else {
+                        if(isset($fields[$facet])) {
+                            print ucfirst($fields[$facet]);
+                        } else {
+                            print ucfirst($facet);
+                        }
+                    }
+                    ?>
+               </div>
+               <ul class="oss-nav">
+                    <li class="oss-top-nav">
+                        <a href="<?php print '?s='.urlencode($query).'&'.opensearchserver_get_facet_url_without_one_facet($facet);?>">
+                            <?php _e("All", 'opensearchserver'); ?>
+                        </a>
+                    </li>
+                    <?php
+                    if(count($facet_results) > 0 ) :
+                      foreach ($facet_results as $value => $count) :
+                        $css_class = 'oss-link';
+                        $link = "?s=".$query.'&'. opensearchserver_get_facet_url($facet, $value)
+                        ?>
+                        <li>
+                            <?php 
+                            if (opensearchserver_is_facet_active($facet, $value)) {
+                                $css_class .= ' oss-bold';
+                            }
+                            ?>
+                            <label for="<?php print urlencode($facet.'_'.$value); ?>">
+                                <a class="<?php echo $css_class; ?>" href="<?php print $link; ?>">
+                                    <?php print opensearchserver_get_facet_value($facet, $value); ?><?php if(get_option('oss_facet_display_count', 0) == 1) { print ' <span class="oss-facet-number-docs">('.$count.')</span>'; }?>
+                                </a>
+                            </label> 
+                        </li>
+                    <?php 
+                        endforeach;
+                    endif;
+                    ?>
+            </ul>
+            <?php
+    		endforeach;
+	    	?>
+        	
+        <?php 
+        	endif;
+        ?>
+    
     </div>
     <?php }?>
     <?php if($oss_sp == 1 || $oss_results->getResultFound() <= 0) {
@@ -143,7 +206,7 @@ get_header(); ?>
         <div id="oss-did-you-mean">
             <?php 
             	if(isset($spellcheck_query)) { 
-					$originalQueryText = '<a href="?s='.$query.'&sp=1"><b>'.$query.'</b></a>';		
+					$originalQueryText = '<a href="?s='.$query.'&sp=1"><b>'.$first_query.'</b></a>';		
             		printf(__('Showing results for <b>%1$s</b> search instead of %2$s.', 'opensearchserver'), $spellcheck_query, $originalQueryText);
             	}
             ?>
@@ -273,6 +336,8 @@ get_header(); ?>
     <?php }
       }
     ?>
+    <div class="clearer">&nbsp;</div>
+    </div>
 </div><!-- #content -->
 </section><!-- #primary -->
 <?php

@@ -38,7 +38,7 @@
 	background: #EEEEEE;
 }
 #oss-filter {
- width:200px;
+ width:250px;
  float:left;
 }
 #oss-results{
@@ -95,5 +95,8 @@
 	font-weight: normal;
 	font-size:0.9em;
 }
+.clearer { clear:both; height:0; }
 .oss-result-info { color:#ababab;}
 .oss-filter-title { font-weight:bold; }
+.unavailable_facet { cursor:default; color:#aaa; }
+.oss-nav-radio input[type=checkbox] { cursor:pointer; }

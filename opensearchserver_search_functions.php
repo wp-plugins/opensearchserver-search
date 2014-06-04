@@ -153,7 +153,7 @@ function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
       if($facet) {
       	$facets = opensearchserver_get_active_facets();
       	foreach($facets as $field => $value) {
-			$search->filter($field .':"' .$value. '"');
+			opensearchserver_add_filter($search, $field, $value);
       	}
       }
       $oss_query = $search->query($query)->template('search');
@@ -177,6 +177,118 @@ function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
     }
     return $result;
   }
+}
+
+/**
+ * Build an array with every facets values
+ * @param unknown_type $query
+ * @param unknown_type $oss_result OssResult for query with active facets
+ * @param unknown_type $oss_result_facets OssResult for query without any active facets
+ */
+function opensearchserver_build_facets_to_display($query, $oss_result, $oss_result_facets) {
+    //get array with, for each facet, what values would be without this facet active
+	$hypotheticalFacets = opensearchserver_getsearchfacet_without_each_facet($query);
+	
+	//get all available facets for this query, without any active facet.
+	//set every frequency to 0
+	$allFacets = opensearchserver_build_facets_array($oss_result_facets, 0);
+	
+	//get real available facets for this query, with every active facets
+	$realFacets = opensearchserver_build_facets_array($oss_result);
+	
+	// erase some values from $allFacets by those from $realFacets
+	foreach($realFacets as $field => $values) {
+		$allFacets[$field] = array_merge($allFacets[$field], $values);
+	}
+
+	// erase some values from $allFacets by those from $hypotheticalFacets
+	foreach($hypotheticalFacets as $field => $values) {
+		$allFacets[$field] = array_merge($allFacets[$field], $values);
+	}
+	$facetsFinal = $allFacets;
+	
+	return $facetsFinal;
+}
+
+/**
+ * For each active facet run a new search without this facet to get what would 
+ * be all values for this facet (for same searched keywords and with all other active facets)  
+ **/
+function opensearchserver_getsearchfacet_without_each_facet($query) {
+	$start = isset($_REQUEST['pa']) ? $_REQUEST['pa'] : NULL;
+    $start = isset($start) ? max(0, $start - 1) * 10 : 0;
+    $query = opensearchserver_clean_query($query);
+    $search = opensearchserver_getsearch_instance(10, $start);
+    $oss_query = $search->query($query)->template('search');
+      
+	$hypotheticalFacets = array();
+	$facetsActive = opensearchserver_get_active_facets();
+	//for each active facet:
+	foreach($facetsActive as $field=>$facet) {
+		$oss_search_hypothetical = clone $oss_query;
+		//ask only for this facet
+		$oss_search_hypothetical->facet($field, 1, TRUE);
+		//filter on every active facet except the current one
+		foreach($facetsActive as $facetField => $facetValue) {
+			if($facetField != $field) {
+				opensearchserver_add_filter($oss_search_hypothetical, $facetField, $facetValue);	
+			}
+		}
+		//execute search
+		try {
+			$xmlResult = $oss_search_hypothetical->execute(60);
+		} catch (\Exception $e) {
+			echo 'An error happened. Message: '. $e->getMessage(); 
+		}	
+		
+		$oss_result = opensearchserver_getresult_instance($xmlResult);
+						
+		$hypotheticalFacets = opensearchserver_build_facets_array($oss_result);
+	}
+	
+	
+	return $hypotheticalFacets;
+}
+
+/**
+ * Build a proper array from $oss_result->getFacets()
+ * @param OssResult $oss_result
+ */
+function opensearchserver_build_facets_array($oss_result, $force_count_value = null) {
+	$facets = array();
+	$finalFacets = array();
+	foreach($oss_result->getFacets() as $facetName) {
+		$facetName = (string)$facetName;
+		foreach($oss_result->getFacet($facetName) as $facetDetails) {				
+			$facetDetailsArray = (array)$facetDetails;
+			$facets[$facetName][$facetDetailsArray['@attributes']['name']] = ($force_count_value !== null) ? $force_count_value : (string)$facetDetails;
+		}
+		if(!empty($facets[$facetName]))
+		{
+			$finalFacets[$facetName] = $facets[$facetName];	
+		}
+	}
+	
+	return $finalFacets;
+}
+
+/**
+ * Add filter to an OssSearch instance.
+ * Returns string used to filter.
+ * @param unknown_type $oss_search
+ * @param unknown_type $facetField field on which filter
+ * @param unknown_type $facetValue value of the filter
+ * @param unknown_type $join type of join. Default is OR
+ */
+function opensearchserver_add_filter($oss_search, $name, $filter, $join = 'OR') {
+	if(is_array($filter)) {
+		$filterString = $name . ':"' . implode('" '.$join.' '.$name.':"', $filter ) .'"';
+	}
+	else {
+		$filterString = $name . ':"' . $filter .'"';
+	}
+	$oss_search->filter($filterString);
+	return $filterString;
 }
 
 function opensearchserver_get_facet_value($facet_field, $value) {
@@ -204,6 +316,7 @@ function opensearchserver_clean_query($query) {
   }
   return $query;
 }
+
 
 function opensearchserver_add_facets_search($search) {
   $facets = get_option('oss_facet');
@@ -269,25 +382,18 @@ function opensearchserver_build_sort_url($sort = null) {
  * @param string $facetName value
  */
 function opensearchserver_get_facet_url($facetField, $facetValue) {
-	if(is_multiple_filter_enabled()) {
-		$facets = get_query_var('f',array());
-		$facets[$facetField] = $facetValue;
-	} else {
-		$facets = array($facetField => $facetValue);
-	}
-	return http_build_query(array('f' => $facets));
-	//TODO : return http_build_query(array('f' => opensearchserver_merge_facets($existingFacetsInUrl, $facetField, $facetValue)));
+	$facetsInUrl = opensearchserver_get_active_facets();
+	return http_build_query(array('f' => opensearchserver_merge_facets($facetsInUrl, $facetField, $facetValue)));
 }
 
 /**
- * 
  * Remove from URL part related to the given facet.
  * Used to build the "All" link for each facet.
  * 
  * @param string $facetField field
  */
 function opensearchserver_get_facet_url_without_one_facet($facetField) {
-	$facets = get_query_var('f',array());
+	$facets = opensearchserver_get_active_facets();
 	if(!empty($facets[$facetField])) {
 		unset($facets[$facetField]);
 	}
@@ -295,10 +401,34 @@ function opensearchserver_get_facet_url_without_one_facet($facetField) {
 }
 
 /**
+ * Remove from URL part related to the given facet, and more specifically for the given value, if one is given.
+ * Used to build the link set on each active facet (one click will remove this active facet, like with a checkbox)
+ * 
+ * @param string $facetField field
+ * @param string $facetValue optionnal - value
+ */
+function opensearchserver_get_facet_url_without_one_facet_value($facetName, $value) {
+	$facets = opensearchserver_get_active_facets();
+
+	if( $value == null || (!empty($facets[$facetName]) && !is_array($facets[$facetName]))) {
+		unset($facets[$facetName]);	
+	}	
+	elseif (in_array($value, $facets[$facetName])) {
+		unset($facets[$facetName][array_search($value, $facets[$facetName])]);
+		//if there were previously several values for a facet but there is just one remaining, transform it back to a mere string
+		if(sizeof($facets[$facetName]) == 1) {
+			$facets[$facetName] = array_shift($facets[$facetName]);
+		}
+	}
+	
+	return http_build_query(array('f' => $facets));
+}
+
+/**
  * Return current facets from URL
  */
 function opensearchserver_get_active_facets() {
-	return get_query_var('f',array());
+	return (!empty($_REQUEST['f'])) ? $_REQUEST['f'] : array();
 }
 
 /**
@@ -308,14 +438,18 @@ function opensearchserver_get_active_facets() {
  */
 function opensearchserver_is_facet_active($facetField, $facetName) {
 	$facets = opensearchserver_get_active_facets();
-	return (!empty($facets) && !empty($facets[$facetField]) && $facets[$facetField] == $facetName);
+	return (!empty($facets) && !empty($facets[$facetField]) && 
+			(
+			(!is_array($facets[$facetField]) && $facets[$facetField] == $facetName)
+			||	
+			(is_array($facets[$facetField]) && in_array($facetName, $facets[$facetField]))
+			)
+		);
 }
 
 /**
  * Complete function to work with facets. Allow several values for one facet.
- * @TODO: add options in BO to choose which facet should be allowed to have several values.
  */
-/*
 function opensearchserver_merge_facets($existingFilters, $facetName, $facetValue)
 {
   if(                                                               // if this facet value already exists, exits
@@ -348,5 +482,30 @@ function opensearchserver_merge_facets($existingFilters, $facetName, $facetValue
   }
   return $existingFilters;      
 }
-*/
+
+	
+/**
+ * Builds new link by removing one specific facet
+ * @param array $currentFilters Current set URL filters on the page
+ * @param string $facetName Name of the facet to delete
+ * @param sstring $value Optionnal - if URL is currently using several values for a facet remove only the specified value 
+ */
+function deleteFacetFilter($currentFilters, $facetName, $value = null)
+{
+	if( $value == null)
+	{
+		unset($currentFilters['f'][$facetName]);	
+	}	
+	elseif (in_array($value, $currentFilters['f'][$facetName]))
+	{
+		unset($currentFilters['f'][$facetName][array_search($value, $currentFilters['f'][$facetName])]);
+		//if there were previously several values for a facet but there is just one remaining, transform it back to a mere string
+		if(sizeof($currentFilters['f'][$facetName]) == 1)
+		{
+			$currentFilters['f'][$facetName] = array_shift($currentFilters['f'][$facetName]);
+		}
+	}	
+	return $currentFilters;		
+}
+
 ?>
