@@ -171,7 +171,13 @@ function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
       		$oss_query->setCustomLog(1,$_SERVER['REMOTE_ADDR']);
       	}
       }
-      return $oss_query->execute();
+      
+	  /*
+	   * filter "oss_search"
+	   */
+	  $oss_query = apply_filters('oss_search', $oss_query);
+
+	  return $oss_query->execute();
     }else {
       $result = $search->query($query)->template('spellcheck')->execute();
     }
@@ -221,6 +227,11 @@ function opensearchserver_getsearchfacet_without_each_facet($query) {
     $search = opensearchserver_getsearch_instance(10, $start);
     $oss_query = $search->query($query)->template('search');
       
+	/*
+	 * filter "oss_search_getsearchfacet_without_each_facet"
+	 */
+	$oss_query = apply_filters('oss_search_getsearchfacet_without_each_facet', $oss_query);
+	
 	$hypotheticalFacets = array();
 	$facetsActive = opensearchserver_get_active_facets();
 	//for each active facet:
@@ -384,9 +395,9 @@ function opensearchserver_build_sort_url($sort = null) {
  * @param string $facetField field
  * @param string $facetName value
  */
-function opensearchserver_get_facet_url($facetField, $facetValue) {
+function opensearchserver_get_facet_url($facetField, $facetValue, $exclusiveFacet = false) {
 	$facetsInUrl = opensearchserver_get_active_facets();
-	return opensearchserver_build_facets_url(opensearchserver_merge_facets($facetsInUrl, $facetField, $facetValue));
+	return opensearchserver_build_facets_url(opensearchserver_merge_facets($facetsInUrl, $facetField, $facetValue, $exclusiveFacet));
 }
 
 /**
@@ -436,7 +447,14 @@ function opensearchserver_get_active_facets() {
 		return array();
 	}
 	$facetsFromUrl = $_REQUEST['f'];
-	$facetsSlugs = get_option('oss_facets_slugs');
+	$facetsSlugs = get_option('oss_facets_slugs', array());
+	
+	/*
+	 * filter "oss_facets_slugs"
+	 * Facets slugs can be handled differently
+	 */
+	$facetsSlugs = apply_filters('oss_facets_slugs', $facetsSlugs);
+	
 	//build array from $facetsSlugs with slugs as keys and fieldnames as values
 	$facetsSlugsReversed = array();
 	foreach($facetsSlugs as $fieldname => $slug) {
@@ -469,6 +487,11 @@ function opensearchserver_transform_facets_array($facetsWithFieldnamesAsKeys) {
 	$facets = get_option('oss_facet');
 	$facetsSlugs = get_option('oss_facets_slugs');
 	
+	/*
+	 * Facets slugs can be handled differently
+	 */
+	$facetsSlugs = apply_filters('oss_facets_slugs', $facetsSlugs);
+	
 	foreach($facetsWithFieldnamesAsKeys as $fieldname => $value) {
 		if(isset($facetsSlugs[$fieldname])) {
 			unset($facetsWithFieldnamesAsKeys[$fieldname]);
@@ -498,7 +521,7 @@ function opensearchserver_is_facet_active($facetField, $facetName) {
 /**
  * Complete function to work with facets. Allow several values for one facet.
  */
-function opensearchserver_merge_facets($existingFilters, $facetName, $facetValue)
+function opensearchserver_merge_facets($existingFilters, $facetName, $facetValue, $exclusiveFacet = false)
 {
   if(                                                               // if this facet value already exists, exits
       !empty($existingFilters[$facetName])                                 
@@ -516,7 +539,7 @@ function opensearchserver_merge_facets($existingFilters, $facetName, $facetValue
   }
                                                                      // given value is not already among the filters, 
                                                                      // it needs to be added
-  if(!empty($existingFilters[$facetName]) && !opensearchserver_facet_is_exclusive($facetName)) {
+  if(!empty($existingFilters[$facetName]) && !$exclusiveFacet) {
     if(is_array($existingFilters[$facetName])) {                     //    if there is already several values for this
       $existingFilters[$facetName][] = $facetValue;                  //    field then add the given value in the array
     }

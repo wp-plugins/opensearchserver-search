@@ -86,7 +86,7 @@ get_header(); ?>
                     if(count($facet_results) > 0 ) :
                       foreach ($facet_results as $value => $count) :
                         $css_class = 'oss-link';
-                        $link = "?s=".$query.'&'. opensearchserver_get_facet_url($facet, $value)
+                        $link = "?s=".$query.'&'. opensearchserver_get_facet_url($facet, $value, opensearchserver_facet_is_exclusive($facet))
                         ?>
                         <li>
                             <?php 

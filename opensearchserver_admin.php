@@ -886,6 +886,9 @@ function opensearchserver_admin_page() {
 								$facets_labels = get_option('oss_facets_labels');
 								$facets_slugs=  get_option('oss_facets_slugs');
 								$facets_exclusive = get_option('oss_facets_exclusive');
+								if(!is_array($facets_exclusive)) {
+									$facets_exclusive = array();
+								}
 							if($facets):?>
 							<table class="widefat" style="width: 100% !important; min-width:600px;">
 								<thead>
