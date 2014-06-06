@@ -3,7 +3,7 @@ Contributors: ekeller,naveenann
 Tags: search,search engine,opensearchserver, full-text, phonetic, filter, facet, indexation, auto-completion
 Requires at least: 3.0.1
 Tested up to: 3.9
-Stable tag: 1.3.5
+Stable tag: 1.3.6
 License: GPLv2 or later
 
 The OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full-text search on WordPress-based websites.
@@ -22,9 +22,9 @@ This plugin automatically replaces WordPress built-in search functionnality.
  * Filter search results by **facets**,
  * Automatic suggestion with **autocompletion**,
  * **Spellcheking** with automatic substitution,
- * Automatically index an post when you publish an post,
- * Search through posts and pages,
- * Easy to set up with just filling a form.
+ * Automatically index content when published, edited or deleted,
+ * Search through posts, pages and other types of content,
+ * Easy to set up and customize with just filling a form.
 
 [youtube http://www.youtube.com/watch?v=_hnUMBLH-aw]
  
@@ -39,15 +39,18 @@ This plugin automatically replaces WordPress built-in search functionnality.
 
 Two ways to get an OpenSearchServer instance:
 
- * Deploy it on your own server by reading the [OpenSearchServer documentation](http://www.open-search-server.com/documentation "OpenSearchServer documentation")
- * Or use an OpenSearchServer SaaS instance [OpenSearchServer SaaS service](http://www.open-search-server.com/services/saas_services "OpenSearchServer SaaS services")
+ * Deploy it on your own server by reading the [OpenSearchServer documentation](http://www.opensearchserver.com/documentation/ "OpenSearchServer documentation")
+ * Or use an OpenSearchServer SaaS instance [OpenSearchServer SaaS service](http://www.opensearchserver.com/#saas "OpenSearchServer SaaS services")
 
 = Installing the plugin =
 
    1. Check you have a running OpenSearchServer instance
-   2. Unpack the plugin archive to wp-content/plugins folder of your WordPress installation.
+   2. Uncompress the plugin archive to wp-content/plugins folder of your WordPress installation.
    3. Activate the OpenSearchServer Search plugin via WordPress settings.
-   4. Open OpenSearchServer settings page and just fill the form to create and index.
+   4. Open OpenSearchServer settings page and fill the form with instance settings.
+   5. Choose type of content and taxonomies to index, save Index Settings.
+   6. Create index by clicking on "(Re-)Create the index".
+   7. Content from WordPress can be pushed to newly created index by clicking "Synchronize / Re-index".
 
 [youtube http://www.youtube.com/watch?v=_hnUMBLH-aw]
 
@@ -92,6 +95,14 @@ You probably updated to a recent version without re-creating your index. You nee
 2. An example of search result.
 
 == Changelog ==
+
+= 1.3.6 =
+* Change facet behavior: there is now a standard behavior and an advanced behavior
+* Advanced behavior allow to choose exclusive or multiple facets
+* Add configurable URL slug for facets
+* Improve autocompletion suggestion
+* Add some WordPress filters
+* ==> **Index re-creation and synchronization may be needed**
 
 = 1.3.5 =
 * Indexation of content's thumbnail
