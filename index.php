@@ -138,7 +138,7 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_phonetic');
   delete_option('oss_multi_filter');
   delete_option('oss_language');
-  delete_option('oss_facet_behavior');
+  delete_option('oss_advanced_facets');
   delete_option('oss_clean_query');
   delete_option('oss_clean_query_enable');
   delete_option('oss_display_user');

@@ -291,6 +291,12 @@ function opensearchserver_add_filter($oss_search, $name, $filter, $join = 'OR') 
 	return $filterString;
 }
 
+/**
+ * Return value for each value of a facet: if original value is found in "custom values" for
+ * this facet use it, otherwise return original value.
+ * @param string $facet_field field of the facet
+ * @param string $value original value
+ */
 function opensearchserver_get_facet_value($facet_field, $value) {
 	$facets_values = get_option('oss_facets_values');
 	if(empty($facets_values[$facet_field])) {
@@ -306,7 +312,7 @@ function opensearchserver_clean_query($query) {
 		$escapechars = explode(' ', stripslashes($clean_query_options));
 		$query = html_entity_decode($query, ENT_COMPAT);
 	  	//defaults to a pre-configured list of escapechars
-	  	if(empty($escapechars)) {
+	  	if(empty($escapechars) || $escapechars[0] == '') {
 		  	$escapechars = array('\\', '^', '~', '(', ')', '{', '}', '[', ']' , '&', '||', '!', '*', '?','039;','\'','#');
 	  	}
 	  	foreach ($escapechars as $escchar)  {
@@ -362,7 +368,7 @@ function opensearchserver_build_sort_url($sort = null) {
 	$url = '?s=' . urlencode(get_search_query()) ;
 	$facets = opensearchserver_get_active_facets();
 	if(!empty($facets)) {
-		$url .= '&'.http_build_query(array('f' => $facets));
+		$url .= '&'.opensearchserver_build_facets_url($facets);
 	}
 	if(!empty($sort)) {
 		$url .= '&sort='.urlencode($sort);
@@ -375,15 +381,12 @@ function opensearchserver_build_sort_url($sort = null) {
  * Build URL part related to facets for one facet (= one field and one value).
  * Used when displaying each facet value.
  * 
- * Depending on whether multiple filters are allowed or not it will merge values or 
- * directly return value.
- * 
  * @param string $facetField field
  * @param string $facetName value
  */
 function opensearchserver_get_facet_url($facetField, $facetValue) {
 	$facetsInUrl = opensearchserver_get_active_facets();
-	return http_build_query(array('f' => opensearchserver_merge_facets($facetsInUrl, $facetField, $facetValue)));
+	return opensearchserver_build_facets_url(opensearchserver_merge_facets($facetsInUrl, $facetField, $facetValue));
 }
 
 /**
@@ -397,7 +400,7 @@ function opensearchserver_get_facet_url_without_one_facet($facetField) {
 	if(!empty($facets[$facetField])) {
 		unset($facets[$facetField]);
 	}
-	return http_build_query(array('f' => $facets));
+	return opensearchserver_build_facets_url($facets);
 }
 
 /**
@@ -421,14 +424,59 @@ function opensearchserver_get_facet_url_without_one_facet_value($facetName, $val
 		}
 	}
 	
-	return http_build_query(array('f' => $facets));
+	return opensearchserver_build_facets_url($facets);
 }
 
 /**
  * Return current facets from URL
+ * Replace any URL slug by its real fieldname
  */
 function opensearchserver_get_active_facets() {
-	return (!empty($_REQUEST['f'])) ? $_REQUEST['f'] : array();
+	if(empty($_REQUEST['f'])) {
+		return array();
+	}
+	$facetsFromUrl = $_REQUEST['f'];
+	$facetsSlugs = get_option('oss_facets_slugs');
+	//build array from $facetsSlugs with slugs as keys and fieldnames as values
+	$facetsSlugsReversed = array();
+	foreach($facetsSlugs as $fieldname => $slug) {
+		$facetsSlugsReversed[$slug] = $fieldname;
+	}
+	foreach($facetsFromUrl as $facetName => $value) {
+		if(isset($facetsSlugsReversed[$facetName])) {
+			unset($facetsFromUrl[$facetName]);
+			$facetsFromUrl[$facetsSlugsReversed[$facetName]] = $value;
+		}
+	}
+	$facetsWithFieldnamesAsKeys = $facetsFromUrl;
+	return $facetsWithFieldnamesAsKeys;
+}
+
+/**
+ * Build URL for facets
+ * @param unknown_type $facetsWithFieldnamesAsKeys
+ */
+function opensearchserver_build_facets_url($facetsWithFieldnamesAsKeys) {
+	return http_build_query(array('f' => opensearchserver_transform_facets_array($facetsWithFieldnamesAsKeys))); 
+}
+
+/**
+ * Transform array of facets using fieldnames as key 
+ * to an array using URL slug as key, if it exist, otherwise
+ * still use fieldname
+ */
+function opensearchserver_transform_facets_array($facetsWithFieldnamesAsKeys) {
+	$facets = get_option('oss_facet');
+	$facetsSlugs = get_option('oss_facets_slugs');
+	
+	foreach($facetsWithFieldnamesAsKeys as $fieldname => $value) {
+		if(isset($facetsSlugs[$fieldname])) {
+			unset($facetsWithFieldnamesAsKeys[$fieldname]);
+			$facetsWithFieldnamesAsKeys[$facetsSlugs[$fieldname]] = $value;
+		}
+	}
+	$finalFacets = $facetsWithFieldnamesAsKeys;
+	return $finalFacets;
 }
 
 /**
@@ -468,7 +516,7 @@ function opensearchserver_merge_facets($existingFilters, $facetName, $facetValue
   }
                                                                      // given value is not already among the filters, 
                                                                      // it needs to be added
-  if(!empty($existingFilters[$facetName])) {
+  if(!empty($existingFilters[$facetName]) && !opensearchserver_facet_is_exclusive($facetName)) {
     if(is_array($existingFilters[$facetName])) {                     //    if there is already several values for this
       $existingFilters[$facetName][] = $facetValue;                  //    field then add the given value in the array
     }
@@ -483,29 +531,12 @@ function opensearchserver_merge_facets($existingFilters, $facetName, $facetValue
   return $existingFilters;      
 }
 
-	
 /**
- * Builds new link by removing one specific facet
- * @param array $currentFilters Current set URL filters on the page
- * @param string $facetName Name of the facet to delete
- * @param sstring $value Optionnal - if URL is currently using several values for a facet remove only the specified value 
+ * Tell if a facet is exclusive or no: does it allow multiple values to be selected or only one?
+ * @param string $facet Name of field for this facet
  */
-function deleteFacetFilter($currentFilters, $facetName, $value = null)
-{
-	if( $value == null)
-	{
-		unset($currentFilters['f'][$facetName]);	
-	}	
-	elseif (in_array($value, $currentFilters['f'][$facetName]))
-	{
-		unset($currentFilters['f'][$facetName][array_search($value, $currentFilters['f'][$facetName])]);
-		//if there were previously several values for a facet but there is just one remaining, transform it back to a mere string
-		if(sizeof($currentFilters['f'][$facetName]) == 1)
-		{
-			$currentFilters['f'][$facetName] = array_shift($currentFilters['f'][$facetName]);
-		}
-	}	
-	return $currentFilters;		
+function opensearchserver_facet_is_exclusive($facet) {
+	$facetsExclusive = get_option('oss_facets_exclusive');
+	return (in_array($facet, $facetsExclusive));	
 }
-
 ?>

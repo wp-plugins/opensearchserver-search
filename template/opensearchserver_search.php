@@ -33,6 +33,7 @@ get_header(); ?>
     if (isset($oss_result) && $oss_result instanceof SimpleXMLElement && isset($oss_result_facet) && $oss_result_facet instanceof SimpleXMLElement) {
       $oss_results = opensearchserver_getresult_instance($oss_result);
       $oss_result_facets = opensearchserver_getresult_instance($oss_result_facet);
+      //if first query does not return results try a spellcheck query to get a new suggestion
       if($oss_results->getResultFound() <= 0 && $oss_sp != 1 && get_option('oss_spell')!='none') {
         $oss_spell_result = opensearchserver_getsearchresult($query, true, null);
         $first_query = $query;
@@ -95,14 +96,14 @@ get_header(); ?>
                             }
                             ?>
                             <?php if($count > 0) : ?>
-	                            <input onclick='window.location.href = "<?php print $link; ?>";' <?php if (opensearchserver_is_facet_active($facet, $value)) { print 'checked="checked"'; } ?> type="checkbox" id="<?php print urlencode($facet.'_'.$value); ?>"/>
+	                            <input onclick='window.location.href = "<?php print $link; ?>";' <?php if (opensearchserver_is_facet_active($facet, $value)) { print 'checked="checked"'; } ?> type="<?php if(opensearchserver_facet_is_exclusive($facet)) echo 'radio'; else echo 'checkbox'; ?>" id="<?php print urlencode($facet.'_'.$value); ?>"/>
 	                            <label for="<?php print urlencode($facet.'_'.$value); ?>">
 	                                <a class="opensearchserver_display_use_radio_buttons <?php echo $css_class; ?>" href="<?php print $link; ?>">
 	                                    <?php print opensearchserver_get_facet_value($facet, $value); ?><?php if(get_option('oss_facet_display_count', 0) == 1) { print ' <span class="oss-facet-number-docs">('.$count.')</span>'; }?>
 	                                </a>
 	                            </label> 
                             <?php else: ?>
-                                <input disabled="disabled" <?php if (opensearchserver_is_facet_active($facet, $value)) { print 'checked="checked"'; } ?> type="checkbox" id="<?php print urlencode($facet.'_'.$value); ?>"/>
+                                <input disabled="disabled" <?php if (opensearchserver_is_facet_active($facet, $value)) { print 'checked="checked"'; } ?> type="<?php if(opensearchserver_facet_is_exclusive($facet)) echo 'radio'; else echo 'checkbox'; ?>" id="<?php print urlencode($facet.'_'.$value); ?>"/>
                                 <label for="<?php print urlencode($facet.'_'.$value); ?>" class="unavailable_facet">
                                     <?php print opensearchserver_get_facet_value($facet, $value); ?>
                                 </label> 
@@ -204,7 +205,7 @@ get_header(); ?>
         <div id="oss-did-you-mean">
             <?php 
             	if(isset($spellcheck_query)) { 
-					$originalQueryText = '<a href="?s='.$query.'&sp=1"><b>'.$first_query.'</b></a>';		
+					$originalQueryText = '<a href="?s='.$first_query.'&sp=1"><b>'.$first_query.'</b></a>';		
             		printf(__('Showing results for <b>%1$s</b> search instead of %2$s.', 'opensearchserver'), $spellcheck_query, $originalQueryText);
             	}
             ?>

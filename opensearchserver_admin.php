@@ -478,6 +478,10 @@ function opensearchserver_admin_set_instance_settings() {
   $oss_indexname = isset($_POST['oss_indexname']) ? $_POST['oss_indexname'] :NULL;
   $oss_login = isset($_POST['oss_login']) ? $_POST['oss_login'] :NULL;
   $oss_key = isset($_POST['oss_key']) ? $_POST['oss_key'] :NULL;
+  //delete trailing slash if any
+  if(substr($oss_url, strlen($oss_url) - 1, 1) == '/') {
+  	$oss_url = substr($oss_url, 0, strlen($oss_url) - 1);
+  }
   update_option('oss_serverurl', $oss_url);
   update_option('oss_indexname', $oss_indexname);
   update_option('oss_login', $oss_login);
@@ -503,6 +507,14 @@ function opensearchserver_update_facet_label_settings($facet_field, $facet_label
     	$facets_labels = get_option('oss_facets_labels', array()); 
       	$facets_labels[$facet_field] = $facet_label;
     	update_option('oss_facets_labels', $facets_labels);
+  	}
+}
+
+function opensearchserver_update_facet_slug_settings($facet_field, $facet_slug) {
+	if($facet_field != NULL) {
+    	$facets_slugs = get_option('oss_facets_slugs', array()); 
+      	$facets_slugs[$facet_field] = $facet_slug;
+    	update_option('oss_facets_slugs', $facets_slugs);
   	}
 }
 
@@ -583,8 +595,16 @@ function opensearchserver_admin_set_query_settings() {
     
     $oss_spell = isset($_POST['oss_spell']) ? $_POST['oss_spell'] : NULL;
     $oss_spell_algo = isset($_POST['oss_spell_algo']) ? $_POST['oss_spell_algo'] : NULL;
+
+    //custom facets slugs
+    $oss_facet_slugs = isset($_POST['oss_facet_edit_slugs']) ? $_POST['oss_facet_edit_slugs'] : array();
+    foreach($oss_facet_slugs as $field => $slug) {
+    	if(!empty($slug)) {
+      		opensearchserver_update_facet_slug_settings($field, $slug);
+    	}
+    }
     
-    //custom facet label
+    //custom facets labels
     $oss_facet_labels = isset($_POST['oss_facet_edit_labels']) ? $_POST['oss_facet_edit_labels'] : array();
     foreach($oss_facet_labels as $field => $custom_label) {
     	if(!empty($custom_label)) {
@@ -596,6 +616,10 @@ function opensearchserver_admin_set_query_settings() {
     $oss_facet_values = isset($_POST['oss_facet_edit_values']) ? $_POST['oss_facet_edit_values'] : array();
     foreach($oss_facet_values as $field => $values) {
     	opensearchserver_update_facet_values_settings($field, $values);
+    }
+	
+    if(!empty($_POST['oss_facets_exclusive'])) {
+    	update_option('oss_facets_exclusive', array_keys($_POST['oss_facets_exclusive']));
     }
     
     //delete facets
@@ -860,22 +884,32 @@ function opensearchserver_admin_page() {
 							</p>
 							<?php 
 								$facets_labels = get_option('oss_facets_labels');
+								$facets_slugs=  get_option('oss_facets_slugs');
+								$facets_exclusive = get_option('oss_facets_exclusive');
 							if($facets):?>
 							<table class="widefat" style="width: 100% !important; min-width:600px;">
 								<thead>
                                     <tr>
-                                        <th colspan="3">
+                                        <th colspan="<?php if(1 == get_option(oss_advanced_facets)) echo '5'; else echo '4'; ?>">
                                             <span class="help">
-                                            <strong>Custom label: </strong>Choose another name for this facet that will be displayed on the results page.
-                                            <br/><strong>Custom values: </strong>Write one replacement by line, with this format: &lt;original value&gt;|&lt;value to display&gt;. 
-                                            For example "2014-02|February 2014" would replace "2014-02" by "February 2014" when displaying and "post|Blog post" would replace "post" by "Blog post".</span>
+	                                            <h4>Help on facets management:</h4>
+	                                            <ul>
+	                                                <li><strong>URL slug: </strong>name of parameter to use in URL for this facet. If empty, name of field will be used.</li>
+	                                                <li><strong>Custom label: </strong>Choose another name for this facet that will be displayed on the results page.</li>
+	                                                <li><strong>Custom values: </strong>Write one replacement by line, with this format: &lt;original value&gt;|&lt;value to display&gt;. 
+	                                            For example "2014-02|February 2014" would replace "2014-02" by "February 2014" when displaying and "post|Blog post" would replace "post" by "Blog post".</li>
+	                                                <?php if(1 == get_option(oss_advanced_facets)):?><li><strong>Exclusive facet: </strong>one value only can be chosen for those facets.</li><?php endif;?>
+	                                            </ul>
+                                            </span>
                                         </th>
                                     </tr>
                                     
                                     <tr>
                                         <th>Facet field list</th>
+                                        <th width="20%;">URL slug</th>
                                         <th width="60%;">Custom label and values</th>
-                                        <th>Delete facet</th>
+                                        <?php if(1 == get_option(oss_advanced_facets)):?><th>Exclusive facet</th><?php endif;?>
+                                        <th class="warning">Delete facet</th>
                                     </tr>
 								</thead>
 								<tbody>
@@ -886,14 +920,23 @@ function opensearchserver_admin_page() {
 										<tr>
 										<td><?php  if($fields[$facet]) { print $fields[$facet]; } else { print $facet; } ?></td>
 										<td>
-	                                        <input type="text" name="oss_facet_edit_labels[<?php echo $facet?>]" placeholder="Custom label" value="<?php if(!empty($facets_labels[$facet])) { echo $facets_labels[$facet]; }?>"  style="min-width:240px;"/>
+	                                        <input type="text" name="oss_facet_edit_slugs[<?php echo $facet?>]" placeholder="URL slug" value="<?php if(!empty($facets_slugs[$facet])) { echo $facets_slugs[$facet]; }?>"  style="min-width:100px;"/>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="oss_facet_edit_labels[<?php echo $facet?>]" placeholder="Custom label" value="<?php if(!empty($facets_labels[$facet])) { echo $facets_labels[$facet]; }?>"  style="min-width:240px;"/>
                                             <em>&nbsp;&nbsp;<a href="#" onclick="jQuery('#oss_facet_edit_values_wrapper_<?php echo $facet?>').fadeIn(); jQuery(this).toggle(); return false;">Edit custom values</a></em>
                                             <div style="display:none;" id="oss_facet_edit_values_wrapper_<?php echo $facet?>">
                                                 <label for="oss_facet_edit_values[<?php echo $facet?>]">Custom values:</label><br/>
                                                 <textarea name="oss_facet_edit_values[<?php echo $facet?>]" id="oss_facet_edit_values[<?php echo $facet?>]" cols="50" rows="4"><?php print implode("\n", opensearchserver_get_facet_values_string($facet)); ?></textarea> 
                                             </div>
                                         </td>
+                                        <?php if(1 == get_option(oss_advanced_facets)):?>
                                         <td>
+                                            <input type="checkbox" value="1" name="oss_facets_exclusive[<?php echo $facet?>]" id="oss_facets_exclusive[<?php echo $facet?>]" <?php if(in_array($facet, $facets_exclusive)) echo 'checked="checked"'; ?>/>
+                                        </td>
+                                        <?php endif;?>
+                                
+                                        <td class="warning">
                                             <input type="checkbox" name="oss_facet_delete[]" value="<?php print $facet; ?>" />
                                         </td>
 									</tr>
@@ -907,7 +950,7 @@ function opensearchserver_admin_page() {
                                 <br/>
                                 <input type="checkbox" value="1" name="oss_advanced_facets" id="oss_advanced_facets" <?php checked( 1 == get_option('oss_advanced_facets')); ?>/>
                                 <label for="oss_advanced_facets">Enable advanced facets behaviour</label>
-                                <br/><span class="help">This option allows selection of multiple values for each facets.</span>
+                                <br/><span class="help">This option allows choice of facet's type (exclusive / multiple) and provide more values for facets in search results.</span>
                                 <br/>
                                 <input type="checkbox" id="oss_facet_display_count" name="oss_facet_display_count" value="1" <?php checked( 1 == get_option('oss_facet_display_count')); ?> />
                                 <label for="oss_facet_display_count">Display number of results for each facet's value</label>
