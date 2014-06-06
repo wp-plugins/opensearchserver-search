@@ -42,7 +42,7 @@ function opensearchserver_create_index() {
   opensearchserver_spellcheck_query_template();
   $autocompletion = opensearchserver_getautocomplete_instance();
   $autocompletion_name = 'autocomplete';
-  $autocompletion->createAutocompletion($autocompletion_name, 'contentExact');
+  $autocompletion->createAutocompletion($autocompletion_name, 'autocomplete');
   return TRUE;
 }
 
@@ -68,6 +68,7 @@ function opensearchserver_create_schema($custom_fields) {
   opensearchserver_setField($schema,$schema_xml,'urlExact','StandardAnalyzer','no','yes','yes','no','no');
   opensearchserver_setField($schema,$schema_xml,'title','TextAnalyzer','yes','yes','positions_offsets','no','no');
   opensearchserver_setField($schema,$schema_xml,'titleExact','StandardAnalyzer','no','yes','no','no','no');
+  opensearchserver_setField($schema,$schema_xml,'autocomplete','AutoCompletionAnalyzer','yes','yes','no','no','no');
   if (get_option('oss_phonetic')) {
     opensearchserver_setField($schema,$schema_xml,'titlePhonetic','PhoneticAnalyzer','yes','yes','positions_offsets','no','no');
     opensearchserver_setField($schema,$schema_xml,'contentPhonetic','PhoneticAnalyzer','yes','yes','positions_offsets','no','no');
@@ -341,6 +342,7 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
   $document->newField('type', strip_tags($post->post_type));
   $title = opensearchserver_stripInvalidXml(strip_tags($post->post_title));
   $document->newField('title', $title);
+  $document->newField('autocomplete', $title);
   $document->newField('titleExact', $title);
   $document->newField('titlePhonetic', $title);
   $document->newField('content', $content);
