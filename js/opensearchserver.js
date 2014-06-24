@@ -14,19 +14,27 @@ OpenSearchServer.getXmlHttpRequestObject = function() {
 OpenSearchServer.xmlHttp = OpenSearchServer.getXmlHttpRequestObject();
 
 OpenSearchServer.setAutocomplete = function(value) {
-	var ac = document.getElementById('oss-autocomplete');
-	ac.innerHTML = value;
+	var parent = OpenSearchServer.usedInput.parents('form');
+	//if autocomplete div does not exist creates it
+	if(parent.children('.oss-autocomplete').length == 0) { 
+		parent.append("<div class='oss-autocomplete oss-autocomplete-from-class-"+OpenSearchServer.usedInput.attr('class')+"  oss-autocomplete-from-id-"+OpenSearchServer.usedInput.attr('id')+"'></div>");
+	}
+	//get autocomplete div and replace its html
+	var ac = parent.children('.oss-autocomplete');
+	ac.html(value);
 	return ac;
 };
 
 OpenSearchServer.selectedAutocomplete = 0;
 OpenSearchServer.autocompleteSize = 0;
+OpenSearchServer.usedInput = null;
 
 OpenSearchServer.getselectedautocompletediv = function(n) {
-	return document.getElementById('oss-autocompleteitem' + n);
+	return OpenSearchServer.usedInput.parents('form').find('#oss-autocompleteitem' + n);
 };
 
-OpenSearchServer.autosuggest = function(event) {
+OpenSearchServer.autosuggest = function(event, usedInput) {
+	OpenSearchServer.usedInput = usedInput;
 	var keynum = 0;
 	if (window.event) { // IE
 		keynum = event.keyCode;
@@ -35,7 +43,7 @@ OpenSearchServer.autosuggest = function(event) {
 	}
 	if (keynum == 38 || keynum == 40) {
 		if (selectedAutocomplete > 0) {
-			OpenSearchServer.autocompleteLinkOut(selectedAutocomplete);
+			OpenSearchServer.getselectedautocompletediv(selectedAutocomplete).siblings().removeClass('oss-autocomplete_link_over');
 		}
 		if (keynum == 38) {
 			if (selectedAutocomplete > 0) {
@@ -47,9 +55,8 @@ OpenSearchServer.autosuggest = function(event) {
 			}
 		}
 		if (selectedAutocomplete > 0) {
-			var dv = OpenSearchServer.getselectedautocompletediv(selectedAutocomplete);
 			OpenSearchServer.autocompleteLinkOver(selectedAutocomplete);
-			OpenSearchServer.setKeywords(dv.innerHTML);
+			OpenSearchServer.setKeywords(OpenSearchServer.getselectedautocompletediv(selectedAutocomplete).html());
 		}
 		return false;
 	}
@@ -57,7 +64,7 @@ OpenSearchServer.autosuggest = function(event) {
 	if (OpenSearchServer.xmlHttp.readyState != 4
 			&& OpenSearchServer.xmlHttp.readyState != 0)
 		return;
-	var str = escape(document.getElementById('oss-keyword').value);
+	var str = escape(usedInput.val());
 	if (str.length == 0) {
 		OpenSearchServer.setAutocomplete('');
 		return;
@@ -81,23 +88,80 @@ OpenSearchServer.handleAutocomplete = function() {
 		return;
 	}
 	var str = resp.split("\n");
-	var content = '<div id="oss-autocompletelist">';
+	var content = '<div class="oss-autocompletelist">';
 	for ( var i = 0; i < str.length - 1; i++) {
 		var j = i + 1;
 		content += '<div id="oss-autocompleteitem' + j + '" ';
+		/* 
 		content += 'onmouseover="javascript:OpenSearchServer.autocompleteLinkOver('
 				+ j + ');" ';
 		content += 'onmouseout="javascript:OpenSearchServer.autocompleteLinkOut('
 				+ j + ');" ';
 		content += 'onclick="javascript:OpenSearchServer.setKeywords_onClick(this.innerHTML);" ';
-		content += 'class="oss-autocomplete_link">' + str[i] + '</div>';
+		*/
+		content += 'class="oss-autocomplete_link">' + str[i].trim() + '</div>';
 	}
 	content += '</div>';
-	ac.innerHTML = content;
+	ac.html(content);
 	selectedAutocomplete = 0;
 	autocompleteSize = str.length;
 };
 
+OpenSearchServer.autocompleteLinkOver = function(n) {
+	var elt = OpenSearchServer.getselectedautocompletediv(n);
+	//remove "over" class from every siblings
+	elt.siblings().removeClass('oss-autocomplete_link_over');
+	//add "over" class
+	elt.addClass('oss-autocomplete_link_over');
+	selectedAutocomplete = n;
+};
+
+OpenSearchServer.autocompleteLinkOut = function(n) {
+	var elt = OpenSearchServer.getselectedautocompletediv(n);
+	//remove "over" class from every siblings
+	elt.siblings().removeClass('oss-autocomplete_link_over');
+};
+
+OpenSearchServer.setKeywords = function(value) {
+	OpenSearchServer.usedInput.val(value).focus();
+};
+
+jQuery(function($) {
+	//facet with radio button, click on radio button must simulate click on link
+	$('.oss-nav-radio input[type=radio]').click(function(e) {
+		window.location.href = $(this).siblings('label').children('a').attr('href');
+	})
+	
+	// autocomplete on search page
+	$('input#oss-keyword').on('keyup', function(event) {
+    	OpenSearchServer.autosuggest(event, $(this));
+    });
+	
+	// autocomplete on main Wordpress search input
+	$('input.search-field').attr('autocomplete', 'off');
+	$('input.search-field').on('keyup', function(event) {
+    	OpenSearchServer.autosuggest(event, $(this));
+    });
+
+	//autocomplete over, out, click
+	$('body').on('mouseover', '.oss-autocomplete_link', function() {
+		//remove "over" class from every siblings
+		$(this).siblings().removeClass('oss-autocomplete_link_over');
+		$(this).addClass('oss-autocomplete_link_over');
+	});
+	$('body').on('mouseout', '.oss-autocomplete_link', function() {
+		$(this).removeClass('oss-autocomplete_link_over');
+	});
+	$('body').on('click', '.oss-autocomplete_link', function() {
+		OpenSearchServer.usedInput.val($(this).html().trim()).focus();
+		OpenSearchServer.setAutocomplete('');
+		OpenSearchServer.usedInput.parents('form').submit();
+	});
+});
+
+
+
+/*
 OpenSearchServer.autocompleteLinkOver = function(n) {
 	if (selectedAutocomplete > 0) {
 		OpenSearchServer.autocompleteLinkOut(selectedAutocomplete);
@@ -117,27 +181,15 @@ OpenSearchServer.autocompleteLinkOut = function(n) {
 };
 
 OpenSearchServer.setKeywords_onClick = function(value) {
-	var dv = document.getElementById('oss-keyword');
+	//var dv = document.getElementById('oss-keyword');
+	var dv = OpenSearchServer.usedInput;
 	if (dv != null) {
-		dv.value = value;
+		dv.val(value);
 		dv.focus();
 		OpenSearchServer.setAutocomplete('');
-		document.forms['oss-searchform'].submit();
+		//document.forms['oss-searchform'].submit();
+		OpenSearchServer.usedInput.parents('form').submit();
 		return true;
 	}
 };
-
-OpenSearchServer.setKeywords = function(value) {
-	var dv = document.getElementById('oss-keyword');
-	if (dv != null) {
-		dv.value = value;
-		dv.focus();
-	}
-};
-
-jQuery(function($) {
-	//facet with radio button, click on radio button must simulate click on link
-	$('.oss-nav-radio input[type=radio]').click(function(e) {
-		window.location.href = $(this).siblings('label').children('a').attr('href');
-	})
-});
+*/

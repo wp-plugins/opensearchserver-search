@@ -9,7 +9,6 @@ get_header(); ?>
         <form method="get" id="oss-searchform" action=<?php print home_url('/');?> >
             <input type="text" value="<?php print get_search_query();?>" name="s"
                 id="oss-keyword" style="width:70%;"
-                onkeyup="return OpenSearchServer.autosuggest(event)"
                 autocomplete="off" /> 
             <input type="submit" id="oss-submit" value="<?php _e("Search", 'opensearchserver'); ?>" />
             <div style="position: absolute">

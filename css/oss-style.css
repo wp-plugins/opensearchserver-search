@@ -55,6 +55,7 @@
 .oss-autocomplete_link {
 	background-color: #FFFFFF;
 	padding: 2px 6px 2px 6px;
+	color:black;
 }
 
 .oss-autocomplete_link_over {
@@ -62,13 +63,14 @@
 	padding: 2px 6px 2px 6px;
 }
 
-#oss-autocomplete {
+.oss-autocomplete {
 	margin: 0;
 	float: left;
 	cursor: pointer !important;
 }
+#oss-search-form .oss-autocomplete { margin-top:35px; }
 
-#oss-autocompletelist {
+.oss-autocompletelist {
 	background-color: #FFFFFF;
 	text-align: left;
 	z-index: 1000;
@@ -76,6 +78,9 @@
 	width: 493px;
 	border: 1px solid #99BBFF;
 }
+
+.search-form .oss-autocompletelist { width:300px; }
+
 .oss-logo {
 	text-align:right;
 }
