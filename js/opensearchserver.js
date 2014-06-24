@@ -35,6 +35,23 @@ OpenSearchServer.getselectedautocompletediv = function(n) {
 
 OpenSearchServer.autosuggest = function(event, usedInput) {
 	OpenSearchServer.usedInput = usedInput;
+	if (OpenSearchServer.xmlHttp.readyState != 4
+			&& OpenSearchServer.xmlHttp.readyState != 0)
+		return;
+	var str = escape(usedInput.val());
+	if (str.length == 0) {
+		OpenSearchServer.setAutocomplete('');
+		return;
+	}
+
+	OpenSearchServer.xmlHttp.open("GET", '?s=ossautointernal&q=' + str, true);
+	OpenSearchServer.xmlHttp.onreadystatechange = OpenSearchServer.handleAutocomplete;
+	OpenSearchServer.xmlHttp.send(null);
+	return true;
+};
+
+OpenSearchServer.navigation = function(event, usedInput) {
+	OpenSearchServer.usedInput = usedInput;
 	var keynum = 0;
 	if (window.event) { // IE
 		keynum = event.keyCode;
@@ -60,21 +77,8 @@ OpenSearchServer.autosuggest = function(event, usedInput) {
 		}
 		return false;
 	}
-
-	if (OpenSearchServer.xmlHttp.readyState != 4
-			&& OpenSearchServer.xmlHttp.readyState != 0)
-		return;
-	var str = escape(usedInput.val());
-	if (str.length == 0) {
-		OpenSearchServer.setAutocomplete('');
-		return;
-	}
-
-	OpenSearchServer.xmlHttp.open("GET", '?s=ossautointernal&q=' + str, true);
-	OpenSearchServer.xmlHttp.onreadystatechange = OpenSearchServer.handleAutocomplete;
-	OpenSearchServer.xmlHttp.send(null);
-	return true;
 };
+
 
 OpenSearchServer.handleAutocomplete = function() {
 	if (OpenSearchServer.xmlHttp.readyState != 4)
@@ -133,14 +137,20 @@ jQuery(function($) {
 	})
 	
 	// autocomplete on search page
-	$('input#oss-keyword').on('keyup', function(event) {
+	$('input#oss-keyword').on('input', function(event) {
     	OpenSearchServer.autosuggest(event, $(this));
+    });
+	$('input#oss-keyword').on('keyup', function(event) {
+    	OpenSearchServer.navigation(event, $(this));
     });
 	
 	// autocomplete on main Wordpress search input
 	$('input.search-field').attr('autocomplete', 'off');
-	$('input.search-field').on('keyup', function(event) {
+	$('input.search-field').on('input', function(event) {
     	OpenSearchServer.autosuggest(event, $(this));
+    });
+	$('input.search-field').on('keyup', function(event) {
+    	OpenSearchServer.navigation(event, $(this));
     });
 
 	//autocomplete over, out, click
