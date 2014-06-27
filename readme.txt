@@ -3,7 +3,7 @@ Contributors: ekeller,naveenann
 Tags: search,search engine,opensearchserver, full-text, phonetic, filter, facet, indexation, auto-completion
 Requires at least: 3.0.1
 Tested up to: 3.9
-Stable tag: 1.3.6
+Stable tag: 1.3.7
 License: GPLv2 or later
 
 The OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full-text search on WordPress-based websites.
@@ -52,6 +52,8 @@ Two ways to get an OpenSearchServer instance:
    6. Create index by clicking on "(Re-)Create the index".
    7. Content from WordPress can be pushed to newly created index by clicking "Synchronize / Re-index".
 
+Here is a video showing installation of a previous version of this plugin:
+
 [youtube http://www.youtube.com/watch?v=_hnUMBLH-aw]
 
 == Frequently Asked Questions ==
@@ -95,6 +97,9 @@ You probably updated to a recent version without re-creating your index. You nee
 2. An example of search result.
 
 == Changelog ==
+
+= 1.3.7 =
+* Add autocompletion on main search input, not only in search page anymore
 
 = 1.3.6 =
 * Change facet behavior: there is now a standard behavior and an advanced behavior
