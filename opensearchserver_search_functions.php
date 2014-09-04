@@ -1,6 +1,15 @@
 <?php
 
 function opensearchserver_is_plugin_active($plugin_var) {
+    //is plugin active for network - if multisite installation
+    if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
+        require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
+    }
+    if ( is_plugin_active_for_network( $plugin_var ) ) {
+        return true;
+    }
+    
+    //else check for current site
 	$return_var = in_array( $plugin_var. '/' .$plugin_var. '.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) );
 	$return_var2 = in_array( $plugin_var, apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) );
     return $return_var || $return_var2;
@@ -156,6 +165,13 @@ function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
 			opensearchserver_add_filter($search, $field, $value);
       	}
       }
+      //handle language filtering with WPML if needed.
+      if(get_option('oss_filter_language_wpml') == 1) {
+          $field = get_option('oss_filter_language_field_wpml', null);
+          $fieldToFilterOn = (empty($field)) ? 'language' : $field;
+          opensearchserver_add_filter($search, $fieldToFilterOn, ICL_LANGUAGE_CODE);
+      }
+      
       $oss_query = $search->query($query)->template('search');
       if(get_query_var('sort')) {
       	if(get_query_var('sort') == '+date') {

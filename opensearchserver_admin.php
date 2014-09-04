@@ -371,7 +371,13 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
   
   if (opensearchserver_is_wpml_usable()) {
     $post_language_information = wpml_get_language_information($post->ID);
-  	$document->newField('language', $post_language_information['locale']);
+    //split locale on "_" to save only language info
+    if(!empty($post_language_information['locale'])) {
+        $chuncks = explode('_', $post_language_information['locale']);
+        if(!empty($chuncks[0])) {
+  	        $document->newField('language', $chuncks[0]);
+        }
+    }
   }
   //Handling taxonomies
   $taxonomies=get_taxonomies('','names'); 
@@ -669,7 +675,11 @@ function opensearchserver_admin_set_query_settings() {
   	update_option('oss_log_ip', $oss_log_ip);
     $oss_taxonomy_display = isset($_POST['oss_taxonomy_display']) ? $_POST['oss_taxonomy_display'] : NULL;
     update_option('oss_taxonomy_display', $oss_taxonomy_display);
-
+    $oss_filter_language_wpml = isset($_POST['oss_filter_language_wpml']) ? $_POST['oss_filter_language_wpml'] : NULL;
+    update_option('oss_filter_language_wpml', $oss_filter_language_wpml);
+    $oss_filter_language_field_wpml = isset($_POST['oss_filter_language_field_wpml']) ? $_POST['oss_filter_language_field_wpml'] : NULL;
+    update_option('oss_filter_language_field_wpml', $oss_filter_language_field_wpml);
+    
 	//some options needs to post changes to OSS
 	if(!opensearchserver_is_query_settings_not_automatic() || (isset($_POST['oss_query_settings_post_to_oss']) && $_POST['oss_query_settings_post_to_oss'] == 1)) {
 		$custom_fields = get_option('oss_custom_field');	
@@ -710,7 +720,6 @@ function opensearchserver_admin_set_index_settings() {
   
   $oss_enable_translation_wpml = isset($_POST['oss_enable_translation_wpml']) ? $_POST['oss_enable_translation_wpml'] : NULL;
   update_option('oss_enable_translation_wpml', $oss_enable_translation_wpml);
-    
 }
 
 function opensearchserver_is_search_only() {
@@ -1037,6 +1046,37 @@ function opensearchserver_admin_page() {
                                 </div>
                             </fieldset>
                             
+                            <?php if(opensearchserver_is_plugin_active('sitepress-multilingual-cms/sitepress.php')) : ?>
+                                <fieldset>
+                                    <legend>Filter results based on language, with plugin WPML</legend>
+                                    <p>
+                                        <input type="checkbox" value="1" 
+                                            name="oss_filter_language_wpml" id="oss_filter_language_wpml" 
+                                            <?php checked( 1 == get_option('oss_filter_language_wpml')); ?>
+                                            />
+                                        <label for="oss_filter_language_wpml">Filter search results based on current website's language</label>
+                                    </p>
+                                    <p>
+                                        <span class="help">If enabled, search results will automatically be filtered by language, based on language of the current used website.
+                                        <br/><strong>Option "Index language information" must be checked in order to use this feature.</strong>
+                                        </span>
+                                        
+                                    </p>
+                                    <div id="oss_filter_language_field" style="<?php if(get_option('oss_filter_language_wpml') != 1) { echo 'display:none;'; }?> padding-left:10px; margin-left:30px; border-left:1px solid #ebebeb;">
+                                        <p><strong>Advanced option:</strong></p>
+                                        <p>                                            
+                                            <label for="oss_filter_language_field_wpml">Field to filter on: </label>
+                                            <input type="text" id="oss_filter_language_field_wpml" placeholder="Leave empty to use default" size="40" value="<?php print get_option('oss_filter_language_field_wpml'); ?>" name="oss_filter_language_field_wpml" />
+                                        </p>
+                                        <p>
+                                            <span class="help"><strong>Leave this field empty if you enabled option "Index language information" and wish to filter on field used for this information.</strong><br/>
+                                            If you want to filter language on a different field (for example if your index is managed in a different way) please enter name of field. Filter value will be value of ICL_LANGUAGE_CODE, which is for example <code>fr</code>, <code>en</code>, <code>es</code>, etc.: you must ensure that values indexed in this field match those codes. See <a href="http://wpml.org/documentation/support/wpml-coding-api/" target="_blank">this page</a> for more information.
+                                            </span>
+                                        </p>
+                                    </div>
+                                </fieldset>
+                             <?php endif;?>
+                            
                             <fieldset><legend>Other options</legend>
                             <p>
                                 <label for="oss_language">Default language</label>: <select
@@ -1169,7 +1209,7 @@ function opensearchserver_admin_page() {
                                             name="oss_enable_translation_wpml" id="oss_enable_translation_wpml" 
                                             <?php checked( 1 == get_option('oss_enable_translation_wpml')); ?>
                                             />
-                                        <label for="oss_enable_translation_wpml">Enable translation management with plugin WPML</label>
+                                        <label for="oss_enable_translation_wpml">Index language information</label>
                                     </p>
                                     <p>
                                         <span class="help">This will index language information for each content. Index re-creation and synchronization will be needed.</span>
@@ -1309,6 +1349,7 @@ function opensearchserver_admin_page() {
 
 <script type="text/javascript">
     jQuery('#oss_log_enable').click(function(e) { jQuery('#oss_logs_custom').toggle();});
+    jQuery('#oss_filter_language_wpml').click(function(e) { jQuery('#oss_filter_language_field').toggle();});
 </script>
 <?php
 opensearchserver_add_toogle();
