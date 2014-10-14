@@ -82,3 +82,15 @@ msgstr "date descendante"
 
 msgid "date (asc)"
 msgstr "date ascendante"
+
+msgid "Next"
+msgstr "Suivante"
+
+msgid "Previous"
+msgstr "Précédente"
+
+msgid "First"
+msgstr "Première"
+
+msgid "Last"
+msgstr "Dernière"

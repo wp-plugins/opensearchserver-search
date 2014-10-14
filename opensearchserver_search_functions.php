@@ -66,13 +66,13 @@ function opensearchserver_getpaging($result) {
     if (isset($ossPaging) && $ossPaging->getResultTotal() >= 1) {
       if ($ossPaging->getResultLow() > 0) {
         $style='oss_pager_first';
-        $label = 'First';
+        $label = __('First', 'opensearchserver');
         $url = $ossPaging->getPageBaseURI() . '1';
         $pagingArray[] = array('style' => $style, 'label' => $label, 'url' => $url);
       }
       if ($ossPaging->getResultPrev() < $ossPaging->getResultCurrentPage()) {
         $style='oss_pager_prev';
-        $label = 'Previous';
+        $label = __('Previous', 'opensearchserver');
         $url = $ossPaging->getPageBaseURI() . ($ossPaging->getResultPrev() + 1);
         $pagingArray[] = array('style' => $style, 'label' => $label, 'url' => $url);
       }
@@ -90,13 +90,13 @@ function opensearchserver_getpaging($result) {
       }
       if ($ossPaging->getResultNext() > $ossPaging->getResultCurrentPage()) {
         $style='oss_pager_next';
-        $label = 'Next';
+        $label = __('Next', 'opensearchserver');
         $url = $ossPaging->getPageBaseURI() . ($ossPaging->getResultNext() + 1);
         $pagingArray[] = array('style' => $style, 'label' => $label, 'url' => $url);
       }
       if($ossPaging->getResultCurrentPage()<$ossPaging->getResultTotal() && $ossPaging->getResultNext() > $ossPaging->getResultCurrentPage()) {
         $style='oss_pager_last';
-        $label = 'Last';
+        $label = __('Last', 'opensearchserver');
         $url = $ossPaging->getPageBaseURI() . ($ossPaging->getResultTotal());
         $pagingArray[] = array('style' => $style, 'label' => $label, 'url' => $url);
       }
