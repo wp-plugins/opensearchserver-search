@@ -98,9 +98,6 @@ Lear everything about available filters and actions [at our documentation center
 
 == Screenshots ==
 
-
-Here are some screenshots for this plugin.
-
 1. Page of results.
 2. Administration page: some query settings.
 3. Administration page: index settings.
