@@ -3,7 +3,7 @@ Contributors: ekeller,naveenann
 Tags: search,search engine,opensearchserver, full-text, phonetic, filter, facet, indexation, auto-completion
 Requires at least: 3.0.1
 Tested up to: 4.0
-Stable tag: 1.3.9
+Stable tag: 1.4
 License: GPLv2 or later
 
 The OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full-text search on WordPress-based websites.
@@ -12,22 +12,31 @@ The OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full
 
 = OpenSearchServer plugin =
 
-The OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full-text search on WordPress-based websites.
-OpenSearchServer is an high-performance search engine which includes spell-check, facet, filter, phonetic search, auto-completion.
+The OpenSearchServer Search Plugin allows to use [OpenSearchServer](http://www.opensearchserver.com/) to enable full-text search on WordPress-based websites.
+OpenSearchServer is an **high-performance search engine which includes spell-check, facet, filter, phonetic search, auto-completion**.
 This plugin automatically replaces WordPress built-in search functionnality.
 
 = Key Features =
 
  * **Full-text search with phonetic support**,
+ * Query can be fully customized and **relevancy of each field (title, author, ...) can be precisely tuned**,
  * Filter search results by **facets**,
  * Automatic suggestion with **autocompletion**,
- * **Spellcheking** with automatic substitution,
- * Automatically index content when published, edited or deleted,
- * Search through posts, pages and other types of content,
- * Easy to set up and customize with just filling a form.
+ * **Spellchecking** with automatic substitution,
+ * Automatic indexing of content when published, edited or deleted,
+ * Can index and search through **all type of content**,
+ * Can index and search **every taxonomies**,
+ * Easy to set up and customize with just filling a form,
+ * Supports **multisites installation*,*
+ * Supports **WPML plugin** for translation,
+ * Includes **several filters and actions** to allow for more customization from other plugins or themes.
 
-[youtube http://www.youtube.com/watch?v=_hnUMBLH-aw]
- 
+= Screenshots =
+
+Page of results:
+
+![Page of results](screenshot-1.png)
+
 == Installation ==
 
 = Requirements =
@@ -51,10 +60,6 @@ Two ways to get an OpenSearchServer instance:
    5. Choose type of content and taxonomies to index, save Index Settings.
    6. Create index by clicking on "(Re-)Create the index".
    7. Content from WordPress can be pushed to newly created index by clicking "Synchronize / Re-index".
-
-Here is a video showing installation of a previous version of this plugin:
-
-[youtube http://www.youtube.com/watch?v=_hnUMBLH-aw]
 
 == Frequently Asked Questions ==
 
@@ -91,12 +96,91 @@ Yes you can: enable the "Search only" mode to switch off sending of data (new po
 
 You probably updated to a recent version without re-creating your index. You need to re-create your index and re-synchronize data.
 
+= What are the available filters and actions? =
+
+**At indexing time**
+
+* Action **oss_create_schema**:
+  * Description: called when creating schema of the index.
+  * Parameters: `$schema`, `$schema_xml`
+  * Example: 
+    * Can be used to add other fields to the schema of the index:
+    
+    ```php
+    add_action('oss_create_schema', 'oss_create_schema', 10, 2 );
+    function oss_create_schema($schema, $schema_xml) {
+        //add a field to store vendor's name
+        opensearchserver_setField($schema,$schema_xml,'vendor_name','StandardAnalyzer','yes','yes','no','no','no');
+    }   
+    ```
+    
+* Filter **oss_autocomplete_value**
+  * Description: called when indexing a document and giving value to its `autocomplete` field.
+  * Parameters: 
+    * `$value`: original value that would be put in autocomplete field and then used for autocompletion,
+    * `$post`: content being indexed.
+  * Example:
+    * Can be used to add more text in the autocomplete field, allowing for more suggestion in the autocompletion feature:
+    
+    ```php
+    add_filter('oss_autocomplete_value', 'oss_autocomplete_value', 1, 2);
+    function oss_autocomplete_value($value, $post) {
+        $autocompleteValues = array($value);  
+        //get name of vendor
+        $autocompleteValues[] = getSoldBy($post);
+        //get attribute "Fournisseur"
+        $terms = get_the_terms( $post->ID, 'pa_fournisseur');
+        if ( $terms && ! is_wp_error( $terms ) ) {
+            foreach ( $terms as $term ) {
+                $autocompleteValues[] = $term->name;
+            }
+        }
+        return $autocompleteValues;
+    }
+    ```
+    
+* Action **oss_index_document**
+  * Description: called at the end of the indexing of a document.
+  * Parameters: `$document`, `$index`, `$lang`, `$post`, `$customFields`
+  * Example: 
+    * Can be used to add values to some custom fields:
+    
+    ```php
+    add_action('oss_index_document', 'oss_index_document', 10, 5 );
+    function oss_index_document($document, $index, $lang, $post, $customFields) {
+        $sold_by = getSoldBy($post);
+        $document->newField('vendor_name', $sold_by);
+    }   
+    ```
+
+**At query time**
+
+* Filter **oss_search** 
+  * Description: called before submitting query to OpenSearchServer.
+  * Parameter: `$oss_query`: query built with configuration made in admin page.
+  * Example: can be used to customize the query, for instance forcing filtering on a particular value.
+* Filter **oss_search_getsearchfacet_without_each_facet**
+  * Description: called when queries to get facets are built.
+  * Parameter: `$oss_query`
+  * Example: can be used to customize the query, for instance forcing filtering on a particular value.
+* Filter **oss_facets_slugs**
+  * Description: called when writing slugs to use for facets' links.
+  * Parameters: `$facetsSlugs`: slugs built from facets' names or from specific slugs values configured in admin page.
+  * Example: can be used to override slugs, for instance taking them from a particular XML file.
+
 == Screenshots ==
 
-1. The admin page.
-2. An example of search result.
+
+Here are some screenshots for this plugin.
+
+1. Page of results.
+2. Administration page: some query settings.
+3. Administration page: index settings.
 
 == Changelog ==
+
+= 1.4 - 04/11/2014 =
+* Add filter and actions, update README.
 
 = 1.3.9 - 14/10/2014 =
 * Add translation labels for some strings: Next, Previous, First, Last

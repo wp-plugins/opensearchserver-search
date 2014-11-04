@@ -110,6 +110,11 @@ function opensearchserver_create_schema($custom_fields) {
       }
     }
   }
+  
+  /*
+   * action "oss_create_schema"
+   */
+  $oss_query = do_action('oss_create_schema', $schema, $schema_xml);
 }
 
 /*
@@ -342,7 +347,10 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
   $document->newField('type', strip_tags($post->post_type));
   $title = opensearchserver_stripInvalidXml(strip_tags($post->post_title));
   $document->newField('title', $title);
-  $document->newField('autocomplete', $title);
+  /*
+   * filter "oss_autocomplete_value"
+   */
+  $document->newField('autocomplete', apply_filters('oss_autocomplete_value', $title, $post));
   $document->newField('titleExact', $title);
   $document->newField('titlePhonetic', $title);
   $document->newField('content', $content);
@@ -440,6 +448,11 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
     $custom_clean_all = null;
   }
   $document->newField("allContent", strip_tags($all_content));
+  
+  /*
+   * action "oss_index_document"
+   */
+  $oss_query = do_action('oss_index_document', $document, $index, $lang, $post, $customFields);
 }
 
 function opensearchserver_default_query() {
