@@ -575,7 +575,7 @@ function opensearchserver_merge_facets($existingFilters, $facetName, $facetValue
  * @param string $facet Name of field for this facet
  */
 function opensearchserver_facet_is_exclusive($facet) {
-	$facetsExclusive = get_option('oss_facets_exclusive');
+    $facetsExclusive = (array)get_option('oss_facets_exclusive');
 	return (in_array($facet, $facetsExclusive));	
 }
 ?>

@@ -641,6 +641,8 @@ function opensearchserver_admin_set_query_settings() {
 	
     if(!empty($_POST['oss_facets_exclusive'])) {
     	update_option('oss_facets_exclusive', array_keys($_POST['oss_facets_exclusive']));
+    } else {
+        update_option('oss_facets_exclusive', null);
     }
     
     //delete facets
