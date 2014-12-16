@@ -210,9 +210,23 @@ function opensearchserver_checkindex(OSSIndexDocument $index, $limit = 1, $idx =
   if ($idx != 0 && $total != 0) {
     $percent = (floatval($idx) / floatval($total)) * 100;
     $mem = floatval(memory_get_usage()) / 1024 / 1024;
-    opensearchserver_display_messages(sprintf('Completed: %.2f - Memory usage: %2f', $percent, $mem));
+    opensearchserver_display_messages(sprintf('Completed: %.2f %% (%d/%d)- Memory usage: %2f', $percent, $idx, $total, $mem));
   }
   return new OSSIndexDocument();
+}
+
+function opensearchserver_get_number_to_index() {
+    global $wpdb;
+    //create list of content type to index to filter query
+    $contentTypesToKeep = array();
+    foreach (get_post_types() as $post_type) {
+        if (get_option('oss_index_types_'.$post_type) == 1) {
+            $contentTypesToKeep[] = $post_type;
+        }
+    }
+    $sql_query = 'SELECT count(ID) FROM '.$wpdb->posts.' WHERE post_status = \'publish\' AND post_type IN ("'.implode('","', $contentTypesToKeep).'") ORDER BY ID';
+    $docs_count = $wpdb->get_var( 'SELECT count(ID) FROM '.$wpdb->posts.' WHERE post_status = \'publish\' AND post_type IN ("'.implode('","', $contentTypesToKeep).'") ORDER BY ID' );
+    return $docs_count;
 }
 
 /*
@@ -245,16 +259,21 @@ function opensearchserver_reindex_site($id,$type, $from = 0, $to = 0) {
       opensearchserver_delete_document('*:*');
     }
     $limitSuffix = $to != 0 ? ' LIMIT '.$from.','.($to - $from) : '';
-    $sql_query = 'SELECT ID FROM '.$wpdb->posts.' WHERE post_status = \'publish\' ORDER BY ID'.$limitSuffix;
+    //create list of content type to index to filter query
+    $contentTypesToKeep = array();
+    foreach (get_post_types() as $post_type) {
+        if (get_option('oss_index_types_'.$post_type) == 1) {
+            $contentTypesToKeep[] = $post_type;
+        }
+    }
+    $sql_query = 'SELECT ID FROM '.$wpdb->posts.' WHERE post_status = \'publish\' AND post_type IN ("'.implode('","', $contentTypesToKeep).'") ORDER BY ID'.$limitSuffix;
     $posts = $wpdb->get_results($sql_query);
     $total_count = count($posts);
     $index = new OSSIndexDocument();
     for ($i = 0; $i < $total_count; $i++) {
       $post = get_post($posts[$i]->ID);
-      if (get_option('oss_index_types_'.$post->post_type) == 1) {
-        opensearchserver_add_documents_to_index($index, $lang, $post, $custom_fields);
-        $index = opensearchserver_checkindex($index, 200, $i, $total_count);
-      }
+      opensearchserver_add_documents_to_index($index, $lang, $post, $custom_fields);
+      $index = opensearchserver_checkindex($index, 200, $i, $total_count);
     }
     opensearchserver_checkindex($index, 1, $i, $total_count);
   }
@@ -335,8 +354,20 @@ function opensearchserver_autocompletionBuild() {
 }
 
 
+/**
+ * Cache user objects in an array to avoid querying database for each post
+ * when indexing content 
+ */
+$cacheUserObjects = array();
+function opensearchserver_get_user_cache($author) {
+    if(!isset($cacheUserObjects[$author])) {
+        $cacheUserObjects[$author] = get_userdata($author);
+    }
+    return $cacheUserObjects[$author];
+}
+
 function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang, $post, $customFields) {
-  $user = get_userdata($post->post_author);
+  $user = opensearchserver_get_user_cache($post->post_author);
   $content = $post->post_content;
   $content = apply_filters('the_content', $content);
   $content = str_replace(']]>', ']]&gt;', $content);
@@ -364,6 +395,7 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
   $document->newField('user_name', $user->user_nicename);
   $document->newField('user_email', $user->user_email);
   $document->newField('user_email', $user->user_url);
+  
   
   //Handling post's thumbnail
   $post_thumbnail_id = get_post_thumbnail_id( $post->ID );
@@ -452,7 +484,12 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
   /*
    * action "oss_index_document"
    */
-  $oss_query = do_action('oss_index_document', $document, $index, $lang, $post, $customFields);
+  do_action('oss_index_document', $document, $index, $lang, $post, $customFields);
+  
+  //free memory
+  $user = null;
+  $content = null;
+  $all_content = null;
 }
 
 function opensearchserver_default_query() {
@@ -759,7 +796,8 @@ function opensearchserver_admin_set_reindex() {
   update_option('oss_index_from', $oss_index_from);
   update_option('oss_index_to', $oss_index_to);
   $index_success = opensearchserver_reindex_site(NULL,NULL, $oss_index_from, $oss_index_to);
-  opensearchserver_display_messages('Re indexing has been finished successfully.');
+  $suffix = ($oss_index_from !== null && $oss_index_from != '' && $oss_index_to !== null && $oss_index_to != '') ? '(indexed documents from #'.$oss_index_from.' to #'.$oss_index_to.')' : '';
+  opensearchserver_display_messages('Re indexing has been finished successfully '. $suffix .'.');
 }
 /*
  * The admin page settings actions
@@ -1303,15 +1341,20 @@ function opensearchserver_admin_page() {
 					<div class="inside">
 						<form id="reindex_settings" name="reindex_settings" method="post"
 							action="">
+                            
+                            <p>
+                                With current "Index settings" total number of documents to index is <strong><?php echo opensearchserver_get_number_to_index(); ?>.</strong>
+                            </p>
+                            <p><span class="help">If indexing is taking too long and process finally crash, try running it several times 
+                            with small number of documents to index. Use for example ranges of 1000 documents.<br/>
+                            <strong>Leave these fields empty to index all documents.</strong></span>
 							<p>
-								<label for="oss_index_from">From index</label>:<br /> <input
-									type="text" name="oss_index_from" id="oss_index_from" size="15"
-									value="<?php print get_option('oss_index_from');?>" /> <br />
-							</p>
-							<p>
-								<label for="oss_index_to">To index</label>:<br /> <input
-									type="text" name="oss_index_to" id="oss_index_to" size="15"
-									value="<?php print get_option('oss_index_to');?>" /> <br />
+								<label for="oss_index_from">From document </label> <input
+									type="text" name="oss_index_from" id="oss_index_from" size="7" placeholder="0"
+									value="<?php print get_option('oss_index_from');?>" />
+								<label for="oss_index_to">to document </label> <input
+									type="text" name="oss_index_to" id="oss_index_to" size="7" placeholder="1000"
+									value="<?php print get_option('oss_index_to');?>" /> 
 							</p>
 							<p>
 								<input type="hidden" name="oss_submit"
