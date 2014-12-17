@@ -94,7 +94,17 @@ You probably updated to a recent version without re-creating your index. You nee
 
 = What are the available filters and actions? =
 
-Lear everything about available filters and actions [at our documentation center](http://www.opensearchserver.com/documentation/plugins/wordpress.md).
+Learn everything about available filters and actions [at our documentation center](http://www.opensearchserver.com/documentation/plugins/wordpress.md).
+
+= Indexing crashes before sending all documents to OpenSearchServer =
+
+Full re-indexing can really be a memory-consuming task. If your server does not allow for such memory to be used by PHP try indexing your content by range. To do so, use the `From document` and `to document` text fields located above the `Re-index / Synchronize` button.
+
+= How can I translate the plugin =
+
+Copy file `lang/opensearchserver-fr_FR.po`, rename it with your country code and translate its content. Feel free to submit us your translated files!
+
+_Serbian translation provided by Ogi Djuraskovic – [http://firstsiteguide.com](http://firstsiteguide.com)_.
 
 == Screenshots ==
 
