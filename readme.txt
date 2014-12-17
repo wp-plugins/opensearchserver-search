@@ -104,7 +104,7 @@ Full re-indexing can really be a memory-consuming task. If your server does not 
 
 Copy file `lang/opensearchserver-fr_FR.po`, rename it with your country code and translate its content. Feel free to submit us your translated files!
 
-_Serbian translation provided by Ogi Djuraskovic – [http://firstsiteguide.com](http://firstsiteguide.com)_.
+_Serbian translation provided by Ogi Djuraskovic - [http://firstsiteguide.com](http://firstsiteguide.com)_.
 
 == Screenshots ==
 
