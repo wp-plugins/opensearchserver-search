@@ -1,0 +1,97 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: OpenSearchServer\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-04-19 00:00+0100\n"
+"PO-Revision-Date: \n"
+"Last-Translator: Borisa Djuraskovic <borisad@webhostinghub.com>\n"
+"Language-Team: OpenSearchServer <contact@opensearchserver.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"Language: fr_FR\n"
+"X-Generator: Poedit 1.5.7\n"
+
+msgid "Search"
+msgstr "Pretraži"
+
+msgid "All"
+msgstr "Svi"
+
+msgid "%1$d documents found (in %2$s seconds)."
+msgstr "%1$d dokumenata pronađeno (za %2$s sekundi) "
+
+msgid "Showing results for <b>%1$s</b> search instead of %2$s."
+msgstr "Prikazivanje rezultata za <b>%1$s</b> umesto toga, pretraži %2$s."
+
+msgid "No documents containing all your search terms were found."
+msgstr "Nisu pronađeni dokumenti koji sadrže sve vaše pojmove pretrage."
+
+msgid "Your searched keywords <b>'%s'</b> did not match any document."
+msgstr ""
+"Ključne reči  <b>'%s'</b> koje ste tražili ne odgovaraju nijednom dokumentu."
+
+msgid "Suggestions:"
+msgstr "Predlozi:"
+
+msgid "Make sure all words are spelled correctly."
+msgstr "Proverite da li su sve reči ispravno napisane."
+
+msgid "Try different keywords."
+msgstr "Pokušajte sa drugim ključnim rečima."
+
+msgid "Try more general keywords."
+msgstr "Pokušajte sa opštijim ključnim rečima"
+
+#  result info line: type, author, categories
+msgid "%1$s by %2$s in %3$s"
+msgstr "%1$s od %2$s u %3$s"
+
+#  result info line: type, author
+msgid "%1$s by %2$s"
+msgstr "%1$s od %2$s"
+
+#  result info line: type, categories
+msgid "%1$s in %2$s"
+msgstr "%1$s u %2$s"
+
+#  result info line: author, categories
+msgid "by %1$s in %2$s"
+msgstr "od %1$s u %2$s"
+
+#  result info line: type
+msgid "type: %1$s"
+msgstr "vrsta: %1$s"
+
+#  result info line: author
+msgid "by %1$s"
+msgstr "od %1$s"
+
+#  result info line: categories
+msgid "categories: %1$s"
+msgstr "kategorije: %1$s"
+
+msgid "Sort results by: "
+msgstr "Sortiraj rezultate prema:"
+
+msgid "relevancy"
+msgstr "relevantnosti"
+
+msgid "date (desc)"
+msgstr "datumu (opad.)"
+
+msgid "date (asc)"
+msgstr "datumu (rast.)"
+
+msgid "Next"
+msgstr "Sledeći"
+
+msgid "Previous"
+msgstr "Prethodni"
+
+msgid "First"
+msgstr "Prvi"
+
+msgid "Last"
+msgstr "Poslednji"
