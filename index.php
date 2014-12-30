@@ -167,8 +167,8 @@ function opensearchserver_uninstall_one_site() {
       $check_taxonomy_name = 'oss_taxonomy_'.$taxonomy;
           delete_option($check_taxonomy_name);
     }
-  $custom_field_lables = opensearchserver_get_all_custom_fields();
-    foreach($custom_field_lables as $custom_field_label => $key) {
+  $custom_field_labels = opensearchserver_get_all_custom_fields();
+    foreach($custom_field_labels as $custom_field_label => $key) {
       $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
       delete_option($check_custom_field_label);
   }

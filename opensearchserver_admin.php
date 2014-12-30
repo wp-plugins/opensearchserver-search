@@ -101,8 +101,8 @@ function opensearchserver_create_schema() {
   	}
   }
   //Add custom fields schema
-  $custom_field_lables = opensearchserver_get_all_custom_fields();
-  foreach($custom_field_lables as $custom_field_label => $key) {
+  $custom_field_labels = opensearchserver_get_all_custom_fields();
+  foreach($custom_field_labels as $custom_field_label => $key) {
     $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
     if(get_option($check_custom_field_label)==1) {
       opensearchserver_setField($schema,$schema_xml,'custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label)),'TextAnalyzer','yes','yes','no','yes','no');
@@ -161,8 +161,8 @@ function opensearchserver_query_template() {
       $query_template->setReturnField('search','taxonomy_'.$taxonomy.'_notAnalyzed');
   	}
   }
-  $custom_field_lables = opensearchserver_get_all_custom_fields();
-  foreach($custom_field_lables as $custom_field_label => $key) {
+  $custom_field_labels = opensearchserver_get_all_custom_fields();
+  foreach($custom_field_labels as $custom_field_label => $key) {
     $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
     if(get_option($check_custom_field_label)==1) {
       $query_template->setReturnField('search','custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label)));
@@ -447,8 +447,8 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
     }
 
   // Handling custom fields
-  $custom_field_lables = opensearchserver_get_all_custom_fields();
-  foreach($custom_field_lables as $custom_field_label => $key) {
+  $custom_field_labels = opensearchserver_get_all_custom_fields();
+  foreach($custom_field_labels as $custom_field_label => $key) {
     $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
     if(get_option($check_custom_field_label)==1) {
         $field = trim($custom_field_label);
@@ -753,8 +753,8 @@ function opensearchserver_admin_set_index_settings() {
     	$check_taxonomy_name = (int)$_POST['oss_taxonomy_'.$taxonomy];
     	update_option('oss_taxonomy_'.$taxonomy, $check_taxonomy_name);
     }
-    $custom_field_lables = opensearchserver_get_all_custom_fields();
-    foreach($custom_field_lables as $custom_field_label => $key) {
+    $custom_field_labels = opensearchserver_get_all_custom_fields();
+    foreach($custom_field_labels as $custom_field_label => $key) {
       $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
       $check_custom_field_value = (int)$_POST[$check_custom_field_label];
       update_option($check_custom_field_label, $check_custom_field_value);
@@ -1260,8 +1260,8 @@ function opensearchserver_admin_page() {
                        <fieldset>
                           <legend>Custom Fields to index</legend>
                           <?php 
-                          $custom_field_lables = opensearchserver_get_all_custom_fields();
-                          foreach($custom_field_lables as $custom_field_label => $key) {
+                          $custom_field_labels = opensearchserver_get_all_custom_fields();
+                          foreach($custom_field_labels as $custom_field_label => $key) {
                             $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
                           ?>
                             <input type="checkbox" name="<?php print $check_custom_field_label;?>"

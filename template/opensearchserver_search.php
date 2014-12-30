@@ -257,13 +257,6 @@ get_header(); ?>
                 <?php if ($content) {
                   print $content.'<br/>';
                 }
-                $custom_fields_array = opensearchserver_get_custom_fields();
-                foreach($custom_fields_array as $field) {
-                  $value = stripslashes($oss_results->getField($i, "custom_".opensearchserver_clean_field($field), false));
-                  if($value) {
-                    print '<b>'. $field.'</b> : '.$value.'<br/>';
-                  }
-                }
                 ?>
             </div>
             <div class="oss-url">
