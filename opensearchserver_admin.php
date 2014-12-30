@@ -101,16 +101,15 @@ function opensearchserver_create_schema($custom_fields) {
       opensearchserver_setField($schema,$schema_xml,'taxonomy_'.$taxonomy.'_notAnalyzed',NULL,'no','yes','yes','yes','no');
   	}
   }
-  if (isset($custom_fields) && $custom_fields != null) {
-    $custom_fields_array = explode(',', $custom_fields);
-    foreach ($custom_fields_array as $field) {
-      $field = opensearchserver_clean_field($field);
-      if (strlen($field) > 0) {
-        opensearchserver_setField($schema,$schema_xml,'custom_'.$field,NULL,'yes','yes','no','yes','no');
-      }
+  //Add custom fields schema
+  $custom_field_lables = opensearchserver_get_all_custom_fields();
+  foreach($custom_field_lables as $custom_field_label => $key) {
+    $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
+    if(get_option($check_custom_field_label)==1) {
+      opensearchserver_setField($schema,$schema_xml,'custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label)),'TextAnalyzer','yes','yes','no','yes','no');
+      opensearchserver_setField($schema,$schema_xml,'custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label)).'_notAnalyzed',NULL,'no','yes','yes','yes','no');
     }
   }
-  
   /*
    * action "oss_create_schema"
    */
@@ -162,6 +161,14 @@ function opensearchserver_query_template($custom_fields) {
   		$query_template->setReturnField('search','taxonomy_'.$taxonomy);
       $query_template->setReturnField('search','taxonomy_'.$taxonomy.'_notAnalyzed');
   	}
+  }
+  $custom_field_lables = opensearchserver_get_all_custom_fields();
+  foreach($custom_field_lables as $custom_field_label => $key) {
+    $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
+    if(get_option($check_custom_field_label)==1) {
+      $query_template->setReturnField('search','custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label)));
+      $query_template->setReturnField('search','custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label)).'_notAnalyzed');
+    }
   }
   if (isset($custom_fields) && $custom_fields != null) {
     $custom_fields_array = explode(',', $custom_fields);
@@ -451,27 +458,25 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
     }
 
   // Handling custom fields
-  $custom_clean_all='';
-  if($customFields) {
-    $custom_fields_array = explode(',',$customFields);
-    foreach ($custom_fields_array as $field) {
-      $field = trim($field);
-      $custom_content = '';
-      $custom_values=get_post_custom_values($field, $post->ID);
-      if(is_array($custom_values)) {
-        foreach ($custom_values as $values) {
-          $custom_content .= $values.' ';
+  $custom_field_lables = opensearchserver_get_all_custom_fields();
+  foreach($custom_field_lables as $custom_field_label => $key) {
+    $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
+    if(get_option($check_custom_field_label)==1) {
+        $field = trim($custom_field_label);
+        $custom_content = '';
+        $custom_values=get_post_custom_values($field, $post->ID);
+        if(is_array($custom_values)) {
+          foreach ($custom_values as $values) {
+            $custom_content .= $values.' ';
+          }
+        }else {
+          $custom_content = $custom_values;
         }
-      }else {
-        $custom_content = $custom_values;
-      }
-      $content_br = nl2br($custom_content);
-      $content_clean=str_replace('<br />', ' ', $content_br);
-      $document->newField('custom_'.opensearchserver_clean_field($field), opensearchserver_stripInvalidXml(strip_tags($content_clean)));
-      $custom_clean_all .=' '.$content_clean;
+        $document->newField('custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label)), $custom_content);
+        $document->newField('custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label)).'_notAnalyzed', $custom_content);
     }
-    $custom_fields_array = null;
   }
+
   // Build all content field
   $all_content = opensearchserver_stripInvalidXml(strip_tags($post->post_title)). ' '.$content;
   
@@ -762,6 +767,12 @@ function opensearchserver_admin_set_index_settings() {
     	$check_taxonomy_name = (int)$_POST['oss_taxonomy_'.$taxonomy];
     	update_option('oss_taxonomy_'.$taxonomy, $check_taxonomy_name);
     }
+    $custom_field_lables = opensearchserver_get_all_custom_fields();
+    foreach($custom_field_lables as $custom_field_label => $key) {
+      $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
+      $check_custom_field_value = (int)$_POST[$check_custom_field_label];
+      update_option($check_custom_field_label, $check_custom_field_value);
+    }
     $oss_enable_autoindexation = isset($_POST['oss_enable_autoindexation']) ? $_POST['oss_enable_autoindexation'] : NULL;
     update_option('oss_enable_autoindexation', (int)$oss_enable_autoindexation);
     opensearchserver_display_messages('OpenSearchServer Index Settings have been updated.');
@@ -773,6 +784,27 @@ function opensearchserver_admin_set_index_settings() {
   $oss_enable_translation_wpml = isset($_POST['oss_enable_translation_wpml']) ? $_POST['oss_enable_translation_wpml'] : NULL;
   update_option('oss_enable_translation_wpml', $oss_enable_translation_wpml);
 }
+function opensearchserver_get_all_custom_fields() {
+  $args = array(
+    'post_status' => array('publish','draft','pending','future'),
+    'post_type' => 'any',
+    'posts_per_page' => -1,
+  );
+  $allposts = get_posts($args);
+  foreach ( $allposts as $post ) : setup_postdata($post);
+        $post_id = $post->ID;
+        $fields = get_post_custom_keys($post_id);    
+        if ($fields) {
+            foreach ($fields as $key => $value) {
+                if ($value[0] != '_') {             
+                    $custom_fields[$value] = isset($custom_fields[$value]) ? $custom_fields[$value] + 1 : 1;
+                }
+            }
+        }
+    endforeach; wp_reset_postdata();
+    return $custom_fields;
+}
+
 
 function opensearchserver_is_search_only() {
 	$search_only = get_option('oss_advanced_search_only', null);
@@ -784,11 +816,6 @@ function opensearchserver_is_query_settings_not_automatic() {
 	return ($oss_advanced_query_settings_not_automatic == 1);
 }
 
-function opensearchserver_admin_set_custom_fields_settings() {
-  $oss_custom_field = isset($_POST['oss_custom_field']) ? $_POST['oss_custom_field'] :NULL;
-  update_option('oss_custom_field', $oss_custom_field);
-  opensearchserver_display_messages('OpenSearchServer Custom Fields Settings have been updated.');
-}
 
 function opensearchserver_admin_set_reindex() {
   $oss_index_from = isset($_POST['oss_index_from']) ? $_POST['oss_index_from'] : NULL;
@@ -842,8 +869,6 @@ function opensearchserver_admin_page() {
     opensearchserver_admin_set_query_settings();
   } elseif ($action == 'index_settings') {
     opensearchserver_admin_set_index_settings();
-  } elseif ($action == 'custom_field_settings') {
-    opensearchserver_admin_set_custom_fields_settings();
   } elseif ($action == 'opensearchserver_reindex') {
     opensearchserver_admin_set_reindex();
   } elseif ($action == 'opensearchserver_advanced_settings') {
@@ -1246,6 +1271,20 @@ function opensearchserver_admin_page() {
 				                    }
 				                  ?>
 				              </fieldset>
+                       <fieldset>
+                          <legend>Custom Fields to index</legend>
+                          <?php 
+                          $custom_field_lables = opensearchserver_get_all_custom_fields();
+                          foreach($custom_field_lables as $custom_field_label => $key) {
+                            $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
+                          ?>
+                            <input type="checkbox" name="<?php print $check_custom_field_label;?>"
+                            value="1" <?php checked( 1 == get_option($check_custom_field_label)); ?> id="<?php print $check_custom_field_label;?>"/>&nbsp;<label
+                            for="<?php print $check_custom_field_label;?>"><?php print $custom_field_label;?> </label><br />
+                            <?php 
+                            }
+                            ?>
+                      </fieldset>
                       <fieldset>
                          <legend>Auto Indexation </legend>
                          <input type="checkbox" name="oss_enable_autoindexation" id="oss_enable_autoindexation" value="1" <?php checked( 1 == get_option('oss_enable_autoindexation')); ?> />
@@ -1297,38 +1336,7 @@ function opensearchserver_admin_page() {
                 <?php 
                 endif;
                 ?>
-				<div class="postbox closed" id="fourth">
-					<div class="handlediv" title="Click to toggle">
-						<br />
-					</div>
-					<h3 class="hndle">
-						<span>Custom fields settings </span>
-					</h3>
-					<div class="inside">
-						<form id="custom_field_settings" name="custom_field_settings"
-							method="post" action="">
-							<p>
-								<label for="custom_fields_oss">Enter the fields from the Custom
-									Field Template. Get useful information <a target="_blank"
-									href="http://wordpress.org/extend/plugins/custom-field-template/">here</a>
-								</label>:<br />
-								<textarea rows="5" cols="80" name="oss_custom_field"
-									wrap="off"><?php
-									print stripslashes(get_option('oss_custom_field'));
-									?></textarea>
-							</p>
-							<p>
-								<input type="hidden" name="oss_submit"
-									value="custom_field_settings" /><input type="submit"
-									name="opensearchserver_submit"
-									value="Update Custom Fields Settings" class="button-primary" /><br />
-							</p>
-						</form>
-					</div>
-
-				</div>
-                
-				<?php 
+				  <?php
                 if(!opensearchserver_is_search_only()) :
                 ?>
 				<div class="postbox" id="fifth">
