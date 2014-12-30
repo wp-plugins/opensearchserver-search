@@ -157,6 +157,10 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_custom_field');
   delete_option('oss_facet_behavior');
   delete_option('oss_taxonomy_display');
+  delete_option('oss_facets_slugs');
+  delete_option('oss_facets_exclusive');
+  delete_option('oss_filter_language_wpml');
+  delete_option('oss_filter_language_field_wpml');
   
   $taxonomies=get_taxonomies('','names'); 
     foreach ($taxonomies as $taxonomy ) {
