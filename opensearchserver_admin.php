@@ -924,7 +924,6 @@ function opensearchserver_admin_page() {
                         <form id="query_settings" name="query_settings" method="post"
 							action="">
                             <fieldset><legend>Query template</legend>
-                            
 							
                             <p>Enter the template query, or leave empty to use the default one</p>
 							<p>	<label for="oss_query">OpenSearchServer query template</label>:<br />
@@ -935,8 +934,15 @@ function opensearchserver_admin_page() {
 									print opensearchserver_default_query();
 								  }?></textarea>
 							</p>
+                            <div class="help">
+                                <p>Taxonomies and Custom fields chosen below (in section "Index Settings") automatically create fields in the schema that can be used in query.</p>
+                                <ul>
+                                    <li>Fields for Taxonomies will use this format: <code>taxonomy_&lt;taxonomy_name&gt;</code>, for example <code>taxonomy_mytags</code></li>
+                                    <li>Fields for Custom Fields will use this format: <code>custom_field_&lt;custom_field_name&gt;</code>, for example <code>custom_field_favorite_fruits</code></li> 
+                                </ul>
+                                <p>For allowing search into a new field simply add it to the query, for example <code>OR custom_field_favorite_fruits:($$)^5</code>. <code>^5</code> gives a weight of 5 to this field.
+                            </div>
                             </fieldset>
-							<p>
                             <fieldset><legend>Facets</legend>
 								<label for="oss_facet">Facet field </label>: 
                                 <select name="oss_facet" id="oss_facet">
@@ -956,7 +962,18 @@ function opensearchserver_admin_page() {
 								<label for="oss_custom_facet">or write the name of an existing field of the schema: </label>
 								<input type="text" name="oss_custom_facet" id="oss_custom_facet" placeholder="fieldname" size="20" /> 
 								<input type="submit" name="opensearchserver_add" value="Add" class="button-secondary" /><br />
-							</p>
+                                
+                                <div class="help">
+                                    <p>Taxonomies and Custom fields chosen below (in section "Index Settings") automatically create 
+                                        fields in the schema that can be used as facets. Format for fields name are 
+                                        <code>taxonomy_&lt;taxonomy_name&gt;_notAnalyzed</code> and 
+                                        <code>custom_field_&lt;custom_field_name&gt;_notAnalyzed</code>.
+                                    </p>
+                                    <p> For example use  
+                                        <code>custom_field_favorite_fruits_notAnalyzed</code>.
+                                    </p>
+                                </div>
+                                <br/>
 							<?php 
 								$facets_labels = get_option('oss_facets_labels');
 								$facets_slugs=  get_option('oss_facets_slugs');
@@ -1303,7 +1320,7 @@ function opensearchserver_admin_page() {
                                  <br/><br/>
                                  <span class="help">If you changed "Content-types to index" or "Auto indexation" settings you will only need to update index settings.</span>
                                  <br/>
-                                 <span class="help">However, if you updated "Taxonomies to index" settings you will first need to save your settings and then press "(Re-)Create index" button (as specific fields need to be created in index's schema).</span>
+                                 <span class="help">However, if you updated "Taxonomies to index" or "Custom Fields to index" settings you will first need to save your settings and then press "(Re-)Create index" button (as specific fields need to be created in index's schema).</span>
                                  <br/><br/><span class="help">If you did not create your index yet or wish to completely re-create it you need to press the "(Re-)Create index" button.</span> 
                                  <br/><br/>
                                  <input type="submit" name="opensearchserver_submit"
@@ -1339,7 +1356,7 @@ function opensearchserver_admin_page() {
                             <p>
                                 With current "Index settings" total number of documents to index is <strong><?php echo opensearchserver_get_number_to_index(); ?>.</strong>
                             </p>
-                            <p><span class="help">If indexing is taking too long and process finally crash, try running it several times 
+                            <p><span class="help">If indexing is taking too long and process finally crashes, try running it several times 
                             with small number of documents to index. Use for example ranges of 1000 documents.<br/>
                             <strong>Leave these fields empty to index all documents.</strong></span>
 							<p>

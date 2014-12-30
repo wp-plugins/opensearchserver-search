@@ -1,5 +1,5 @@
 === OpenSearchServer Search ===
-Contributors: ekeller,naveenann
+Contributors: ekeller,naveenann,AlexandreT
 Tags: search,search engine,opensearchserver, full-text, phonetic, filter, facet, indexation, auto-completion
 Requires at least: 3.0.1
 Tested up to: 4.0
@@ -113,6 +113,12 @@ _Serbian translation provided by Ogi Djuraskovic - [http://firstsiteguide.com](h
 3. Administration page: index settings.
 
 == Changelog ==
+= 1.5 - 30/12/2014 =
+* Improve indexing of Custom Fields.
+* Add useful help texts for Query and Facets management.
+* ==> **Index re-creation and synchronization may be needed if you are indexing some Custom Fields.** Please re-configure Custom Fields 
+to index in section "Index settings". 
+
 = 1.4.2 - 16/12/2014 =
 * Update indexing process
 
