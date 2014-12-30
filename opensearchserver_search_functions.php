@@ -367,9 +367,6 @@ function opensearchserver_get_max($oss_results) {
   return ($oss_results->getResultStart() + $oss_results->getResultRows() > $oss_results->getResultFound()) ? $oss_results->getResultFound() : $oss_results->getResultStart() + $oss_results->getResultRows();
 }
 
-function opensearchserver_get_custom_fields() {
-  return explode(",",get_option('oss_custom_field'));
-}
 
 /**
  * Return ID of content in WP.

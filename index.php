@@ -151,7 +151,6 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_index_types_nav_menu_item');
   delete_option('oss_index_from');
   delete_option('oss_index_to');
-  delete_option('oss_custom_field');
   delete_option('oss_enable_translation_wpml');
   delete_option('oss_advanced_query_settings_not_automatic');
   delete_option('oss_advanced_search_only');
@@ -165,6 +164,11 @@ function opensearchserver_uninstall_one_site() {
       $check_taxonomy_name = 'oss_taxonomy_'.$taxonomy;
           delete_option($check_taxonomy_name);
     }
+  $custom_field_lables = opensearchserver_get_all_custom_fields();
+    foreach($custom_field_lables as $custom_field_label => $key) {
+      $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
+      delete_option($check_custom_field_label);
+  }
 }
 
 function add_query_vars_filter( $vars ){
