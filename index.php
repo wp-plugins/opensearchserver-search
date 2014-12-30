@@ -144,11 +144,6 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_display_user');
   delete_option('oss_display_type');
   delete_option('oss_display_date');
-  delete_option('oss_index_types_post');
-  delete_option('oss_index_types_page');
-  delete_option('oss_index_types_attachment');
-  delete_option('oss_index_types_revision');
-  delete_option('oss_index_types_nav_menu_item');
   delete_option('oss_index_from');
   delete_option('oss_index_to');
   delete_option('oss_enable_translation_wpml');
@@ -159,6 +154,10 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_log_ip');
   delete_option('oss_display_category');
   delete_option('oss_enable_autoindexation');
+  delete_option('oss_custom_field');
+  delete_option('oss_facet_behavior');
+  delete_option('oss_taxonomy_display');
+  
   $taxonomies=get_taxonomies('','names'); 
     foreach ($taxonomies as $taxonomy ) {
       $check_taxonomy_name = 'oss_taxonomy_'.$taxonomy;
@@ -168,6 +167,13 @@ function opensearchserver_uninstall_one_site() {
     foreach($custom_field_lables as $custom_field_label => $key) {
       $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
       delete_option($check_custom_field_label);
+  }
+//Delete all the options starts with oss_index_types.
+  $all_options = wp_load_alloptions();
+  foreach( $all_options as $name => $value ) {
+    if(strrpos($name, 'oss_index_types', - strlen($name)) !== FALSE) {
+        delete_option($name); 
+    }
   }
 }
 
