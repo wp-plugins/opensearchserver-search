@@ -325,6 +325,10 @@ function opensearchserver_add_filter($oss_search, $name, $filter, $join = 'OR') 
  * @param string $value original value
  */
 function opensearchserver_get_facet_value($facet_field, $value) {
+    $value = trim($value);
+    if(empty($value)) {
+        return __('No value', 'opensearchserver');
+    }
 	$facets_values = get_option('oss_facets_values');
 	if(empty($facets_values[$facet_field])) {
 		return $value;
@@ -459,7 +463,7 @@ function opensearchserver_get_active_facets() {
 	if(empty($_REQUEST['f'])) {
 		return array();
 	}
-	$facetsFromUrl = $_REQUEST['f'];
+	$facetsFromUrl = stripslashes_deep($_REQUEST['f']);
 	$facetsSlugs = get_option('oss_facets_slugs', array());
 	
 	/*
@@ -574,5 +578,139 @@ function opensearchserver_merge_facets($existingFilters, $facetName, $facetValue
 function opensearchserver_facet_is_exclusive($facet) {
     $facetsExclusive = (array)get_option('oss_facets_exclusive');
 	return (in_array($facet, $facetsExclusive));	
+}
+
+/**
+ * Tell if a link "All" must be added for a facet
+ * @param string $facet Name of field for this facet
+ */
+function opensearchserver_facet_do_add_link_all($facet) {
+    $facetsOptionAll = (array)get_option('oss_facets_option_all');
+	return (in_array($facet, $facetsOptionAll));	
+}
+
+/**
+ * Tell if a search form must be added for a facet
+ * @param string $facet Name of field for this facet
+ */
+function opensearchserver_facet_do_add_searchform($facet) {
+    $facetsOptionSearchForm = (array)get_option('oss_facets_option_searchform');
+	return (in_array($facet, $facetsOptionSearchForm));	
+}
+
+/**
+ * See http://wordpress.stackexchange.com/questions/14652/how-to-show-a-hierarchical-terms-list
+ * Recursively sort an array of taxonomy terms hierarchically. Child categories will be
+ * placed under a 'children' member of their parent term.
+ * @param Array   $cats     taxonomy term objects to sort
+ * @param Array   $into     result array to put them in
+ * @param String  $key		key for final array (term_id, name, ...)
+ * @param integer $parentId the current parent ID to put them in
+ */
+function sort_terms_hierarchicaly(Array &$cats, Array &$into, $key, $parentId = 0)
+{
+    foreach ($cats as $i => $cat) {
+        if ($cat->parent == $parentId) {
+            $into[$cat->$key] = $cat;
+            unset($cats[$i]);
+        }
+    }
+
+    foreach ($into as $topCat) {
+        $topCat->children = array();
+        sort_terms_hierarchicaly($cats, $topCat->children, $key, $topCat->term_id);
+    }
+}
+
+
+/**
+ * Recursively sort an array of facets based on a already sorted array of taxonomies
+ * $cats and $facets must share common keys.
+ * @param Array $cats 		Hierarchicaly sorted array of taxonomies
+ * @param Array $facets		Array of facets
+ * @param Array $into		Result array
+ */
+function sort_facets_hierarchicaly($cats, $facets, Array &$into) {
+    foreach ($cats as $key => $cat) {
+        $into[$key] = $facets[$key];
+        $into[$key]['children'] = array();
+        sort_facets_hierarchicaly($cat->children, $facets, $into[$key]['children']);
+    }                
+}
+
+
+function opensearchserver_get_facets_html($facetField, $facets, $depth = 0, &$countDisplayed = 0, $previousActive = null, $isHierarchical = false) {
+    $output = '';
+    $maxValueToDisplay = get_option('oss_facet_max_display', null);
+    foreach($facets as $value => $info) {
+        $output .= '<li class="';
+      // if current "active" status is not the same than the previous facet we write a particular class (only for 
+      // facets that are not hierarchical, otherwise is too complicated)
+      if(!$isHierarchical && !empty($previousActive) && $previousActive != $info['active'])
+          $output .= 'oss-facet-changestatus';
+      $output .= ($info['active']) ? ' oss-facetactive' : ' oss-facetvalue';
+      // if we already displayed max number of values we give a particular class to the remaining
+      if($maxValueToDisplay && $countDisplayed > $maxValueToDisplay) 
+          $output .= ' oss-hidden-facet';
+      $output .= '">';
+      if($info['count'] > 0) {
+          $output .= '<input onclick=\'window.location.href = "'.$info['link'].'"\''; 
+          if ($info['active']) { 
+              $output .= 'checked="checked"'; 
+          } 
+          $output .= ' type="';
+          $output .= (opensearchserver_facet_is_exclusive($facetField)) ? 'radio' : 'checkbox';
+          $output .= '"'; 
+          $output .= ' id="'.urlencode($facetField.'_'.$value).'"/>';
+          $output .= '<label for="'.urlencode($facetField.'_'.$value).'">';
+          $output .= '<a class="opensearchserver_display_use_radio_buttons '.$info['css_class'].'" href="'.$info['link'].'">';
+          $output .= opensearchserver_get_facet_value($facetField, $value);
+          if(get_option('oss_facet_display_count', 0) == 1) { 
+              $output.= ' <span class="oss-facet-number-docs">('.$info['count'].')</span>';
+          }
+          $output .= '</a>';
+          $output .= '</label>'; 
+      } else {
+          $output .= '<input disabled="disabled"';
+          if ($info['active']) { 
+              $output .= ' checked="checked"'; 
+          } 
+          $output .= ' type="';
+          $output .= (opensearchserver_facet_is_exclusive($facetField)) ? 'radio' : 'checkbox';
+          $output .= '"';
+          $output .= ' id="'.urlencode($facetField.'_'.$value).'"/>';
+          $output .= '<label for="'.urlencode($facetField.'_'.$value).'" class="unavailable_facet">';
+          $output .= opensearchserver_get_facet_value($facetField, $value);
+          $output .= '</label>';
+      }
+      $countDisplayed++;
+      
+      //display children if any
+      if(!empty($info['children'])) {
+          $newDepth = $depth + 1;
+          $output .= '<ul class="oss-sub-facet oss-sub-facet-'.$depth.'">';
+          $output .= opensearchserver_get_facets_html($facetField, $info['children'], $newDepth, $countDisplayed, null, $isHierarchical);
+          $output .= '</ul>';            
+      }
+      $output .= '</li>';
+      
+      $previousActive = $info['active'];
+    }
+    
+    return $output;
+}
+  
+function opensearchserver_get_facet_label($field) {
+    $facets_labels = get_option('oss_facets_labels');
+    if(!empty($facets_labels[$field])) {
+        return $facets_labels[$field];   
+    } else {
+        if(isset($fields[$field])) {
+            return ucfirst($fields[$field]);
+        } else {
+            return ucfirst($field);
+        }
+    }
+    return '';
 }
 ?>

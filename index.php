@@ -161,6 +161,13 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_facets_exclusive');
   delete_option('oss_filter_language_wpml');
   delete_option('oss_filter_language_field_wpml');
+  delete_option('oss_facets_option_all');
+  delete_option('oss_facets_option_all');
+  delete_option('oss_facets_labels');
+  delete_option('oss_facets_values');
+  delete_option('oss_facets_option_searchform');
+  delete_option('oss_facets_option_hierarchical');
+  delete_option('oss_facets_option_hierarchical_taxonomy');
   
   $taxonomies=get_taxonomies('','names'); 
     foreach ($taxonomies as $taxonomy ) {

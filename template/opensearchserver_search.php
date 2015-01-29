@@ -5,6 +5,8 @@
 get_header(); ?>
 <section id="primary" class="content-area">
 <div id="content" class="site-content" role="main">
+
+<div style="text-align:center; color:grey; background:#eee; color:black; padding:10px; border:1px solid #6DB657; font-size:14px; margin:10px;">OSS test page</div>
     <div id="oss-search-form">
         <form method="get" id="oss-searchform" action=<?php print home_url('/');?> >
             <input type="text" value="<?php print get_search_query();?>" name="s"
@@ -50,127 +52,183 @@ get_header(); ?>
       ?>
     <div class="oss-search">
     <?php if($oss_result_facets->getResultFound()>0) {?>
-    <div id="oss-filter">
+    <div id="oss-filter" style="">
  
         <?php 
+        $maxValueToDisplay = get_option('oss_facet_max_display', null);
         
-        $facets_labels = get_option('oss_facets_labels');
+    //advanced facets
+    if(get_option('oss_advanced_facets')) :
+        $facets_option_hierarchical = get_option('oss_facets_option_hierarchical');
+		if(!is_array($facets_option_hierarchical)) {
+			$facets_option_hierarchical = array();
+		}
+		$facets_option_hierarchical_taxonomy = get_option('oss_facets_option_hierarchical_taxonomy');
+		if(!is_array($facets_option_hierarchical_taxonomy)) {
+			$facets_option_hierarchical_taxonomy = array();
+		}
         $fields = opensearchserver_get_fields();
+
+        //compute facets
+        $facets = opensearchserver_build_facets_to_display($query, $oss_results, $oss_result_facets);
+
+        //display active facets
+        $activeFacets = opensearchserver_get_active_facets();
+        if(!empty($activeFacets)) {
+             echo '<div id="oss-active-filters">';
+             echo '<h3>'.__('Active filters', 'opensearchserver').'</h3>';
+             echo '<p>'.__('Click on a filter to remove it.', 'opensearchserver').'</p>';  
+        }
+        foreach($activeFacets as $field => $facetInfo) {
+            echo '<div class="oss-active-filter">';
+            echo '<div class="oss-filter-title oss-active-filter-title">'.opensearchserver_get_facet_label($field).'</div>';
+            echo '<ul class="oss-nav oss-nav-radio oss-active-filters-values">';
+            foreach ((array)$facetInfo as $key => $facetValue) {
+                $link = "?s=".$query.'&'. opensearchserver_get_facet_url_without_one_facet_value($field, $facetValue);
+                echo '<li class="oss-facetactive oss-active-filter-value"><input onclick=\'window.location.href = "'.$link.'"\' checked="checked" 
+                  type="checkbox" id="'.urlencode($field.'_'.$facetValue).'_delete"/>';
+                echo '<label for="'.urlencode($field.'_'.$facetValue).'_delete">
+                  <a class="opensearchserver_display_use_radio_buttons" href="'.$link.'">'.
+                    opensearchserver_get_facet_value($field, $facetValue).'</a>';
+                echo '</label></li>'; 
+            }
+            echo '</ul>';
+            echo '</div>';
+        }
+        if(!empty($activeFacets)) {
+            echo '</div>';
+        } 
         
-        //advanced facets
-        if(get_option('oss_advanced_facets')) :
-            $facets = opensearchserver_build_facets_to_display($query, $oss_results, $oss_result_facets);
-	        foreach ($facets as $facet => $facet_results) :
-	        ?>
+        
+        echo '<h3>'.__('Filters', 'opensearchserver').'</h3>';
+        
+        foreach ($facets as $facet => $facet_results) :
+            $facetStringId = urlencode($facet);
+            $isHierarchical = in_array($facet, $facets_option_hierarchical);
+            
+            //loop through facets and build an array with active facets first, each item
+            //is a sub array containing url, number of values, whether facet is active or not, ...
+            $facetValues = array();
+            $tempFacetsActive = array();
+            foreach ($facet_results as $value => $count) {
+                $active = opensearchserver_is_facet_active($facet, $value);
+                $newValue = array(
+                        'link' => (!$active) ?
+                                    "?s=".$query.'&'. opensearchserver_get_facet_url($facet, $value, opensearchserver_facet_is_exclusive($facet)) :                  
+                        			"?s=".$query.'&'. opensearchserver_get_facet_url_without_one_facet_value($facet, $value),
+                        'css_class' => (!$active) ? 'oss-link' : 'oss-bold',
+                        'count' => $count,
+                        'active' => $active
+                    );
+                if($isHierarchical) {
+                    $facetValues[$value] = $newValue;
+                    $countValues = count($facetValues);
+                } else {
+                    ($active) ? 
+                        $tempFacetsActive[$value] = $newValue:
+                        $facetValues[$value] = $newValue;
+                }
+            }
+            
+            //hierarchical facets need more work
+            if($isHierarchical) {
+                //build an array of taxonomy objects
+                $cats = array();
+                foreach($facetValues as $name => $obj) {
+                    $cats[] = get_term_by('name', $name, $facets_option_hierarchical_taxonomy[$facet]);
+                }
+                //sort hierarchically this array of taxonomy objects
+                $categoryHierarchy = array();
+                sort_terms_hierarchicaly($cats, $categoryHierarchy, 'name');
+                //finally sort the array of facets in the same way than the array of taxonomies,
+                //with sub arrays if needed            
+                $finalFacets = array();
+                sort_facets_hierarchicaly($categoryHierarchy, $facetValues, $finalFacets);
+            } else {
+                $finalFacets = $facetValues;
+                //facets that are not hierarchical well have selected values on top of the list
+                if(!empty($tempFacetsActive)) {
+                    $finalFacets = $tempFacetsActive + $finalFacets;
+                }
+                $countValues = count($finalFacets);
+            } 
+        ?>
                <div class="oss-filter-title">
                     <?php
-                    if(!empty($facets_labels[$facet])) {
-                        print $facets_labels[$facet];   
-                    } else {
-                        if(isset($fields[$facet])) {
-                            print ucfirst($fields[$facet]);
-                        } else {
-                            print ucfirst($facet);
-                        }
-                    }
+                    print opensearchserver_get_facet_label($facet);
                     ?>
                </div>
-               <ul class="oss-nav oss-nav-radio">
-                    <li class="oss-top-nav">
-                        <a href="<?php print '?s='.urlencode($query).'&'.opensearchserver_get_facet_url_without_one_facet($facet);?>">
-                            <?php _e("All", 'opensearchserver'); ?>
-                        </a>
-                    </li>
-                    <?php
-                    if(count($facet_results) > 0 ) :
-                      foreach ($facet_results as $value => $count) :
-                        $css_class = 'oss-link';
-                        $link = "?s=".$query.'&'. opensearchserver_get_facet_url($facet, $value, opensearchserver_facet_is_exclusive($facet))
-                        ?>
-                        <li>
-                            <?php 
-                            if (opensearchserver_is_facet_active($facet, $value)) {
-                                $css_class .= ' oss-bold';
-                                $link = "?s=".$query.'&'. opensearchserver_get_facet_url_without_one_facet_value($facet, $value);
-                            }
-                            ?>
-                            <?php if($count > 0) : ?>
-	                            <input onclick='window.location.href = "<?php print $link; ?>";' <?php if (opensearchserver_is_facet_active($facet, $value)) { print 'checked="checked"'; } ?> type="<?php if(opensearchserver_facet_is_exclusive($facet)) echo 'radio'; else echo 'checkbox'; ?>" id="<?php print urlencode($facet.'_'.$value); ?>"/>
-	                            <label for="<?php print urlencode($facet.'_'.$value); ?>">
-	                                <a class="opensearchserver_display_use_radio_buttons <?php echo $css_class; ?>" href="<?php print $link; ?>">
-	                                    <?php print opensearchserver_get_facet_value($facet, $value); ?><?php if(get_option('oss_facet_display_count', 0) == 1) { print ' <span class="oss-facet-number-docs">('.$count.')</span>'; }?>
-	                                </a>
-	                            </label> 
-                            <?php else: ?>
-                                <input disabled="disabled" <?php if (opensearchserver_is_facet_active($facet, $value)) { print 'checked="checked"'; } ?> type="<?php if(opensearchserver_facet_is_exclusive($facet)) echo 'radio'; else echo 'checkbox'; ?>" id="<?php print urlencode($facet.'_'.$value); ?>"/>
-                                <label for="<?php print urlencode($facet.'_'.$value); ?>" class="unavailable_facet">
-                                    <?php print opensearchserver_get_facet_value($facet, $value); ?>
-                                </label> 
-                            <?php endif; ?>
+               <?php if(opensearchserver_facet_do_add_searchform($facet)) : ?>
+                  <input class="oss-facetfilter" type="text" rel="<?php echo $facetStringId; ?>" id="oss-facetfilter-<?php echo $facetStringId; ?>" value="" placeholder="<?php _e("Filter values", 'opensearchserver'); ?>" />
+               <?php endif; ?>
+               <ul class="oss-nav oss-nav-radio" id="oss-facetvalues-<?php echo $facetStringId; ?>">               
+                    <?php if(opensearchserver_facet_do_add_link_all($facet)) : ?>
+                        <li class="oss-top-nav">
+                            <a href="<?php print '?s='.urlencode($query).'&'.opensearchserver_get_facet_url_without_one_facet($facet);?>">
+                                <?php _e("All", 'opensearchserver'); ?>
+                            </a>
                         </li>
-                    <?php 
-                        endforeach;
-                    endif;
+                    <?php endif; ?>
+                    <?php
+                      $countDisplayed = 1;
+                      $previousActive = null;
+                      
+                      //display facets
+                      echo opensearchserver_get_facets_html($facet, $finalFacets, 0, $countDisplayed, null, $isHierarchical);
+
+                      //display a link to toggle hidden values 
+                      if($maxValueToDisplay && ($countDisplayed-1) > $maxValueToDisplay) {
+                         $remaining = $countValues - $maxValueToDisplay;
+                         echo '<li class="oss-seeall"><a href="#" class="oss-link-seeall">'.sprintf( _n( 'See one more value', 'See %d other values', $remaining, 'opensearchserver' ), $remaining).'</a></li>';   
+                      }
                     ?>
             </ul>
             <?php
     		endforeach;
-    	?>
-        
-        <?php 
-        	//standard facets
-        	else: 
-	        	$facets = opensearchserver_build_facets_array($oss_results);
-		        foreach ($facets as $facet => $facet_results) :
-		        ?>
-               <div class="oss-filter-title">
-                    <?php
-                    if(!empty($facets_labels[$facet])) {
-                        print $facets_labels[$facet];   
-                    } else {
-                        if(isset($fields[$facet])) {
-                            print ucfirst($fields[$facet]);
-                        } else {
-                            print ucfirst($facet);
-                        }
+    //if "standard" facets
+    // no complex behaviour here
+    else:
+        $facets = opensearchserver_build_facets_array($oss_results);
+        foreach ($facets as $facet => $facet_results) :
+        ?>
+           <div class="oss-filter-title">
+                <?php
+                print opensearchserver_get_facet_label($facet);
+                ?>
+           </div>
+           <ul class="oss-nav">			   
+			<li class="oss-top-nav">
+				<a href="<?php print '?s='.urlencode($query).'&'.opensearchserver_get_facet_url_without_one_facet($facet);?>">
+					<?php _e("All", 'opensearchserver'); ?>
+				</a>
+			</li>
+            <?php
+            if(count($facet_results) > 0 ) :
+              foreach ($facet_results as $value => $count) :
+                $css_class = 'oss-link';
+                $link = "?s=".$query.'&'. opensearchserver_get_facet_url($facet, $value)
+                ?>
+                <li>
+                    <?php 
+                    if (opensearchserver_is_facet_active($facet, $value)) {
+                        $css_class .= ' oss-bold';
                     }
                     ?>
-               </div>
-               <ul class="oss-nav">
-                    <li class="oss-top-nav">
-                        <a href="<?php print '?s='.urlencode($query).'&'.opensearchserver_get_facet_url_without_one_facet($facet);?>">
-                            <?php _e("All", 'opensearchserver'); ?>
+                    <label for="<?php print urlencode($facet.'_'.$value); ?>">
+                        <a class="<?php echo $css_class; ?>" href="<?php print $link; ?>">
+                            <?php print opensearchserver_get_facet_value($facet, $value); ?><?php if(get_option('oss_facet_display_count', 0) == 1) { print ' <span class="oss-facet-number-docs">('.$count.')</span>'; }?>
                         </a>
-                    </li>
-                    <?php
-                    if(count($facet_results) > 0 ) :
-                      foreach ($facet_results as $value => $count) :
-                        $css_class = 'oss-link';
-                        $link = "?s=".$query.'&'. opensearchserver_get_facet_url($facet, $value)
-                        ?>
-                        <li>
-                            <?php 
-                            if (opensearchserver_is_facet_active($facet, $value)) {
-                                $css_class .= ' oss-bold';
-                            }
-                            ?>
-                            <label for="<?php print urlencode($facet.'_'.$value); ?>">
-                                <a class="<?php echo $css_class; ?>" href="<?php print $link; ?>">
-                                    <?php print opensearchserver_get_facet_value($facet, $value); ?><?php if(get_option('oss_facet_display_count', 0) == 1) { print ' <span class="oss-facet-number-docs">('.$count.')</span>'; }?>
-                                </a>
-                            </label> 
-                        </li>
-                    <?php 
-                        endforeach;
-                    endif;
-                    ?>
-            </ul>
-            <?php
-    		endforeach;
-	    	?>
-        	
-        <?php 
-        	endif;
+                    </label> 
+                </li>
+            <?php 
+                endforeach;
+            endif;
+        endforeach;
+        ?>
+        </ul>
+    <?php 
+    //end "if advanced facets"
+    endif;  	
         ?>
     
     </div>

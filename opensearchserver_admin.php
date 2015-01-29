@@ -663,13 +663,41 @@ function opensearchserver_admin_set_query_settings() {
       		opensearchserver_update_facet_label_settings($field, $custom_label);
     	}
     }
-    
+
     //custom values
     $oss_facet_values = isset($_POST['oss_facet_edit_values']) ? $_POST['oss_facet_edit_values'] : array();
     foreach($oss_facet_values as $field => $values) {
     	opensearchserver_update_facet_values_settings($field, $values);
     }
-	
+
+    //option "search form" for each facet
+    if(!empty($_POST['oss_facets_option_searchform'])) {
+    	update_option('oss_facets_option_searchform', array_keys($_POST['oss_facets_option_searchform']));
+    } else {
+        update_option('oss_facets_option_searchform', null);
+    }
+    
+    //option "hierarchical" for each facet
+    if(!empty($_POST['oss_facets_option_hierarchical'])) {
+    	update_option('oss_facets_option_hierarchical', array_keys($_POST['oss_facets_option_hierarchical']));
+    } else {
+        update_option('oss_facets_option_hierarchical', null);
+    }
+    
+    
+    //taxonomy "hierarchical" for each facet
+    $oss_facets_option_hierarchical_taxonomy = isset($_POST['oss_facets_option_hierarchical_taxonomy']) ? $_POST['oss_facets_option_hierarchical_taxonomy'] : array();
+	update_option('oss_facets_option_hierarchical_taxonomy', $oss_facets_option_hierarchical_taxonomy);
+    
+    
+    //option "all" for each facet
+    if(!empty($_POST['oss_facets_option_all'])) {
+    	update_option('oss_facets_option_all', array_keys($_POST['oss_facets_option_all']));
+    } else {
+        update_option('oss_facets_option_all', null);
+    }
+    
+    //option "facet exclusive" for each facet
     if(!empty($_POST['oss_facets_exclusive'])) {
     	update_option('oss_facets_exclusive', array_keys($_POST['oss_facets_exclusive']));
     } else {
@@ -709,7 +737,9 @@ function opensearchserver_admin_set_query_settings() {
     update_option('oss_display_date', $oss_display_date);
     $oss_advanced_facets = isset($_POST['oss_advanced_facets']) ? $_POST['oss_advanced_facets'] : NULL;
     update_option('oss_advanced_facets', $oss_advanced_facets);
-	$oss_sort_timestamp = isset($_POST['oss_sort_timestamp']) ? $_POST['oss_sort_timestamp'] : NULL;
+	$oss_facet_max_display = isset($_POST['oss_facet_max_display']) ? $_POST['oss_facet_max_display'] : NULL;
+  	update_option('oss_facet_max_display', $oss_facet_max_display);
+    $oss_sort_timestamp = isset($_POST['oss_sort_timestamp']) ? $_POST['oss_sort_timestamp'] : NULL;
     update_option('oss_sort_timestamp', $oss_sort_timestamp);
     $oss_clean_query = isset($_POST['oss_clean_query']) ? $_POST['oss_clean_query'] : NULL;
   	update_option('oss_clean_query', $oss_clean_query);
@@ -860,6 +890,9 @@ function opensearchserver_admin_page() {
   } elseif ($action == 'opensearchserver_advanced_settings') {
   	opensearchserver_admin_set_advanced_settings();
   }
+  
+  
+    $taxonomies_list = get_taxonomies('','names');
   ?>
 <div class="wrap">
 	<h2>OpenSearchServer</h2>
@@ -944,7 +977,8 @@ function opensearchserver_admin_page() {
                             </div>
                             </fieldset>
                             <fieldset><legend>Facets</legend>
-								<label for="oss_facet">Facet field </label>: 
+                                <strong>Add a facet:</strong> 
+								<label for="oss_facet">facet field </label>: 
                                 <select name="oss_facet" id="oss_facet">
 									<?php
 									$facets = get_option('oss_facet');
@@ -964,19 +998,38 @@ function opensearchserver_admin_page() {
 								<input type="submit" name="opensearchserver_add" value="Add" class="button-secondary" /><br />
                                 
                                 <div class="help">
+                                    <p><strong>How to create facets on taxonomies or custom fields?</strong>
                                     <p>Taxonomies and Custom fields chosen below (in section "Index Settings") automatically create 
                                         fields in the schema that can be used as facets. Format for fields name are 
                                         <code>taxonomy_&lt;taxonomy_name&gt;_notAnalyzed</code> and 
                                         <code>custom_field_&lt;custom_field_name&gt;_notAnalyzed</code>.
                                     </p>
-                                    <p> For example use  
+                                    <p>For example use  
                                         <code>custom_field_favorite_fruits_notAnalyzed</code>.
                                     </p>
+                                    <p>If you want to create a facet on a hierarchical taxonomy you will have to add it first, using its fieldname, and then
+                                    choose the corresponding taxonomy in the "hierarchical" select list.</p>
                                 </div>
                                 <br/>
 							<?php 
 								$facets_labels = get_option('oss_facets_labels');
 								$facets_slugs=  get_option('oss_facets_slugs');
+								$facets_option_searchform = get_option('oss_facets_option_searchform');
+								if(!is_array($facets_option_searchform)) {
+									$facets_option_searchform = array();
+								}
+								$facets_option_hierarchical = get_option('oss_facets_option_hierarchical');
+								if(!is_array($facets_option_hierarchical)) {
+									$facets_option_hierarchical = array();
+								}
+								$facets_option_hierarchical_taxonomy = get_option('oss_facets_option_hierarchical_taxonomy');
+								if(!is_array($facets_option_hierarchical_taxonomy)) {
+									$facets_option_hierarchical_taxonomy = array();
+								}
+								$facets_option_all = get_option('oss_facets_option_all');
+								if(!is_array($facets_option_all)) {
+									$facets_option_all = array();
+								}
 								$facets_exclusive = get_option('oss_facets_exclusive');
 								if(!is_array($facets_exclusive)) {
 									$facets_exclusive = array();
@@ -985,7 +1038,7 @@ function opensearchserver_admin_page() {
 							<table class="widefat" style="width: 100% !important; min-width:600px;">
 								<thead>
                                     <tr>
-                                        <th colspan="<?php if(1 == get_option(oss_advanced_facets)) echo '5'; else echo '4'; ?>">
+                                        <th colspan="<?php if(1 == get_option(oss_advanced_facets)) echo '8'; else echo '4'; ?>">
                                             <span class="help">
 	                                            <h4>Help on facets management:</h4>
 	                                            <ul>
@@ -993,18 +1046,28 @@ function opensearchserver_admin_page() {
 	                                                <li><strong>Custom label: </strong>Choose another name for this facet that will be displayed on the results page.</li>
 	                                                <li><strong>Custom values: </strong>Write one replacement by line, with this format: &lt;original value&gt;|&lt;value to display&gt;. 
 	                                            For example "2014-02|February 2014" would replace "2014-02" by "February 2014" when displaying and "post|Blog post" would replace "post" by "Blog post".</li>
-	                                                <?php if(1 == get_option(oss_advanced_facets)):?><li><strong>Exclusive facet: </strong>one value only can be chosen for those facets.</li><?php endif;?>
+                                                    <?php if(1 == get_option(oss_advanced_facets)):?>
+                                                        <li><strong>Search form</strong>: display a small search form on top of the facet that can be used to filter displayed values.</li>
+                                                        <lI><strong>Hierarchical</strong>: hierarchical facet. If checked, you will have to choose which taxonmy should be used to get hierarchical values.</li>                                                        
+                                                        <li><strong>Link "All"</strong>: add an "All" link to reset the facet.</li>
+	                                                    <li><strong>Exclusive: </strong>one value only can be chosen for those facets.</li>
+                                                   <?php endif;?>
 	                                            </ul>
                                             </span>
                                         </th>
                                     </tr>
                                     
                                     <tr>
-                                        <th>Facet field list</th>
+                                        <th width="15%;">Facet field list</th>
                                         <th width="20%;">URL slug</th>
-                                        <th width="60%;">Custom label and values</th>
-                                        <?php if(1 == get_option(oss_advanced_facets)):?><th>Exclusive facet</th><?php endif;?>
-                                        <th class="warning">Delete facet</th>
+                                        <th width="40%;">Custom label and values</th>
+                                        <?php if(1 == get_option(oss_advanced_facets)):?>
+                                            <th>Search form</th>
+                                            <th width="40%">Hierarchical</th>
+                                            <th>Link "All"</th>
+                                            <th>Exclusive</th>
+                                        <?php endif;?>
+                                        <th class="warning" width="10%">Delete facet</th>
                                     </tr>
 								</thead>
 								<tbody>
@@ -1015,20 +1078,43 @@ function opensearchserver_admin_page() {
 										<tr>
 										<td><?php  if($fields[$facet]) { print $fields[$facet]; } else { print $facet; } ?></td>
 										<td>
-	                                        <input type="text" name="oss_facet_edit_slugs[<?php echo $facet?>]" placeholder="URL slug" value="<?php if(!empty($facets_slugs[$facet])) { echo $facets_slugs[$facet]; }?>"  style="min-width:100px;"/>
+	                                        <input type="text" name="oss_facet_edit_slugs[<?php echo $facet?>]" placeholder="URL slug" value="<?php if(!empty($facets_slugs[$facet])) { echo $facets_slugs[$facet]; }?>"  style="min-width:80px;"/>
                                         </td>
                                         <td>
-                                            <input type="text" name="oss_facet_edit_labels[<?php echo $facet?>]" placeholder="Custom label" value="<?php if(!empty($facets_labels[$facet])) { echo $facets_labels[$facet]; }?>"  style="min-width:240px;"/>
-                                            <em>&nbsp;&nbsp;<a href="#" onclick="jQuery('#oss_facet_edit_values_wrapper_<?php echo $facet?>').fadeIn(); jQuery(this).toggle(); return false;">Edit custom values</a></em>
+                                            <input type="text" name="oss_facet_edit_labels[<?php echo $facet?>]" placeholder="Custom label" value="<?php if(!empty($facets_labels[$facet])) { echo $facets_labels[$facet]; }?>"  style="min-width:140px;"/>
+                                            <?php if(1 == get_option(oss_advanced_facets)) echo '<br/>'; ?><em>&nbsp;&nbsp;<a href="#" onclick="jQuery('#oss_facet_edit_values_wrapper_<?php echo $facet?>').fadeIn(); jQuery(this).toggle(); return false;">Edit custom values</a></em>
                                             <div style="display:none;" id="oss_facet_edit_values_wrapper_<?php echo $facet?>">
                                                 <label for="oss_facet_edit_values[<?php echo $facet?>]">Custom values:</label><br/>
-                                                <textarea name="oss_facet_edit_values[<?php echo $facet?>]" id="oss_facet_edit_values[<?php echo $facet?>]" cols="50" rows="4"><?php print implode("\n", opensearchserver_get_facet_values_string($facet)); ?></textarea> 
+                                                <textarea name="oss_facet_edit_values[<?php echo $facet?>]" id="oss_facet_edit_values[<?php echo $facet?>]" cols="28" rows="5"><?php print implode("\n", opensearchserver_get_facet_values_string($facet)); ?></textarea> 
                                             </div>
                                         </td>
+                                        
                                         <?php if(1 == get_option(oss_advanced_facets)):?>
-                                        <td>
-                                            <input type="checkbox" value="1" name="oss_facets_exclusive[<?php echo $facet?>]" id="oss_facets_exclusive[<?php echo $facet?>]" <?php if(in_array($facet, $facets_exclusive)) echo 'checked="checked"'; ?>/>
-                                        </td>
+                                            <td>
+                                                <input type="checkbox" value="1" name="oss_facets_option_searchform[<?php echo $facet?>]" id="oss_facets_option_searchform[<?php echo $facet?>]" <?php if(in_array($facet, $facets_option_searchform)) echo 'checked="checked"'; ?>/>
+                                            </td>
+                                            <td>
+                                                <input type="checkbox" value="1" name="oss_facets_option_hierarchical[<?php echo $facet?>]" 
+                                                        id="oss_facets_option_hierarchical[<?php echo $facet?>]" 
+                                                        <?php if(in_array($facet, $facets_option_hierarchical)) echo 'checked="checked"'; ?>
+                                                         onclick="jQuery('#oss_facets_option_hierarchical_taxonomy_<?php echo $facet?>').toggle(jQuery(this).prop('checked'));"
+                                                        />
+                                                <select style="display:<?php echo (in_array($facet, $facets_option_hierarchical)) ? 'block' : 'none'; ?>;" id="oss_facets_option_hierarchical_taxonomy_<?php echo $facet?>" name="oss_facets_option_hierarchical_taxonomy[<?php echo $facet?>]">
+    									          <?php
+                                                    foreach($taxonomies_list as $id => $taxonomy) {
+                                                        $checked = ($id == $facets_option_hierarchical_taxonomy[$facet]) ? 'selected="selected"' : '';
+                                                        echo '<option value="'.$id.'" '.$checked.' >'.$taxonomy.'</option>';
+                                                    }
+                                                  ?>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <input type="checkbox" value="1" name="oss_facets_option_all[<?php echo $facet?>]" id="oss_facets_option_all[<?php echo $facet?>]" <?php if(in_array($facet, $facets_option_all)) echo 'checked="checked"'; ?>/>
+                                            </td>
+                                            
+                                            <td>
+                                                <input type="checkbox" value="1" name="oss_facets_exclusive[<?php echo $facet?>]" id="oss_facets_exclusive[<?php echo $facet?>]" <?php if(in_array($facet, $facets_exclusive)) echo 'checked="checked"'; ?>/>
+                                            </td>
                                         <?php endif;?>
                                 
                                         <td class="warning">
@@ -1042,14 +1128,24 @@ function opensearchserver_admin_page() {
 								</tbody>
 							</table>
 							<?php endif;?>
+                                <?php if(1 == get_option(oss_advanced_facets)):?>
+                                    <p>
+                                        <label for="oss_facet_max_display">
+                                           Maximum number of values to display before displaying a "See more" link:
+                                        </label> 
+                                        <input type="text" name="oss_facet_max_display" id="oss_facet_max_display" placeholder="5" size="7" value="<?php print get_option('oss_facet_max_display');?>" />
+                                        <br/><span class="help">Can be useful if facets have lots of values. Leave empty to display all values.</span>                                
+                                    </p>
+                                <?php endif; ?>
                                 <br/>
                                 <input type="checkbox" value="1" name="oss_advanced_facets" id="oss_advanced_facets" <?php checked( 1 == get_option('oss_advanced_facets')); ?>/>
-                                <label for="oss_advanced_facets">Enable advanced facets behaviour</label>
-                                <br/><span class="help">This option allows choice of facet's type (exclusive / multiple) and provide more values for facets in search results.</span>
+                                <label for="oss_advanced_facets"><strong>Enable advanced facets behaviour</strong></label>
+                                <br/><span class="help">This option allows for choosing facet's type (exclusive / multiple), hierarchical facets and some other options, display an "Active filters" section on top of the facets, and provide more values for facets in search results.</span>
                                 <br/>
                                 <input type="checkbox" id="oss_facet_display_count" name="oss_facet_display_count" value="1" <?php checked( 1 == get_option('oss_facet_display_count')); ?> />
                                 <label for="oss_facet_display_count">Display number of results for each facet's value</label>
                                 <br/>
+                                
 							</p>
                             </fieldset>
                             
