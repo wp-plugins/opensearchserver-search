@@ -168,6 +168,8 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_facets_option_searchform');
   delete_option('oss_facets_option_hierarchical');
   delete_option('oss_facets_option_hierarchical_taxonomy');
+  delete_option('oss_query_behaviour');
+  delete_option('oss_query_template');
   
   $taxonomies=get_taxonomies('','names'); 
     foreach ($taxonomies as $taxonomy ) {

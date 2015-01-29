@@ -194,6 +194,15 @@ class OssSearchTemplate extends OssAbstract {
     $return = $this->queryServerXML(OssSearchTemplate::API_SEARCH_TEMPLATE, $params);
     return $return === FALSE ? FALSE : TRUE;
   }
+ 
 
+  public function get_search_template_list() {
+    $path_parameters = array(
+        "{index_name}" => $this->index
+    );
+    $path = strtr(OssApi::REST_API_SEARCH_TEMPLATE_LIST, $path_parameters);
+    $return = $this->queryServerREST($path,NULL,NULL, OssApi::DEFAULT_CONNEXION_TIMEOUT, OssApi::DEFAULT_QUERY_TIMEOUT,'GET',2);
+    return json_decode($return)->templates;
+  }
 }
 ?>

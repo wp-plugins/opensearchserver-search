@@ -171,8 +171,11 @@ function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
           $fieldToFilterOn = (empty($field)) ? 'language' : $field;
           opensearchserver_add_filter($search, $fieldToFilterOn, ICL_LANGUAGE_CODE);
       }
-      
-      $oss_query = $search->query($query)->template('search');
+      if(get_option('oss_query_behaviour') == 2) {
+        $oss_query = $search->query($query)->template(get_option('oss_query_template'));
+      }else { 
+        $oss_query = $search->query($query)->template('search');
+      }
       if(get_query_var('sort')) {
       	if(get_query_var('sort') == '+date') {
       		$oss_query->sort('+timestamp');

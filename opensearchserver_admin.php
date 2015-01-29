@@ -45,6 +45,12 @@ function opensearchserver_create_index() {
   return TRUE;
 }
 
+
+function get_list_of_search_templates() {
+  $search_template_instance = opensearchserver_getsearchtemplate_instance();
+  return $search_template_instance->get_search_template_list();
+}
+
 function opensearchserver_setField($ossSchema, $xmlSchema, $fieldName, $analyzer, $stored, $indexed, $termVector, $default = 'no', $unique = 'no') {
   $xmlField = $xmlSchema->xpath('/response/schema/fields/field[@name="' . $fieldName . '"]');
   // Check if the field already exists.
@@ -717,6 +723,10 @@ function opensearchserver_admin_set_query_settings() {
 	}
 	update_option('oss_facet', $facets);
     
+    $oss_write_query = isset($_POST['oss_write_query']) ? $_POST['oss_write_query'] : 1;
+    update_option('oss_query_behaviour', $oss_write_query);
+    $oss_query_template = isset($_POST['oss_query_template']) ? $_POST['oss_query_template'] : NULL;
+    update_option('oss_query_template', $oss_query_template);
     $oss_multi_filter = isset($_POST['oss_multi_filter']) ? $_POST['oss_multi_filter'] : NULL;
     update_option('oss_multi_filter', $oss_multi_filter);
     $oss_facet_display_count = isset($_POST['oss_facet_display_count']) ? $_POST['oss_facet_display_count'] : NULL;
@@ -737,7 +747,7 @@ function opensearchserver_admin_set_query_settings() {
     update_option('oss_display_date', $oss_display_date);
     $oss_advanced_facets = isset($_POST['oss_advanced_facets']) ? $_POST['oss_advanced_facets'] : NULL;
     update_option('oss_advanced_facets', $oss_advanced_facets);
-	$oss_facet_max_display = isset($_POST['oss_facet_max_display']) ? $_POST['oss_facet_max_display'] : NULL;
+	  $oss_facet_max_display = isset($_POST['oss_facet_max_display']) ? $_POST['oss_facet_max_display'] : NULL;
   	update_option('oss_facet_max_display', $oss_facet_max_display);
     $oss_sort_timestamp = isset($_POST['oss_sort_timestamp']) ? $_POST['oss_sort_timestamp'] : NULL;
     update_option('oss_sort_timestamp', $oss_sort_timestamp);
@@ -956,8 +966,22 @@ function opensearchserver_admin_page() {
                         
                         <form id="query_settings" name="query_settings" method="post"
 							action="">
+                        <strong>Query Behaviour</strong>
+                            <p>
+                                  <input type="radio" id="oss_write_query" 
+                                        value="1" name="oss_write_query"
+                                        <?php 
+                                        $oss_write_query = isset($_POST['oss_write_query']) ? $_POST['oss_write_query'] : 1;
+                                        checked( 1 == $oss_write_query); ?>  />
+                                    <label for="oss_write_query_enable">Write Query</label>
+                                    <input type="radio" id="oss_existing_query_template" 
+                                        value="2" name="oss_write_query"
+                                        <?php checked( 2 == get_option('oss_query_behaviour')); ?>  />
+                                    <label for="oss_existing_query_template_enabled">Use an existing query template</label>
+                              </p>
+
                             <fieldset><legend>Query template</legend>
-							
+							             <div id="oss-query-write-template">
                             <p>Enter the template query, or leave empty to use the default one</p>
 							<p>	<label for="oss_query">OpenSearchServer query template</label>:<br />
 								<textarea rows="7" cols="80" name="oss_query" wrap="off"><?php
@@ -975,6 +999,24 @@ function opensearchserver_admin_page() {
                                 </ul>
                                 <p>For allowing search into a new field simply add it to the query, for example <code>OR custom_field_favorite_fruits:($$)^5</code>. <code>^5</code> gives a weight of 5 to this field.
                             </div>
+                      </div>
+                      <div id="oss-query-select-template">
+                          <p>
+                            <strong>Select query template</strong>
+                            <select name="oss_query_template" id="oss_query_template">
+                            <option value="none">Select </option>
+                            <?php
+                            $templates = get_list_of_search_templates();
+                            foreach($templates as $template) {
+                              ?>
+                              <option value="<?php print $template->name;?>"><?php print $template->name.' (Type '.$template->type.')';?></option>
+                              <?php
+                            }
+                            ?>
+                            
+                            </select>
+                          </p>
+                          </div>
                             </fieldset>
                             <fieldset><legend>Facets</legend>
                                 <strong>Add a facet:</strong> 
@@ -1515,6 +1557,10 @@ function opensearchserver_admin_page() {
 <script type="text/javascript">
     jQuery('#oss_log_enable').click(function(e) { jQuery('#oss_logs_custom').toggle();});
     jQuery('#oss_filter_language_wpml').click(function(e) { jQuery('#oss_filter_language_field').toggle();});
+    jQuery('#oss_write_query').click(function(e) {jQuery('#oss-query-select-template').hide();jQuery('#oss-query-write-template').show();});
+    jQuery('#oss_existing_query_template').click(function(e) {jQuery('#oss-query-write-template').hide();jQuery('#oss-query-select-template').show();});
+    if(jQuery('#oss_existing_query_template').is(":checked")) {jQuery('#oss-query-write-template').hide();jQuery('#oss-query-select-template').show();}
+    else {jQuery('#oss-query-select-template').hide();jQuery('#oss-query-write-template').show();}
 </script>
 <?php
 opensearchserver_add_toogle();
