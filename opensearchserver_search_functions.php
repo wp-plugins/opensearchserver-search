@@ -244,7 +244,11 @@ function opensearchserver_getsearchfacet_without_each_facet($query) {
     $start = isset($start) ? max(0, $start - 1) * 10 : 0;
     $query = opensearchserver_clean_query($query);
     $search = opensearchserver_getsearch_instance(10, $start);
-    $oss_query = $search->query($query)->template('search');
+    if(get_option('oss_query_behaviour') == 2) {
+        $oss_query = $search->query($query)->template(get_option('oss_query_template'));
+      }else { 
+        $oss_query = $search->query($query)->template('search');
+      }
       
 	/*
 	 * filter "oss_search_getsearchfacet_without_each_facet"
