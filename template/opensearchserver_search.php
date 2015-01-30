@@ -6,7 +6,6 @@ get_header(); ?>
 <section id="primary" class="content-area">
 <div id="content" class="site-content" role="main">
 
-<div style="text-align:center; color:grey; background:#eee; color:black; padding:10px; border:1px solid #6DB657; font-size:14px; margin:10px;">OSS test page</div>
     <div id="oss-search-form">
         <form method="get" id="oss-searchform" action=<?php print home_url('/');?> >
             <input type="text" value="<?php print get_search_query();?>" name="s"

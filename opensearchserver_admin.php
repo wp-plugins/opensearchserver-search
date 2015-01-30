@@ -777,7 +777,12 @@ function opensearchserver_admin_set_advanced_settings() {
     update_option('oss_advanced_search_only', $oss_advanced_search_only);
     $oss_advanced_query_settings_not_automatic = isset($_POST['oss_advanced_query_settings_not_automatic']) ? $_POST['oss_advanced_query_settings_not_automatic'] : NULL;
     update_option('oss_advanced_query_settings_not_automatic', $oss_advanced_query_settings_not_automatic);
-
+    $oss_advanced_query_template_choice = isset($_POST['oss_advanced_query_template_choice']) ? $_POST['oss_advanced_query_template_choice'] : NULL;
+    update_option('oss_advanced_query_template_choice', $oss_advanced_query_template_choice);
+    //need to reset "oss_query_template" if option query_template_choice is disabled
+    if(empty($oss_advanced_query_template_choice)) {
+        update_option('oss_query_behaviour', 1);
+    }
     opensearchserver_display_messages('OpenSearchServer advanced settings have been updated.');
 }
 
@@ -840,6 +845,10 @@ function opensearchserver_is_search_only() {
 function opensearchserver_is_query_settings_not_automatic() {
 	$oss_advanced_query_settings_not_automatic = get_option('oss_advanced_query_settings_not_automatic', null);
 	return ($oss_advanced_query_settings_not_automatic == 1);
+}
+function opensearchserver_is_query_template_choice() {
+	$oss_advanced_query_template_choice = get_option('oss_advanced_query_template_choice', null);
+	return ($oss_advanced_query_template_choice == 1);
 }
 
 
@@ -966,56 +975,60 @@ function opensearchserver_admin_page() {
                         
                         <form id="query_settings" name="query_settings" method="post"
 							action="">
-                        <strong>Query Behaviour</strong>
+                        
+                            <?php if(opensearchserver_is_query_template_choice()):?>
+                            <fieldset><legend>Query Behaviour</legend>
+                            
                             <p>
                                   <input type="radio" id="oss_write_query" 
                                         value="1" name="oss_write_query"
                                         <?php 
                                         $oss_write_query = isset($_POST['oss_write_query']) ? $_POST['oss_write_query'] : 1;
                                         checked( 1 == $oss_write_query); ?>  />
-                                    <label for="oss_write_query_enable">Write Query</label>
+                                    <label for="oss_write_query">Write query pattern</label>&nbsp;
                                     <input type="radio" id="oss_existing_query_template" 
                                         value="2" name="oss_write_query"
                                         <?php checked( 2 == get_option('oss_query_behaviour')); ?>  />
-                                    <label for="oss_existing_query_template_enabled">Use an existing query template</label>
+                                    <label for="oss_existing_query_template">Use an existing search template</label>
                               </p>
-
-                            <fieldset><legend>Query template</legend>
-							             <div id="oss-query-write-template">
-                            <p>Enter the template query, or leave empty to use the default one</p>
-							<p>	<label for="oss_query">OpenSearchServer query template</label>:<br />
-								<textarea rows="7" cols="80" name="oss_query" wrap="off"><?php
-									if (trim(get_option('oss_query'))) {
-                                    print stripslashes(get_option('oss_query'));
-                                  }else {
-									print opensearchserver_default_query();
-								  }?></textarea>
-							</p>
-                            <div class="help">
-                                <p>Taxonomies and Custom fields chosen below (in section "Index Settings") automatically create fields in the schema that can be used in query.</p>
-                                <ul>
-                                    <li>Fields for Taxonomies will use this format: <code>taxonomy_&lt;taxonomy_name&gt;</code>, for example <code>taxonomy_mytags</code></li>
-                                    <li>Fields for Custom Fields will use this format: <code>custom_field_&lt;custom_field_name&gt;</code>, for example <code>custom_field_favorite_fruits</code></li> 
-                                </ul>
-                                <p>For allowing search into a new field simply add it to the query, for example <code>OR custom_field_favorite_fruits:($$)^5</code>. <code>^5</code> gives a weight of 5 to this field.
-                            </div>
-                      </div>
-                      <div id="oss-query-select-template">
-                          <p>
-                            <strong>Select query template</strong>
-                            <select name="oss_query_template" id="oss_query_template">
-                            <option value="none">Select </option>
-                            <?php
-                            $templates = get_list_of_search_templates();
-                            foreach($templates as $template) {
-                              ?>
-                              <option value="<?php print $template->name;?>"><?php print $template->name.' (Type '.$template->type.')';?></option>
-                              <?php
-                            }
-                            ?>
+                              
+                            </fieldset>
+                            <?php endif; ?>
                             
-                            </select>
-                          </p>
+                            <fieldset><legend>Query template</legend>
+    						<div class="oss_visibleByQueryPattern" id="oss-query-write-template">
+                                <p>Enter the template query, or leave empty to use the default one</p>
+    							<p>	<label for="oss_query">OpenSearchServer query template</label>:<br />
+    								<textarea rows="7" cols="80" name="oss_query" wrap="off"><?php
+    									if (trim(get_option('oss_query'))) {
+                                        print stripslashes(get_option('oss_query'));
+                                      }else {
+    									print opensearchserver_default_query();
+    								  }?></textarea>
+    							</p>
+                                <div class="help">
+                                    <p>Taxonomies and Custom fields chosen below (in section "Index Settings") automatically create fields in the schema that can be used in query.</p>
+                                    <ul>
+                                        <li>Fields for Taxonomies will use this format: <code>taxonomy_&lt;taxonomy_name&gt;</code>, for example <code>taxonomy_mytags</code></li>
+                                        <li>Fields for Custom Fields will use this format: <code>custom_field_&lt;custom_field_name&gt;</code>, for example <code>custom_field_favorite_fruits</code></li> 
+                                    </ul>
+                                    <p>For allowing search into a new field simply add it to the query, for example <code>OR custom_field_favorite_fruits:($$)^5</code>. <code>^5</code> gives a weight of 5 to this field.
+                                </div>
+                          </div>
+                          <div class="oss_visibleByQueryTemplate" id="oss-query-select-template">
+                              <p>
+                                <strong>Select an existing search template</strong>
+                                <select name="oss_query_template" id="oss_query_template">
+                                <?php
+                                $templates = get_list_of_search_templates();
+                                foreach($templates as $template) :
+                                  $checked = (get_option('oss_query_template') == $template->name) ? 'selected="selected"' : '';
+                                  echo '<option value="'. $template->name.'" '. $checked . '>'. $template->name .' (Type '.$template->type.')</option>';
+                                endforeach;
+                                ?>
+                                
+                                </select>
+                              </p>
                           </div>
                             </fieldset>
                             <fieldset><legend>Facets</legend>
@@ -1313,7 +1326,7 @@ function opensearchserver_admin_page() {
                                     <?php }?>
                                 </select>
                             </p>
-                            <p>
+                            <p class="oss_visibleByQueryPattern">
                                 <input
                                     type="checkbox" name="oss_phonetic" value="1"
                                     <?php checked( 1 == get_option('oss_phonetic')); ?> />
@@ -1360,7 +1373,7 @@ function opensearchserver_admin_page() {
 							<p>
 								<input type="hidden" name="oss_submit" value="query_settings" />
                                 <?php if(opensearchserver_is_query_settings_not_automatic()): ?>
-                                    <div id="oss_query_settings_post_to_oss_wrapper">
+                                    <div class="oss_visibleByQueryPattern" id="oss_query_settings_post_to_oss_wrapper">
 	                                   <input type="checkbox" name="oss_query_settings_post_to_oss" id="oss_query_settings_post_to_oss" value="1" <?php checked(!opensearchserver_is_search_only()); ?> />&nbsp;
 	                                   <label for="oss_query_settings_post_to_oss">Post query settings to OpenSearchServer instance.</label>
 	                                   <br/><span class="help">If not checked, settings will only be saved localy and nothing will be posted to OpenSearchServer instance. Useful for example to edit custom label of a facet.</span>
@@ -1540,7 +1553,17 @@ function opensearchserver_admin_page() {
                                 <span class="help">If enabled, this option will display a checkbox at the bottom of "Query settings" section allowing to choose whether or not
                                 OpenSearchServer related settings (pattern, spell-check, ...) should be sent to your OpenSearchServer instance. <br/>If not checked, settings will only be
                                 saved localy. This may be useful if query is managed on OpenSearchServer's side, Wordpress plugin should only be used to manage local options (like
-                                labels and custom values for facets, type of information to display for each document on the results page, etc.).</span>
+                                labels and custom values for facets, type of information to display for each document on the results page, etc.).<br/>
+                                If option "Allow for choosing a different search template" and option "Do not immediately post "Query Settings" to OpenSearchServer" are both enabled then the
+                                checkbox at the bottom of the "Query Settings" section will be hidden.</span>
+                            </p>
+                            <p>
+                                <input type="checkbox" value="1" name="oss_advanced_query_template_choice" id="oss_advanced_query_template_choice" <?php checked( 1 == get_option('oss_advanced_query_template_choice')); ?>/>
+                                    <label for="oss_advanced_query_template_choice">Allow for choosing a different search template</label>
+                                <br/>
+                                <span class="help">If enabled, this option will display an option on top of the "Query settings" section that will allow for choosing to use a specific search 
+                                template created in OpenSearchserver directly. If this option is chosen, search template will have to be fully managed in OpenSearchServer: searched fields (or pattern),
+                                needed returned fields, snippets, etc. Only keywords and facets will be dynamically configured on the search template.</span>
                             </p>
                             <p>
                                 <input type="hidden" name="oss_submit" value="opensearchserver_advanced_settings" /> 
@@ -1557,9 +1580,9 @@ function opensearchserver_admin_page() {
 <script type="text/javascript">
     jQuery('#oss_log_enable').click(function(e) { jQuery('#oss_logs_custom').toggle();});
     jQuery('#oss_filter_language_wpml').click(function(e) { jQuery('#oss_filter_language_field').toggle();});
-    jQuery('#oss_write_query').click(function(e) {jQuery('#oss-query-select-template').hide();jQuery('#oss-query-write-template').show();});
-    jQuery('#oss_existing_query_template').click(function(e) {jQuery('#oss-query-write-template').hide();jQuery('#oss-query-select-template').show();});
-    if(jQuery('#oss_existing_query_template').is(":checked")) {jQuery('#oss-query-write-template').hide();jQuery('#oss-query-select-template').show();}
+    jQuery('#oss_write_query').click(function(e) {jQuery('.oss_visibleByQueryTemplate').hide();jQuery('.oss_visibleByQueryPattern').show();});
+    jQuery('#oss_existing_query_template').click(function(e) {jQuery('.oss_visibleByQueryPattern').hide();jQuery('.oss_visibleByQueryTemplate').show();});
+    if(jQuery('#oss_existing_query_template').is(":checked")) {jQuery('.oss_visibleByQueryPattern').hide();jQuery('.oss_visibleByQueryTemplate').show();}
     else {jQuery('#oss-query-select-template').hide();jQuery('#oss-query-write-template').show();}
 </script>
 <?php

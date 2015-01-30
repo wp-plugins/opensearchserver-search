@@ -171,9 +171,10 @@ function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
           $fieldToFilterOn = (empty($field)) ? 'language' : $field;
           opensearchserver_add_filter($search, $fieldToFilterOn, ICL_LANGUAGE_CODE);
       }
+
       if(get_option('oss_query_behaviour') == 2) {
         $oss_query = $search->query($query)->template(get_option('oss_query_template'));
-      }else { 
+      } else { 
         $oss_query = $search->query($query)->template('search');
       }
       if(get_query_var('sort')) {
@@ -196,7 +197,10 @@ function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
 	   */
 	  $oss_query = apply_filters('oss_search', $oss_query);
 
-	  return $oss_query->execute();
+	  $results = $oss_query->execute();
+	  //Useful for debugging purpose:
+	  //var_dump($oss_query->getLastQueryString());
+	  return $results;
     }else {
       $result = $search->query($query)->template('spellcheck')->execute();
     }
