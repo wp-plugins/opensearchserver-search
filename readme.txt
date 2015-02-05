@@ -3,7 +3,7 @@ Contributors: ekeller,naveenann,AlexandreT
 Tags: search,search engine,opensearchserver, full-text, phonetic, filter, facet, indexation, auto-completion
 Requires at least: 3.0.1
 Tested up to: 4.0
-Stable tag: 1.5
+Stable tag: 1.5.1
 License: GPLv2 or later
 
 The OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full-text search on WordPress-based websites.
@@ -113,6 +113,11 @@ _Serbian translation provided by Ogi Djuraskovic - [http://firstsiteguide.com](h
 3. Administration page: index settings.
 
 == Changelog ==
+
+= 1.5.1 - 05/02/2015 =
+ * Add feature for choosing an existing query template from OSS, instead of using query configured in WordPress.
+ * Improved facets: small search form, hierarchical facets, etc.
+
 = 1.5 - 30/12/2014 =
 * Improve indexing of Custom Fields.
 * Add useful help texts for Query and Facets management.
