@@ -344,7 +344,7 @@ function opensearchserver_get_facet_value($facet_field, $value) {
 	if(empty($facets_values[$facet_field])) {
 		return $value;
 	}
-	return (!empty($facets_values[$facet_field][(string)$value])) ? $facets_values[$facet_field][(string)$value] : $value;
+	return (!empty($facets_values[$facet_field][(string)$value])) ? stripslashes($facets_values[$facet_field][(string)$value]) : $value;
 }
 
 function opensearchserver_clean_query($query) {

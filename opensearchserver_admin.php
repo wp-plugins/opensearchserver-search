@@ -610,7 +610,7 @@ function opensearchserver_get_facet_values_string($facet_field) {
     $values = array();
 	if(!empty($facets_values[$facet_field])) {
     	foreach($facets_values[$facet_field] as $original => $replacement) {
-    		$values[] = $original.'|'.$replacement;
+    		$values[] = $original.'|'.stripslashes($replacement);
     	}
     }
     return $values;
