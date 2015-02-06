@@ -6,7 +6,7 @@
  Author: Emmanuel Keller - Naveen.A.N - Alexandre Toyer
  Author URI: http://open-search-server.com
  Tested up to: 4.0
- Version: 1.5.1
+ Version: 1.5
  */
 require_once 'lib/oss_api.class.php';
 require_once 'lib/oss_misc.lib.php';
@@ -154,7 +154,7 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_log_ip');
   delete_option('oss_display_category');
   delete_option('oss_enable_autoindexation');
-  delete_option('oss_custom_field');
+  delete_option('oss_custom_fields');
   delete_option('oss_facet_behavior');
   delete_option('oss_taxonomy_display');
   delete_option('oss_facets_slugs');
@@ -176,12 +176,8 @@ function opensearchserver_uninstall_one_site() {
       $check_taxonomy_name = 'oss_taxonomy_'.$taxonomy;
           delete_option($check_taxonomy_name);
     }
-  $custom_field_labels = opensearchserver_get_all_custom_fields();
-    foreach($custom_field_labels as $custom_field_label => $key) {
-      $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
-      delete_option($check_custom_field_label);
-  }
-//Delete all the options starts with oss_index_types.
+  
+  //Delete all the options starting with oss_index_types.
   $all_options = wp_load_alloptions();
   foreach( $all_options as $name => $value ) {
     if(strrpos($name, 'oss_index_types', - strlen($name)) !== FALSE) {

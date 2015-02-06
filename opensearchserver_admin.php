@@ -108,9 +108,10 @@ function opensearchserver_create_schema() {
   }
   //Add custom fields schema
   $custom_field_labels = opensearchserver_get_selected_custom_fields();
-  foreach($custom_field_labels as $custom_field_label => $key) {
-      opensearchserver_setField($schema,$schema_xml,$custom_field_label,'TextAnalyzer','yes','yes','no','yes','no');
-      opensearchserver_setField($schema,$schema_xml,$custom_field_label.'_notAnalyzed',NULL,'no','yes','yes','yes','no');
+  foreach($custom_field_labels as $key => $custom_field_label) {
+      $schemaFieldName = opensearchserver_format_custom_field_name($custom_field_label);
+      opensearchserver_setField($schema,$schema_xml,$schemaFieldName,'TextAnalyzer','yes','yes','no','yes','no');
+      opensearchserver_setField($schema,$schema_xml,$schemaFieldName.'_notAnalyzed',NULL,'no','yes','yes','yes','no');
     }
   /*
    * action "oss_create_schema"
@@ -164,10 +165,10 @@ function opensearchserver_query_template() {
       $query_template->setReturnField('search','taxonomy_'.$taxonomy.'_notAnalyzed');
   	}
   }
-   $custom_field_labels = opensearchserver_get_selected_custom_fields();
-  foreach($custom_field_labels as $custom_field_label => $key) {    
-      $query_template->setReturnField('search',$custom_field_label);
-      $query_template->setReturnField('search',$custom_field_label);
+  $custom_field_labels = opensearchserver_get_selected_custom_fields();
+  foreach($custom_field_labels as $key => $custom_field_label) {  
+      $schemaFieldName = opensearchserver_format_custom_field_name($custom_field_label);  
+      $query_template->setReturnField('search', $schemaFieldName);
   }
 }
 
@@ -448,20 +449,19 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
 
   // Handling custom fields
   $custom_field_labels = opensearchserver_get_selected_custom_fields();
-  foreach($custom_field_labels as $custom_field_label => $key) {
-        $field = str_replace('oss_custom_field_','',trim($custom_field_label));
+  foreach($custom_field_labels as $key => $field) {
+        $schemaFieldName = opensearchserver_format_custom_field_name($field);
         $custom_content = '';
-        $custom_values=get_post_custom_values($field, $post->ID);
+        $custom_values = get_post_custom_values($field, $post->ID);
         if(is_array($custom_values)) {
           foreach ($custom_values as $values) {
             $custom_content .= $values.' ';
           }
-        }else {
+        } else {
           $custom_content = $custom_values;
         }
-        $document->newField($custom_field_label, $custom_content);
-        $document->newField($custom_field_label.'_notAnalyzed', $custom_content);
-    
+        $document->newField($schemaFieldName, $custom_content);
+        $document->newField($schemaFieldName.'_notAnalyzed', $custom_content);
   }
 
   // Build all content field
@@ -790,12 +790,10 @@ function opensearchserver_admin_set_index_settings() {
     	$check_taxonomy_name = (int)$_POST['oss_taxonomy_'.$taxonomy];
     	update_option('oss_taxonomy_'.$taxonomy, $check_taxonomy_name);
     }
-    $custom_field_labels = opensearchserver_get_all_custom_fields();
-    foreach($custom_field_labels as $custom_field_label => $key) {
-      $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
-      $check_custom_field_value = (int)$_POST[$check_custom_field_label];
-      update_option($check_custom_field_label, $check_custom_field_value);
-    }
+    
+    $customFields = ($_POST['oss_custom_fields']) ? $_POST['oss_custom_fields'] : array();
+    update_option('oss_custom_fields', array_keys($customFields));
+    
     $oss_enable_autoindexation = isset($_POST['oss_enable_autoindexation']) ? $_POST['oss_enable_autoindexation'] : NULL;
     update_option('oss_enable_autoindexation', (int)$oss_enable_autoindexation);
     opensearchserver_display_messages('OpenSearchServer Index Settings have been updated.');
@@ -809,21 +807,23 @@ function opensearchserver_admin_set_index_settings() {
 }
 
 
-function opensearchserver_get_selected_custom_fields() {
-  global $wpdb;
-  $selected_custom_fields = array();
-  $custom_fields = array();
-  $selected_custom_fields = $wpdb->get_col("SELECT option_name FROM wp_options WHERE option_name LIKE 'oss_custom_field%' AND option_value=1");
-  if ($selected_custom_fields){
-    natcasesort($selected_custom_fields);
-  }
-  foreach ($selected_custom_fields as $key => $value) {
-    $custom_fields[$value] = 1;
-  }
-  return $custom_fields;
+/**
+ * Format name of a custom field in machine readable string
+ */
+function opensearchserver_format_custom_field_name($name) {
+  return strtolower('oss_custom_field_'.str_replace(' ', '_', $name));
 }
 
+/**
+ * Return the selected custom fields to index
+ */
+function opensearchserver_get_selected_custom_fields() {
+  return get_option('oss_custom_fields', array());
+}
 
+/** 
+ * Get all available custom fields for the whole website
+ */
 function opensearchserver_get_all_custom_fields() {
   global $wpdb;
   $meta_keys = array();
@@ -1431,12 +1431,12 @@ function opensearchserver_admin_page() {
                           <legend>Custom Fields to index</legend>
                           <?php 
                           $custom_field_labels = opensearchserver_get_all_custom_fields();
+                          $selected_custom_fields = opensearchserver_get_selected_custom_fields();
                           foreach($custom_field_labels as $custom_field_label => $key) {
-                            $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
                           ?>
-                            <input type="checkbox" name="<?php print $check_custom_field_label;?>"
-                            value="1" <?php checked( 1 == get_option($check_custom_field_label)); ?> id="<?php print $check_custom_field_label;?>"/>&nbsp;<label
-                            for="<?php print $check_custom_field_label;?>"><?php print $custom_field_label;?> </label><br />
+                            <input type="checkbox" name="oss_custom_fields[<?php print $custom_field_label;?>]"
+                            value="1" <?php checked( in_array($custom_field_label, $selected_custom_fields)); ?> id="<?php print urlencode($custom_field_label);?>"/>&nbsp;<label
+                            for="<?php print urlencode($custom_field_label) ;?>"><?php print $custom_field_label;?> </label><br />
                             <?php 
                             }
                             ?>
