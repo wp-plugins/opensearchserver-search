@@ -107,14 +107,11 @@ function opensearchserver_create_schema() {
   	}
   }
   //Add custom fields schema
-  $custom_field_labels = opensearchserver_get_all_custom_fields();
+  $custom_field_labels = opensearchserver_get_selected_custom_fields();
   foreach($custom_field_labels as $custom_field_label => $key) {
-    $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
-    if(get_option($check_custom_field_label)==1) {
-      opensearchserver_setField($schema,$schema_xml,'custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label)),'TextAnalyzer','yes','yes','no','yes','no');
-      opensearchserver_setField($schema,$schema_xml,'custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label)).'_notAnalyzed',NULL,'no','yes','yes','yes','no');
+      opensearchserver_setField($schema,$schema_xml,$custom_field_label,'TextAnalyzer','yes','yes','no','yes','no');
+      opensearchserver_setField($schema,$schema_xml,$custom_field_label.'_notAnalyzed',NULL,'no','yes','yes','yes','no');
     }
-  }
   /*
    * action "oss_create_schema"
    */
@@ -167,13 +164,10 @@ function opensearchserver_query_template() {
       $query_template->setReturnField('search','taxonomy_'.$taxonomy.'_notAnalyzed');
   	}
   }
-  $custom_field_labels = opensearchserver_get_all_custom_fields();
-  foreach($custom_field_labels as $custom_field_label => $key) {
-    $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
-    if(get_option($check_custom_field_label)==1) {
-      $query_template->setReturnField('search','custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label)));
-      $query_template->setReturnField('search','custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label)).'_notAnalyzed');
-    }
+   $custom_field_labels = opensearchserver_get_selected_custom_fields();
+  foreach($custom_field_labels as $custom_field_label => $key) {    
+      $query_template->setReturnField('search',$custom_field_label);
+      $query_template->setReturnField('search',$custom_field_label);
   }
 }
 
@@ -453,11 +447,9 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
     }
 
   // Handling custom fields
-  $custom_field_labels = opensearchserver_get_all_custom_fields();
+  $custom_field_labels = opensearchserver_get_selected_custom_fields();
   foreach($custom_field_labels as $custom_field_label => $key) {
-    $check_custom_field_label = 'oss_custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label));
-    if(get_option($check_custom_field_label)==1) {
-        $field = trim($custom_field_label);
+        $field = str_replace('oss_custom_field_','',trim($custom_field_label));
         $custom_content = '';
         $custom_values=get_post_custom_values($field, $post->ID);
         if(is_array($custom_values)) {
@@ -467,9 +459,9 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
         }else {
           $custom_content = $custom_values;
         }
-        $document->newField('custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label)), $custom_content);
-        $document->newField('custom_field_'.strtolower(str_replace(' ', '_', $custom_field_label)).'_notAnalyzed', $custom_content);
-    }
+        $document->newField($custom_field_label, $custom_content);
+        $document->newField($custom_field_label.'_notAnalyzed', $custom_content);
+    
   }
 
   // Build all content field
@@ -815,25 +807,35 @@ function opensearchserver_admin_set_index_settings() {
   $oss_enable_translation_wpml = isset($_POST['oss_enable_translation_wpml']) ? $_POST['oss_enable_translation_wpml'] : NULL;
   update_option('oss_enable_translation_wpml', $oss_enable_translation_wpml);
 }
+
+
+function opensearchserver_get_selected_custom_fields() {
+  global $wpdb;
+  $selected_custom_fields = array();
+  $custom_fields = array();
+  $selected_custom_fields = $wpdb->get_col("SELECT option_name FROM wp_options WHERE option_name LIKE 'oss_custom_field%' AND option_value=1");
+  if ($selected_custom_fields){
+    natcasesort($selected_custom_fields);
+  }
+  foreach ($selected_custom_fields as $key => $value) {
+    $custom_fields[$value] = 1;
+  }
+  return $custom_fields;
+}
+
+
 function opensearchserver_get_all_custom_fields() {
-  $args = array(
-    'post_status' => array('publish','draft','pending','future'),
-    'post_type' => 'any',
-    'posts_per_page' => -1,
-  );
-  $allposts = get_posts($args);
-  foreach ( $allposts as $post ) : setup_postdata($post);
-        $post_id = $post->ID;
-        $fields = get_post_custom_keys($post_id);    
-        if ($fields) {
-            foreach ($fields as $key => $value) {
-                if ($value[0] != '_') {             
-                    $custom_fields[$value] = isset($custom_fields[$value]) ? $custom_fields[$value] + 1 : 1;
-                }
-            }
-        }
-    endforeach; wp_reset_postdata();
-    return $custom_fields;
+  global $wpdb;
+  $meta_keys = array();
+  $custom_fields = array();
+  $meta_keys = $wpdb->get_col("SELECT meta_key FROM $wpdb->postmeta GROUP BY meta_key HAVING meta_key NOT LIKE '\_%' ORDER BY meta_key");
+  if ($meta_keys){
+    natcasesort($meta_keys);
+  }
+  foreach ($meta_keys as $key => $value) {
+    $custom_fields[$value] = isset($custom_fields[$value]) ? $custom_fields[$value] + 1 : 1;
+  }
+  return $custom_fields;
 }
 
 
