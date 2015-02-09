@@ -1408,9 +1408,8 @@ function opensearchserver_admin_page() {
 						<form id="index_settings" name="index_settings" method="post"
 							action="">
 						<fieldset>
-                  			<legend>Content-Type to index</legend>
-							<p>
-								<label for="oss_index_types">Choose type of content to index:</label><br />
+                  			<legend>Type of content to index</legend>
+                            <div class="oss_scrollable_list">
 								<?php
 								foreach (get_post_types() as $post_type) {
                                   $checkTypeName = 'oss_index_types_'.$post_type;
@@ -1419,9 +1418,11 @@ function opensearchserver_admin_page() {
 									value="1" <?php checked( 1 == get_option($checkTypeName)); ?> id="<?php print $checkTypeName;?>"/>&nbsp;<label
 									for="<?php print $checkTypeName;?>"><?php print $post_type;?> </label><br />
 								<?php } ?>
-							</fieldset>
-							 <fieldset>
-				                  <legend>Taxonomies to index</legend>
+                            </div>
+						</fieldset>
+						 <fieldset>
+			                    <legend>Taxonomies to index</legend>
+                                <div class="oss_scrollable_list">
 				                  <?php 
 				                    $taxonomies=get_taxonomies('','names'); 
 				                    foreach ($taxonomies as $taxonomy ) {
@@ -1433,9 +1434,11 @@ function opensearchserver_admin_page() {
 				                  <?php 
 				                    }
 				                  ?>
-				              </fieldset>
+                                </div>
+			              </fieldset>
                        <fieldset>
                           <legend>Custom Fields to index</legend>
+                          <div class="oss_scrollable_list">
                           <?php 
                           $custom_field_labels = opensearchserver_get_all_custom_fields();
                           $selected_custom_fields = opensearchserver_get_selected_custom_fields();
@@ -1447,6 +1450,7 @@ function opensearchserver_admin_page() {
                             <?php 
                             }
                             ?>
+                            </div>
                       </fieldset>
                       <fieldset>
                          <legend>Auto Indexation </legend>

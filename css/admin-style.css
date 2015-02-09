@@ -15,3 +15,4 @@
 #opensearchserver_admin #oss_query_settings_post_to_oss_wrapper { border-top:1px solid #ececec; padding:10px 0 0 0; margin:5px 0 10px 0; }
 #opensearchserver_admin .warning { background:rgb(255, 140, 124); text-align:center;}
 #opensearchserver_admin label { vertical-align:baseline; }
+#opensearchserver_admin .oss_scrollable_list { max-height:300px; overflow:auto; padding:5px 0 5px 0;}
