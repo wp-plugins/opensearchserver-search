@@ -94,3 +94,12 @@ msgstr "Première"
 
 msgid "Last"
 msgstr "Dernière"
+
+msgid "Filters"
+msgstr "Filtres"
+
+msgid "Active filters"
+msgstr "Filtres actifs"
+
+msgid "Click on a filter to remove it."
+msgstr "Cliquez sur un filtre pour le retirer."
