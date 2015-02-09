@@ -167,6 +167,38 @@ jQuery(function($) {
 		OpenSearchServer.setAutocomplete('');
 		OpenSearchServer.usedInput.parents('form').submit();
 	});
+
+    // filter facets with input text
+	jQuery(".oss-facetfilter").keyup(function(){
+        // Retrieve the input field text
+        var filter = jQuery(this).val();
+        // Loop through the list
+        jQuery('#oss-facetvalues-'+jQuery(this).attr('rel')).find('li.oss-facetvalue').each(function(){
+        	// If the list item does not contain the text phrase fade it out
+            if (jQuery(this).text().search(new RegExp(filter, "i")) < 0) {
+            	jQuery(this).fadeOut();
+ 
+            // Show the list item if the phrase matches
+            } else {
+            	jQuery(this).show();
+            }
+        });
+ 		
+ 		// hide the "show all" link
+        jQuery('#oss-facetvalues-'+jQuery(this).attr('rel')).find('li.oss-seeall a').hide();
+ 		
+ 		// if no filter value hide the initially hidden facets and display toggle link
+ 		if(filter.length == 0) {
+ 			jQuery('#oss-facetvalues-'+jQuery(this).attr('rel')).find('li.oss-hidden-facet').hide();
+ 			jQuery('#oss-facetvalues-'+jQuery(this).attr('rel')).find('li.oss-seeall a').show();
+ 		}       
+    });
+	
+	jQuery("a.oss-link-seeall").click(function(e) {
+		e.preventDefault();
+		jQuery(this).closest('ul').find('li.oss-hidden-facet').toggle('slideDown'); 
+		jQuery(this).toggle(false);
+	});
 });
 
 
