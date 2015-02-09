@@ -753,6 +753,8 @@ function opensearchserver_admin_set_query_settings() {
   	update_option('oss_log_ip', $oss_log_ip);
     $oss_taxonomy_display = isset($_POST['oss_taxonomy_display']) ? $_POST['oss_taxonomy_display'] : NULL;
     update_option('oss_taxonomy_display', $oss_taxonomy_display);
+    $oss_autocomplete_number = isset($_POST['oss_autocomplete_number']) ? $_POST['oss_autocomplete_number'] : NULL;
+    update_option('oss_autocomplete_number', $oss_autocomplete_number);
     $oss_filter_language_wpml = isset($_POST['oss_filter_language_wpml']) ? $_POST['oss_filter_language_wpml'] : NULL;
     update_option('oss_filter_language_wpml', $oss_filter_language_wpml);
     $oss_filter_language_field_wpml = isset($_POST['oss_filter_language_field_wpml']) ? $_POST['oss_filter_language_field_wpml'] : NULL;
@@ -1369,6 +1371,11 @@ function opensearchserver_admin_page() {
                                     <?php }
                                     }?>
                                 </select>
+                            </p>
+                            <p>
+                                <label for="oss_autocomplete_number">Number of suggestions for autocompletion: </label>
+                                <input type="text" id="oss_autocomplete_number" name="oss_autocomplete_number" 
+                                value="<?php echo get_option('oss_autocomplete_number'); ?>" placeholder="10" style="width:40px;"/>
                             </p>
                             </fieldset>
                             

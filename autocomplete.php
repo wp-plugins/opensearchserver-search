@@ -9,7 +9,9 @@ foreach ($escapechars as $escchar) $query = str_replace($escchar, ' ', $query);
 $query = trim($query);
 if (!isset($query) || strlen($query) == 0) return;
 $search = opensearchserver_getautocomplete_instance();
-$result = $search->autocomplete($query,10);
+$nbSuggest = get_option('oss_autocomplete_number');
+$nbSuggest = (!empty($nbSuggest)) ? $nbSuggest : 10;
+$result = $search->autocomplete($query, $nbSuggest);
 $result_array = explode("\n", $result);
 $count = count($result_array)-1;
 for($i=0;$i<$count;$i++) {
