@@ -103,3 +103,6 @@ msgstr "Filtres actifs"
 
 msgid "Click on a filter to remove it."
 msgstr "Cliquez sur un filtre pour le retirer."
+
+msgid "Filter values"
+msgstr "Filtrer les valeurs"
