@@ -173,12 +173,12 @@ get_header(); ?>
                       $previousActive = null;
                       
                       //display facets
-                      echo opensearchserver_get_facets_html($facet, $finalFacets, 0, $countDisplayed, null, $isHierarchical);
+					  $countHidden = 0;
+                      echo opensearchserver_get_facets_html($facet, $finalFacets, 0, $countDisplayed, null, $isHierarchical, null, $countHidden);
 
                       //display a link to toggle hidden values 
-                      if($maxValueToDisplay && ($countDisplayed-1) > $maxValueToDisplay) {
-                         $remaining = $countValues - $maxValueToDisplay;
-                         echo '<li class="oss-seeall"><a href="#" class="oss-link-seeall">'.sprintf( _n( 'See one more value', 'See %d other values', $remaining, 'opensearchserver' ), $remaining).'</a></li>';   
+                      if($countHidden > 0) {
+                         echo '<li class="oss-seeall"><a href="#" class="oss-link-seeall">'.sprintf( _n( 'See one more value', 'See %d other values', $remaining, 'opensearchserver' ), $countHidden).'</a></li>';   
                       }
                     ?>
             </ul>

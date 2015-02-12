@@ -180,7 +180,7 @@ function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
       if(get_query_var('sort')) {
       	if(get_query_var('sort') == '+date') {
       		$oss_query->sort('+timestamp');
-      	} else {
+      	} else if(get_query_var('sort') == '-date') {
       		$oss_query->sort('-timestamp');
       	}
       }
@@ -649,8 +649,21 @@ function sort_facets_hierarchicaly($cats, $facets, Array &$into) {
     }                
 }
 
-
-function opensearchserver_get_facets_html($facetField, $facets, $depth = 0, &$countDisplayed = 0, $previousActive = null, $isHierarchical = false) {
+/**
+ * Return HTML for list of values for one facet.
+ * 
+ * $countDisplayed and $countHidden will be filled.
+ * 
+ * @param unknown_type $facetField
+ * @param unknown_type $facets
+ * @param unknown_type $depth
+ * @param unknown_type $countDisplayed
+ * @param unknown_type $previousActive
+ * @param unknown_type $isHierarchical
+ * @param unknown_type $maxDepth
+ * @param int $countHidden
+ */
+function opensearchserver_get_facets_html($facetField, $facets, $depth = 0, &$countDisplayed = 0, $previousActive = null, $isHierarchical = false, $maxDepth = null, &$countHidden) {
     $output = '';
     $maxValueToDisplay = get_option('oss_facet_max_display', null);
     foreach($facets as $value => $info) {
@@ -661,8 +674,10 @@ function opensearchserver_get_facets_html($facetField, $facets, $depth = 0, &$co
           $output .= 'oss-facet-changestatus';
       $output .= ($info['active']) ? ' oss-facetactive' : ' oss-facetvalue';
       // if we already displayed max number of values we give a particular class to the remaining
-      if($maxValueToDisplay && $countDisplayed > $maxValueToDisplay) 
+      if($maxValueToDisplay && $countDisplayed > $maxValueToDisplay) {
           $output .= ' oss-hidden-facet';
+          $countHidden++;
+      }
       $output .= '">';
       if($info['count'] > 0) {
           $output .= '<input onclick=\'window.location.href = "'.$info['link'].'"\''; 
@@ -697,10 +712,10 @@ function opensearchserver_get_facets_html($facetField, $facets, $depth = 0, &$co
       $countDisplayed++;
       
       //display children if any
-      if(!empty($info['children'])) {
+      if(!empty($info['children']) && ($maxDepth === null || $depth < $maxDepth)) {
           $newDepth = $depth + 1;
           $output .= '<ul class="oss-sub-facet oss-sub-facet-'.$depth.'">';
-          $output .= opensearchserver_get_facets_html($facetField, $info['children'], $newDepth, $countDisplayed, null, $isHierarchical);
+          $output .= opensearchserver_get_facets_html($facetField, $info['children'], $newDepth, $countDisplayed, null, $isHierarchical, $maxDepth, $countHidden);
           $output .= '</ul>';            
       }
       $output .= '</li>';
