@@ -6,32 +6,32 @@ Tested up to: 4.0
 Stable tag: 1.5.2
 License: GPLv2 or later
 
-The OpenSearchServer Search Plugin allows to use OpenSearchServer to enable full-text search on WordPress-based websites.
+The OpenSearchServer Search Plugin enables OpenSearchServer full-text search in WordPress-based websites.
 
 == Description ==
 
 = OpenSearchServer plugin =
 
-The OpenSearchServer Search Plugin allows to use [OpenSearchServer](http://www.opensearchserver.com/) to enable full-text search on WordPress-based websites.
-OpenSearchServer is an **high-performance search engine which includes spell-check, facet, filter, phonetic search, auto-completion**.
-This plugin automatically replaces WordPress built-in search functionnality.
+The OpenSearchServer Search Plugin enables [OpenSearchServer](http://www.opensearchserver.com/)  full-text search in WordPress-based websites.
+OpenSearchServer is an **high-performance search engine that includes spell-check, facets, filters, phonetic search, and auto-completion**.
+This plugin automatically replaces the WordPress built-in search function.
 
 = Key Features =
 
  * **Full-text search with phonetic support**,
- * Query can be fully customized and **relevancy of each field (title, author, ...) can be precisely tuned**,
- * Filter search results by **facets**,
- * Automatic suggestion with **autocompletion**,
- * **Spellchecking** with automatic substitution,
- * Automatic indexing of content when published, edited or deleted,
+ * Queries can be fully customized and the **relevancy of each field (title, author, ...) can be precisely tuned**,
+ * Search results can be filtered using **facets**,
+ * Automatic search suggestions through **autocompletion**,
+ * **Spell-checking** with automatic substitution,
+ * Automatic indexing of content as soon as it gets published, edited or deleted,
  * Can index and search through **all type of content**,
  * Can index and search **every taxonomies**,
- * Easy to set up and customize with just filling a form,
- * Supports **multisites installation**,
- * Supports **WPML plugin** for translation,
- * Includes **several filters and actions** to allow for more customization from other plugins or themes.
+ * Can be easily set up and tweaked through web form page
+ * Supports **multi-sites installation**,
+ * Supports a **WPML plugin** for translation,
+ * Includes **several filters and actions** to allow for more customization via other plugins or themes.
 
-See screenshots page to learn more!
+See the screenshots page for more!
 
 == Installation ==
 
@@ -42,67 +42,69 @@ See screenshots page to learn more!
  
 = Installing an OpenSearchServer instance =
 
-Two ways to get an OpenSearchServer instance:
+There are two ways to get an OpenSearchServer instance:
 
- * Deploy it on your own server by reading the [OpenSearchServer documentation](http://www.opensearchserver.com/documentation/ "OpenSearchServer documentation")
- * Or use an OpenSearchServer SaaS instance [OpenSearchServer SaaS service](http://www.opensearchserver.com/#saas "OpenSearchServer SaaS services")
+ * Deploy it on your own server as explained in the [OpenSearchServer documentation](http://www.opensearchserver.com/documentation/ "OpenSearchServer documentation")
+ * Or use an OpenSearchServer SaaS instance [OpenSearchServer Software as a Service instances](http://www.opensearchserver.com/#saas "OpenSearchServer SaaS services")
 
 = Installing the plugin =
 
-   1. Check you have a running OpenSearchServer instance
-   2. Uncompress the plugin archive to wp-content/plugins folder of your WordPress installation.
+   1. Verify that you have a running OpenSearchServer instance
+   2. Uncompress the plugin archive in the wp-content/plugins folder for your WordPress installation.
    3. Activate the OpenSearchServer Search plugin via WordPress settings.
-   4. Open OpenSearchServer settings page and fill the form with instance settings.
-   5. Choose type of content and taxonomies to index, save Index Settings.
-   6. Create index by clicking on "(Re-)Create the index".
-   7. Content from WordPress can be pushed to newly created index by clicking "Synchronize / Re-index".
+   4. Open the OpenSearchServer settings page (in the Plugins menu) and fill the form with your desired settings
+   5. Choose the types of content and the taxonomies to index, save your Index Settings.
+   6. Create your index by clicking on the "(Re-)Create the index" button
+   7. New and modified content from WordPress can be pushed into your newly created index by clicking the "Synchronize / Re-index" button.
 
 == Frequently Asked Questions ==
 
 = What is OpenSearchServer? =
 
-Open Search Server is a search engine software developed under the GPL v3 open source licence. Read more on http://www.open-search-server.com
+Open Search Server is a search engine developed under the GPL v3 open source licence. Read more on http://www.open-search-server.com
 
 = How to update the search index? =
 
-Using the Reindex-Site button in the OpenSearchServer Settings page. While posting a page or a post OpenSearchServer plugin automatically indexes the post or page
+Use the Reindex-Site button in the OpenSearchServer Settings page. By default the OpenSearchServer plugin automatically indexes any new post or page
    
-= When I click Create-index/Save button or reindex button I got an exception saying "Bad credential" = 
+= When I click the Create-index/Save button or the Reindex button I got an exception saying "Bad credential" = 
 
-Check that the credentials used in the plugin page is correct against the ones created in OpenSearchServer instance, under the privilages tab.
+Check that the credentials entered in the plugin page match the ones entered in your OpenSearchServer instance, under the Privileges tab.
 
-= I get an error when I install opensearchserver "Fatal error: OSS_API won't work without curl extension in "opensearchserver-search\OSS_API.class.php" on line 23" =
+= I get an error when I install Opensearchserver. "Fatal error: OSS_API won't work without curl extension in "opensearchserver-search\OSS_API.class.php" on line 23" =
 
-Check that CURL extension for PHP is enabled on your server, else install it.
+Check whether the CURL extension for PHP is enabled on your server, and install it if necessary.
  
 = How to customize/style the search page? =
 
-Copy the file opensearchserver_search.php from the directory wp-content/plugins/opensearchserver-search to your current theme folder (wp-content/themes/twentyfourteen). 
-Customize the layout as per your needs.
+Copy the opensearchserver_search.php file from the wp-content/plugins/opensearchserver-search directory to your current theme folder (for instance wp-content/themes/twentyfourteen). 
+Customize the layout as needed.
    
-= Will this plugin work with a multisites installation? =
+= Will this plugin work with a multi-sites installation? =
 
-Yes, this plugin supports multisites installation.
+Yes, this plugin supports multi-sites installation.
 
-= I already manage my OpenSearchServer index in another way (web crawler). Can I use this plugin to plug my Wordress search page to my existing index? =
+= I already manage my OpenSearchServer index in another way (using web crawler). Can I use this plugin to plug my WordPress search page into my existing index? =
 
-Yes you can: enable the "Search only" mode to switch off sending of data (new posts and pages) from Wordpress to OpenSearchServer. Warning: you may however need to first create your index with this plugin before enabling "Search only mode" to ensure creation of all needed schema's fields.
+Yes you can: enable the "Search only" mode to stop sending data (chiefly new posts and pages) from Wordpress to OpenSearchServer.
 
-= I get this PHP warning when saving query settings: "Warning: OSS Returned an error: "Error com.jaeksoft.searchlib.web.ServletException: com.jaeksoft.searchlib.SearchLibException: Returned field: The field: thumbnail_url does not exist" =
+Warning: you may first need to create your index using the OSS WordPress plugin before enabling the "Search only mode". This ensures that the necessary fields are all created in the schema of your index.
+
+= I get the following PHP warning when saving my query settings: "Warning: OSS Returned an error: "Error com.jaeksoft.searchlib.web.ServletException: com.jaeksoft.searchlib.SearchLibException: Returned field: The field: thumbnail_url does not exist" =
 
 You probably updated to a recent version without re-creating your index. You need to re-create your index and re-synchronize data.
 
 = What are the available filters and actions? =
 
-Learn everything about available filters and actions [at our documentation center](http://www.opensearchserver.com/documentation/plugins/wordpress.md).
+Learn everything about the available filters and actions [in our documentation center](http://www.opensearchserver.com/documentation/plugins/wordpress.md).
 
-= Indexing crashes before sending all documents to OpenSearchServer =
+= The indexing process crashes before it can send all documents to OpenSearchServer =
 
-Full re-indexing can really be a memory-consuming task. If your server does not allow for such memory to be used by PHP try indexing your content by range. To do so, use the `From document` and `to document` text fields located above the `Re-index / Synchronize` button.
+Fully re-indexing can hit the memory quite hard. If your server does not allow for that much memory to be used by PHP, try indexing your content in smaller spans. To do so, use the 'From document' and 'to document' input fields located above the 'Re-index / Synchronize' button and determine through trial and error how many documents your server will let you process in one go.
 
 = How can I translate the plugin =
 
-Copy file `lang/opensearchserver-fr_FR.po`, rename it with your country code and translate its content. Feel free to submit us your translated files!
+Copy the `lang/opensearchserver-fr_FR.po` file, rename it with your country code and translate its content. Feel free to submit us your translated files!
 
 _Serbian translation provided by Ogi Djuraskovic - [http://firstsiteguide.com](http://firstsiteguide.com)_.
 
@@ -120,130 +122,129 @@ _Serbian translation provided by Ogi Djuraskovic - [http://firstsiteguide.com](h
  * Updated FR translation
 
 = 1.5.1 - 05/02/2015 =
- * Add feature for choosing an existing query template from OSS, instead of using query configured in WordPress.
- * Improved facets: small search form, hierarchical facets, etc.
+ * Added a feature to select an existing query template from OSS rather than using queries configured in WordPress.
+ * Improved facets use: added a small search form, hierarchical facets, and some other imrpovements
 
 = 1.5 - 30/12/2014 =
-* Improve indexing of Custom Fields.
-* Add useful help texts for Query and Facets management.
-* ==> **Index re-creation and synchronization may be needed if you are indexing some Custom Fields.** Please re-configure Custom Fields 
-to index in section "Index settings". 
+* Improved the indexing of Custom Fields.
+* Additional help texts for Query and Facets management.
+* ==> **Re-creating and synchronizing the index may be needed if you are indexing Custom Fields.** Please re-configure which Custom Fields to index in the "Index settings" section. 
 
 = 1.4.2 - 16/12/2014 =
-* Update indexing process
+* Updated the indexing process
 
 = 1.4.1 - 07/11/2014 =
-* Fix bug whith exclusive facet when there is only one.
+* Fixed a bug occurring when there only was a single exclusive facet
 
 = 1.4 - 04/11/2014 =
-* Add filter and actions, update README.
+* Added filters and actions, updated the README.
 
 = 1.3.9 - 14/10/2014 =
-* Add translation labels for some strings: Next, Previous, First, Last
+* Added translation labels for the following strings: Next, Previous, First, Last
 
 = 1.3.8 - 04/09/2014 =
-* Add plugin icon for Wordpress 4.0
+* Added a plugin icon for Wordpress 4.0
 
 = 1.3.7 =
-* Add autocompletion on main search input, not only in search page anymore
+* Added autocompletion on the main search input - it's no longer limited to the search page
 
 = 1.3.6 =
-* Change facet behavior: there is now a standard behavior and an advanced behavior
-* Advanced behavior allow to choose exclusive or multiple facets
-* Add configurable URL slug for facets
-* Improve autocompletion suggestion
-* Add some WordPress filters
-* ==> **Index re-creation and synchronization may be needed**
+* Changed facet behavior: there is now a standard behavior and an advanced behavior
+* The advanced behavior allows for selecting exclusive or multiple facets
+* Added configurable URL slugs for facets
+* Improved autocompletion suggestions
+* Added some WordPress filters
+* ==> **Index re-creation and synchronization may be needed upon updating the plugin**
 
 = 1.3.5 =
-* Indexation of content's thumbnail
-* Indexation of multiple taxonomies
-* Categorie is now indexed like any other taxonomy
-* Chosen content type can now be automatically indexed when added / edited / deleted
-* Use STYLESHEETPATH instead of TEMPLATEPATH to be able to override template in a Child Theme
-* Add handling of OpenSearchServer logging
-* ==> **Index re-creation and synchronization may be needed**
+* Indexing of content thumbnails
+* Indexing of multiple taxonomies
+* Categories are now indexed like any other taxonomy
+* The chosen content type can now be automatically indexed when added / edited / deleted
+* Used STYLESHEETPATH instead of TEMPLATEPATH, which makes it possible to override the template in a Child Theme
+* Added handling of OpenSearchServer logging
+* ==> **Index re-creation and synchronization may be needed upon updating the plugin**
 
 = 1.3.4 =
-* UI Enhancements
-* Sort by date feature. 
+* UI enhancements
+* 'Sort by date' feature. 
 
 = 1.3.3 =
-* Add search only mode 
-* Add option to send query settings to OSS or save them locally
-* Custom label and values for facets
+* Added a search only mode 
+* Added an option to either send query settings to OSS or to save them locally
+* Custom labels and values for facets
 
 = 1.3.2 =
-* Search results can be filtered by year and month.
-* Bug Fixes
+* Search results can now be filtered by year and month.
+* Various bug fixes
 
 = 1.3.1 =
-* Multiple fixes.
-* Add support for multisites installation
+* Various bug fixes.
+* Added support for multi-sites installation
 
 = 1.3 =
 * Improved admin page
-* Search result can also be filtered by tags
-* User can define their own special character to clean the query.
+* Search result can now also be filtered by tags
+* Users can define their own special character to clean the query.
 * Fixed issues with multiple categories.
 
 = 1.2.4 =
-* Improved Search result display.
+* Improved the search result display.
 
 = 1.2.3 =
-* New Autocompletion REST API
+* New autocompletion REST API
 
 = 1.2.2 =
-* Select which type of post will be indexed
-* Option to display user, type and category in search result
+* Added a function to select which type of post will be indexed
+* Added an option to display user, type and category in search result
 
 = 1.2.1 =
-* Multiple facet support.
-* New feature facet behavior.
-* Fix in spell check if no field is selected.
+* Added multiple facets support.
+* New feature - facet behavior.
+* Fixed the spell check when no field is selected.
 
 = 1.2.0 =
-* Upgrade to last OpenSearchServer PHP library
-* Possibility to index a range of documents
+* Upgrade to the latest OpenSearchServer PHP library
+* Added the possibility to index a range of documents
 
 = 1.1.1 =
-* 17 Language support
-* Spelling corrections
+* Now supporting 17 languages
+* Now providing spelling corrections
 
 = 1.1.0 =
 * Tested with OpenSearchServer 1.3-rc2
 
 = 1.0.9 =
-* Phonetic search
-* Custom fields support
-* Facets and filters on categories
-* CSS and javascript improvements
+* Added phonetic search
+* Added custom fields support
+* Added facets and filters on categories
+* Various CSS and Javascript improvements
 
 = 1.0.8 =
-* Improved OpenSearchServer settings page.
-* SpellCheck feature in search page.
-* AutoCompletion feature in search page.
+* Improved the OpenSearchServer settings page
+* SpellCheck feature added to the search page
+* AutoCompletion feature added to the search page
 
 = 1.0.7 =
-* OpenSearchServer client library upgrade (1.3)
+* OpenSearchServer client library upgrade (to 1.3)
 
 = 1.0.6 =
-* Search result has template file. 
+* Search results now have a template file. 
 
 = 1.0.5 =
-* Fixed bug while indexing document
+* Fixed a document indexing bug
 * Fixed paging issues in the current page.
-* Updated batch indexing process.
+* Updated the batch-indexing process.
 
 = 1.0.4 =
 * OpenSearchServer client library upgrade.
-* Fixed a bug which add two blank lines in the top of the HTML page.
+* Fixed a bug that added two blank lines at the top of the HTML page.
 
 = 1.0.3 =
-* Fixed images in search result. 
+* Fixed images in search results. 
 
 = 1.0.2 =
-* Added deletion feature in OSS plugin 
+* Added a deletion feature to the OSS plugin 
 
 = 1.0.1 =
-* Implemented and overridden wordpress search to OpenSearchServer search
+* Implemented the override of WordPress search by OpenSearchServer search
