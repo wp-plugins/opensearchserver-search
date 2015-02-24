@@ -238,5 +238,6 @@ add_action('save_post','opensearchserver_do_while_posting',10,2);
 add_action('wp_enqueue_scripts','opensearchserver_load_scripts_styles' );
 add_action('admin_menu', 'opensearchserver_admin_actions');
 add_action('template_redirect', 'opensearchserver_search');
-add_filter( 'query_vars', 'add_query_vars_filter' )
+add_action('synchronize_with_cron','opensearchserver_synchronize_with_cron' );
+add_filter( 'query_vars', 'add_query_vars_filter' );
 ?>

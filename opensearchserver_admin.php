@@ -190,25 +190,27 @@ function opensearchserver_spellcheck_query_template() {
  * @param OSSIndexDocument $index
  * @param number $limit
  */
-function opensearchserver_checkindex(OSSIndexDocument $index, $limit = 1, $idx = 0, $total = 0) {
+function opensearchserver_checkindex(OSSIndexDocument $index, $limit = 1, $idx = 0, $total = 0 ,$is_not_cron = TRUE) {
   global $wpdb;
   if ($index->count() < $limit) {
     return $index;
   }
   opensearchserver_start_indexing($index);
   $index = null;
-  wp_cache_flush();
-  $wpdb->flush();
-  if (function_exists('gc_enabled')) {
-    if (gc_enabled()) {
-      gc_collect_cycles();
+  if(is_not_cron) {
+    wp_cache_flush();
+    $wpdb->flush();
+    if (function_exists('gc_enabled')) {
+      if (gc_enabled()) {
+        gc_collect_cycles();
+      }
     }
-  }
 
-  if ($idx != 0 && $total != 0) {
-    $percent = (floatval($idx) / floatval($total)) * 100;
-    $mem = floatval(memory_get_usage()) / 1024 / 1024;
-    opensearchserver_display_messages(sprintf('Completed: %.2f %% (%d/%d)- Memory usage: %2f', $percent, $idx, $total, $mem));
+    if ($idx != 0 && $total != 0) {
+      $percent = (floatval($idx) / floatval($total)) * 100;
+      $mem = floatval(memory_get_usage()) / 1024 / 1024;
+      opensearchserver_display_messages(sprintf('Completed: %.2f %% (%d/%d)- Memory usage: %2f', $percent, $idx, $total, $mem));
+    }
   }
   return new OSSIndexDocument();
 }
@@ -226,11 +228,37 @@ function opensearchserver_get_number_to_index() {
     $docs_count = $wpdb->get_var( 'SELECT count(ID) FROM '.$wpdb->posts.' WHERE post_status = \'publish\' AND post_type IN ("'.implode('","', $contentTypesToKeep).'") ORDER BY ID' );
     return $docs_count;
 }
-
 /*
- * Function to reindex the website.
+ * Function to reindex the website with cron.
 */
-function opensearchserver_reindex_site($id,$type, $from = 0, $to = 0) {
+function opensearchserver_reindex_site_with_cron() {
+  global $wpdb;
+  opensearchserver_reindex_init();
+  opensearchserver_delete_document('*:*');
+   $contentTypesToKeep = array();
+    foreach (get_post_types() as $post_type) {
+        if (get_option('oss_index_types_'.$post_type) == 1) {
+            $contentTypesToKeep[] = $post_type;
+        }
+    }
+    $sql_query = 'SELECT ID FROM '.$wpdb->posts.' WHERE post_status = \'publish\' AND post_type IN ("'.implode('","', $contentTypesToKeep).'") ORDER BY ID'.$limitSuffix;
+    $posts = $wpdb->get_results($sql_query);
+    $total_count = count($posts);
+    $index = new OSSIndexDocument();
+    for ($i = 0; $i < $total_count; $i++) {
+      $post = get_post($posts[$i]->ID);
+      opensearchserver_add_documents_to_index($index, $lang, $post);
+      $index = opensearchserver_checkindex($index, 200, $i, $total_count, FALSE);
+    }
+    opensearchserver_checkindex($index, 1, $i, $total_count,FALSE);
+  opensearchserver_optimize();
+  opensearchserver_autocompletionBuild();
+  return 1;
+}
+/*
+ * Function to initialize the variable for reindex.
+*/
+function opensearchserver_reindex_init() {
   global $wpdb;
   $oss_server_url = get_option('oss_serverurl');
   $oss_indexname = get_option('oss_indexname');
@@ -243,6 +271,13 @@ function opensearchserver_reindex_site($id,$type, $from = 0, $to = 0) {
   $ossEnginePath  = config_request_value('ossEnginePath', $oss_server_url, 'engineURL');
   $ossEngineConnectTimeOut = config_request_value('ossEngineConnectTimeOut', 5, 'engineConnectTimeOut');
   $ossEngineIndex = config_request_value('ossEngineIndex', $oss_indexname, 'engineIndex');
+}
+/*
+ * Function to reindex the website.
+*/
+function opensearchserver_reindex_site($id,$type, $from = 0, $to = 0) {
+  global $wpdb;
+  opensearchserver_reindex_init();
   if($id) {
     $delete='id:'.$type.'_'.$id;
     opensearchserver_delete_document($delete);
@@ -857,14 +892,28 @@ function opensearchserver_is_query_template_choice() {
 
 
 function opensearchserver_admin_set_reindex() {
-  $oss_index_from = isset($_POST['oss_index_from']) ? $_POST['oss_index_from'] : NULL;
-  $oss_index_to = isset($_POST['oss_index_to']) ? $_POST['oss_index_to'] : NULL;
-  update_option('oss_index_from', $oss_index_from);
-  update_option('oss_index_to', $oss_index_to);
-  $index_success = opensearchserver_reindex_site(NULL,NULL, $oss_index_from, $oss_index_to);
-  $suffix = ($oss_index_from !== null && $oss_index_from != '' && $oss_index_to !== null && $oss_index_to != '') ? '(indexed documents from #'.$oss_index_from.' to #'.$oss_index_to.')' : '';
-  opensearchserver_display_messages('Re indexing has been finished successfully '. $suffix .'.');
+  $post_oss_submit = $_POST['opensearchserver_submit'];
+  if($post_oss_submit == 'Synchronize with CRON') {
+    wp_schedule_single_event(time(), 'synchronize_with_cron');
+    opensearchserver_display_messages('Re indexing has been successfully scheduled with cron will be executed in next 15 minutes.');
+  }else {
+    $oss_index_from = isset($_POST['oss_index_from']) ? $_POST['oss_index_from'] : NULL;
+    $oss_index_to = isset($_POST['oss_index_to']) ? $_POST['oss_index_to'] : NULL;
+    update_option('oss_index_from', $oss_index_from);
+    update_option('oss_index_to', $oss_index_to);
+    $index_success = opensearchserver_reindex_site(NULL,NULL, $oss_index_from, $oss_index_to);
+    $suffix = ($oss_index_from !== null && $oss_index_from != '' && $oss_index_to !== null && $oss_index_to != '') ? '(indexed documents from #'.$oss_index_from.' to #'.$oss_index_to.')' : '';
+    opensearchserver_display_messages('Re indexing has been finished successfully '. $suffix .'.');
+  }
 }
+/*
+ * Re-index using cron
+*/
+function opensearchserver_synchronize_with_cron() {
+   opensearchserver_reindex_site_with_cron();
+}
+
+
 /*
  * The admin page settings actions
 */
@@ -910,7 +959,7 @@ function opensearchserver_admin_page() {
     opensearchserver_admin_set_index_settings();
   } elseif ($action == 'opensearchserver_reindex') {
     opensearchserver_admin_set_reindex();
-  } elseif ($action == 'opensearchserver_advanced_settings') {
+  }elseif ($action == 'opensearchserver_advanced_settings') {
   	opensearchserver_admin_set_advanced_settings();
   }
   
@@ -1536,6 +1585,9 @@ function opensearchserver_admin_page() {
 									value="opensearchserver_reindex" /> <input type="submit"
 									name="opensearchserver_submit" value="Synchronize / Re-Index"
 									class="button-primary" />
+                  <input type="submit"
+                  name="opensearchserver_submit" value="Synchronize with CRON"
+                  class="button-primary" />
 							</p>
 						</form>
 					</div>
