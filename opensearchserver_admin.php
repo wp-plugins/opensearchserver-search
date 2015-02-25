@@ -233,51 +233,35 @@ function opensearchserver_get_number_to_index() {
 */
 function opensearchserver_reindex_site_with_cron() {
   global $wpdb;
-  opensearchserver_reindex_init();
+  $lang = get_option('oss_language', '');
   opensearchserver_delete_document('*:*');
-   $contentTypesToKeep = array();
-    foreach (get_post_types() as $post_type) {
-        if (get_option('oss_index_types_'.$post_type) == 1) {
-            $contentTypesToKeep[] = $post_type;
-        }
+  $contentTypesToKeep = array();
+  foreach (get_post_types() as $post_type) {
+    if (get_option('oss_index_types_'.$post_type) == 1) {
+        $contentTypesToKeep[] = $post_type;  
     }
-    $sql_query = 'SELECT ID FROM '.$wpdb->posts.' WHERE post_status = \'publish\' AND post_type IN ("'.implode('","', $contentTypesToKeep).'") ORDER BY ID'.$limitSuffix;
-    $posts = $wpdb->get_results($sql_query);
-    $total_count = count($posts);
-    $index = new OSSIndexDocument();
-    for ($i = 0; $i < $total_count; $i++) {
-      $post = get_post($posts[$i]->ID);
-      opensearchserver_add_documents_to_index($index, $lang, $post);
-      $index = opensearchserver_checkindex($index, 200, $i, $total_count, FALSE);
-    }
-    opensearchserver_checkindex($index, 1, $i, $total_count,FALSE);
+  }
+  $sql_query = 'SELECT ID FROM '.$wpdb->posts.' WHERE post_status = \'publish\' AND post_type IN ("'.implode('","', $contentTypesToKeep).'") ORDER BY ID';
+  $posts = $wpdb->get_results($sql_query);
+  $total_count = count($posts);
+  $index = new OSSIndexDocument();
+  for ($i = 0; $i < $total_count; $i++) {
+    $post = get_post($posts[$i]->ID);
+    opensearchserver_add_documents_to_index($index, $lang, $post);
+    $index = opensearchserver_checkindex($index, 200, $i, $total_count, FALSE);
+  }
+  opensearchserver_checkindex($index, 1, $i, $total_count,FALSE);
   opensearchserver_optimize();
   opensearchserver_autocompletionBuild();
   return 1;
 }
-/*
- * Function to initialize the variable for reindex.
-*/
-function opensearchserver_reindex_init() {
-  global $wpdb;
-  $oss_server_url = get_option('oss_serverurl');
-  $oss_indexname = get_option('oss_indexname');
-  $oss_login =  get_option('oss_login');
-  $oss_key = get_option('oss_key');
-  $lang = get_option('oss_language', '');
-  $table_name_posts =$wpdb->prefix ."posts";
-  $table_name_users =$wpdb->prefix ."users";
-  $index_status=0;
-  $ossEnginePath  = config_request_value('ossEnginePath', $oss_server_url, 'engineURL');
-  $ossEngineConnectTimeOut = config_request_value('ossEngineConnectTimeOut', 5, 'engineConnectTimeOut');
-  $ossEngineIndex = config_request_value('ossEngineIndex', $oss_indexname, 'engineIndex');
-}
+
 /*
  * Function to reindex the website.
 */
-function opensearchserver_reindex_site($id,$type, $from = 0, $to = 0) {
+function opensearchserver_reindex_site($id, $type, $from = 0, $to = 0) {
   global $wpdb;
-  opensearchserver_reindex_init();
+  $lang = get_option('oss_language', '');
   if($id) {
     $delete='id:'.$type.'_'.$id;
     opensearchserver_delete_document($delete);
@@ -894,7 +878,7 @@ function opensearchserver_is_query_template_choice() {
 function opensearchserver_admin_set_reindex() {
   $post_oss_submit = $_POST['opensearchserver_submit'];
   if($post_oss_submit == 'Synchronize with CRON') {
-    wp_schedule_single_event(time(), 'synchronize_with_cron');
+    wp_schedule_single_event(time() + 900, 'synchronize_with_cron');
     opensearchserver_display_messages('Re indexing has been successfully scheduled with cron will be executed in next 15 minutes.');
   }else {
     $oss_index_from = isset($_POST['oss_index_from']) ? $_POST['oss_index_from'] : NULL;
