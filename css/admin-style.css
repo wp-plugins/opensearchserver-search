@@ -16,3 +16,37 @@
 #opensearchserver_admin .warning { background:rgb(255, 140, 124); text-align:center;}
 #opensearchserver_admin label { vertical-align:baseline; }
 #opensearchserver_admin .oss_scrollable_list { max-height:300px; overflow:auto; padding:5px 0 5px 0;}
+#opensearchserver_admin #oss-cron-running { 
+	background:#F5F5F5; 
+	border-radius:5px;
+	padding:1px 10px 10px 10px;
+	width:400px;
+	margin:10px 0 10px 0;
+	-webkit-box-shadow: 0px 0px 7px 0px rgba(50, 50, 50, 0.6);
+    -moz-box-shadow:    0px 0px 7px 0px rgba(50, 50, 50, 0.6);
+    box-shadow:         0px 0px 7px 0px rgba(50, 50, 50, 0.6);
+} 
+#opensearchserver_admin #oss-cron-wrapper { height:30px; }
+#opensearchserver_admin #oss-cron-loading { float:left; position:relative; width:200px;  margin:5px 0 5px 0; }
+/* Style from Bootstrap */
+#opensearchserver_admin #oss-cron-loading  {
+	overflow: hidden;
+	height:20px;
+	background-color: white;
+	border-radius: 4px;
+	-webkit-box-shadow: inset 0 1px 2px rgba(0,0,0,.1);
+	box-shadow: inset 0 1px 2px rgba(0,0,0,.1);
+	border:1px solid #ccc;
+}
+#opensearchserver_admin #oss-cron-loading-percent { position:absolute; top:1px; left:98px; font-size:10px;}
+#opensearchserver_admin #oss-cron-loading-inner {  height:20px; background:#ddd; border-radius:2px;}
+/* Style from Bootstrap */
+#opensearchserver_admin #oss-cron-loading-inner {
+    background-color: #5bc0de; 
+	background-image: -webkit-linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent);
+	background-image: -o-linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent);
+	background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent);
+	-webkit-background-size: 40px 40px;
+	background-size: 40px 40px;
+}
+#opensearchserver_admin #oss-cron-stats { float:left; width:100px; padding:5px 0 0 5px; }

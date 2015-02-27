@@ -197,7 +197,7 @@ function opensearchserver_checkindex(OSSIndexDocument $index, $limit = 1, $idx =
   }
   opensearchserver_start_indexing($index);
   $index = null;
-  if(is_not_cron) {
+  if($is_not_cron) {
     wp_cache_flush();
     $wpdb->flush();
     if (function_exists('gc_enabled')) {
@@ -228,13 +228,33 @@ function opensearchserver_get_number_to_index() {
     $docs_count = $wpdb->get_var( 'SELECT count(ID) FROM '.$wpdb->posts.' WHERE post_status = \'publish\' AND post_type IN ("'.implode('","', $contentTypesToKeep).'") ORDER BY ID' );
     return $docs_count;
 }
+
 /*
  * Function to reindex the website with cron.
 */
 function opensearchserver_reindex_site_with_cron() {
   global $wpdb;
-  $lang = get_option('oss_language', '');
-  opensearchserver_delete_document('*:*');
+  $lang = get_option('oss_language', '');  
+  
+  var_dump('Reset ? :');
+  var_dump(get_option('oss_cron_reset'));
+  update_option('oss_cron_reset', false);
+  $numberOfPostsToIndexByJob = get_option('oss_cron_number_by_job', 200);
+  
+  // Get boundaries to use for getting the posts to index
+  // Those limits are set by previous CRON jobs
+  $from = (int) get_option('oss_cron_from', null);
+  var_dump('From:');
+  var_dump($from);
+  // Start by deleting all documents from the index if the OSS CRON job runs
+  // for the first time.
+  if (empty($from)) {
+    opensearchserver_delete_document('*:*');
+  }
+  $limitSuffix = ' LIMIT '.$from.','.$numberOfPostsToIndexByJob;
+  
+  var_dump($limitSuffix);
+  
   $contentTypesToKeep = array();
   foreach (get_post_types() as $post_type) {
     if (get_option('oss_index_types_'.$post_type) == 1) {
@@ -253,7 +273,37 @@ function opensearchserver_reindex_site_with_cron() {
   opensearchserver_checkindex($index, 1, $i, $total_count,FALSE);
   opensearchserver_optimize();
   opensearchserver_autocompletionBuild();
+  
+  wp_cache_flush();
+  $wpdb->flush();
+  
+  // See if indexing is completed
+  $to = $from + $numberOfPostsToIndexByJob;
+  if($to > opensearchserver_get_number_to_index()) {
+      opensearchserver_reset_cron();
+  } else {
+      // CRON may have been reset since the beginning of this batch. 
+      // If it's the case, do not update the oss_cron_from option  and 
+      // do not program a new batch
+      var_dump('2 - Reset ? :');
+      var_dump(get_option('oss_cron_reset'));
+      if(get_option('oss_cron_reset')) {
+          update_option('oss_cron_from', 0);
+          var_dump('reset!');
+      } else {
+          update_option('oss_cron_from', $to);
+          //schedule a next CRON job
+          wp_schedule_single_event(time() + 2, 'synchronize_with_cron');
+      }
+  }
   return 1;
+}
+
+function opensearchserver_reset_cron() {
+    wp_clear_scheduled_hook( 'synchronize_with_cron' );
+    update_option('oss_cron_from', 0);
+    update_option('oss_cron_reset', true);
+    update_option('oss_cron_running', false);
 }
 
 /*
@@ -876,11 +926,9 @@ function opensearchserver_is_query_template_choice() {
 
 
 function opensearchserver_admin_set_reindex() {
-  $post_oss_submit = $_POST['opensearchserver_submit'];
-  if($post_oss_submit == 'Synchronize with CRON') {
-    wp_schedule_single_event(time() + 900, 'synchronize_with_cron');
-    opensearchserver_display_messages('Re indexing has been successfully scheduled with cron will be executed in next 15 minutes.');
-  }else {
+    //reset CRON    
+    opensearchserver_reset_cron();
+    
     $oss_index_from = isset($_POST['oss_index_from']) ? $_POST['oss_index_from'] : NULL;
     $oss_index_to = isset($_POST['oss_index_to']) ? $_POST['oss_index_to'] : NULL;
     update_option('oss_index_from', $oss_index_from);
@@ -888,13 +936,24 @@ function opensearchserver_admin_set_reindex() {
     $index_success = opensearchserver_reindex_site(NULL,NULL, $oss_index_from, $oss_index_to);
     $suffix = ($oss_index_from !== null && $oss_index_from != '' && $oss_index_to !== null && $oss_index_to != '') ? '(indexed documents from #'.$oss_index_from.' to #'.$oss_index_to.')' : '';
     opensearchserver_display_messages('Re indexing has been finished successfully '. $suffix .'.');
-  }
 }
+
+function opensearchserver_admin_set_reindex_cron() {
+    opensearchserver_reset_cron();
+    wp_schedule_single_event(time() + 2, 'synchronize_with_cron');
+    update_option('oss_cron_running', true);
+    $oss_cron_number_by_job = isset($_POST['oss_cron_number_by_job']) ? $_POST['oss_cron_number_by_job'] : NULL;
+    update_option('oss_cron_number_by_job', $oss_cron_number_by_job);
+    opensearchserver_display_messages('Re indexing has been successfully scheduled with CRON.');
+}
+
 /*
  * Re-index using cron
 */
 function opensearchserver_synchronize_with_cron() {
-   opensearchserver_reindex_site_with_cron();
+    ini_set('memory_limit', '2048M');
+    set_time_limit(0);
+    opensearchserver_reindex_site_with_cron();
 }
 
 
@@ -943,6 +1002,8 @@ function opensearchserver_admin_page() {
     opensearchserver_admin_set_index_settings();
   } elseif ($action == 'opensearchserver_reindex') {
     opensearchserver_admin_set_reindex();
+  } elseif ($action == 'opensearchserver_reindex_cron') {
+    opensearchserver_admin_set_reindex_cron();
   }elseif ($action == 'opensearchserver_advanced_settings') {
   	opensearchserver_admin_set_advanced_settings();
   }
@@ -1544,7 +1605,7 @@ function opensearchserver_admin_page() {
 						<br />
 					</div>
 					<h3 class="hndle">
-						<span>Indexation </span>
+						<span>Indexing</span>
 					</h3>
 					<div class="inside">
 						<form id="reindex_settings" name="reindex_settings" method="post"
@@ -1553,6 +1614,9 @@ function opensearchserver_admin_page() {
                             <p>
                                 With current "Index settings" total number of documents to index is <strong><?php echo opensearchserver_get_number_to_index(); ?>.</strong>
                             </p>
+                             <hr/>
+                              <p><strong>Re-index manually</strong><br/>
+                              Re-index data as soon as the button is clicked, in a synchronous process.</p>
                             <p><span class="help">If indexing is taking too long and process finally crashes, try running it several times 
                             with small number of documents to index. Use for example ranges of 1000 documents.<br/>
                             <strong>Leave these fields empty to index all documents.</strong></span>
@@ -1565,14 +1629,52 @@ function opensearchserver_admin_page() {
 									value="<?php print get_option('oss_index_to');?>" /> 
 							</p>
 							<p>
-								<input type="hidden" name="oss_submit"
-									value="opensearchserver_reindex" /> <input type="submit"
+								<input type="hidden" name="oss_submit" value="opensearchserver_reindex" /> 
+                                <input type="submit"
 									name="opensearchserver_submit" value="Synchronize / Re-Index"
 									class="button-primary" />
-                  <input type="submit"
-                  name="opensearchserver_submit" value="Synchronize with CRON"
-                  class="button-primary" />
-							</p>
+                          </form>
+                          <form id="reindex_settings_cron" name="reindex_settings_cron" method="post" action="">
+                          <hr/>
+                          <p><strong>Re-index with CRON</strong><br/>
+                          Schedule a CRON job to re-index full content. This job will be executed next time the WordPress CRON runs.</p>
+                          
+                          <label for="oss_cron_number_by_job">Number of documents to index with each job : </label> <input
+                                    type="text" name="oss_cron_number_by_job" id="oss_cron_number_by_job" size="7" placeholder="200"
+                                    value="<?php print get_option('oss_cron_number_by_job');?>" /> 
+                          <br/><span class="help">Full re-indexing may need several automatic execution of the CRON, depending on the <strong>Number of documents to index with each job</strong> value.</span>
+                          <?php 
+                              //If a CRON indexing is running, check the current percentage of job done
+                              $cronIsRunning = get_option('oss_cron_running');
+                              if($cronIsRunning) {
+                                  $numberIndexed = get_option('oss_cron_from');
+                                  $totalToIndex = opensearchserver_get_number_to_index();
+                                  $percentDone = round($numberIndexed * 100 / $totalToIndex);
+                              }
+                          ?>
+                          <?php if($cronIsRunning) : ?>
+                          <div id="oss-cron-running">
+                              <p style="margin-bottom:0;">
+                                <strong><em>CRON is currently running</em></strong>
+                                <br/>
+                                Progress (refresh the page to update it):                  
+                              </p>
+                              <div id="oss-cron-wrapper">
+                                <div id="oss-cron-loading">
+                                    <div id="oss-cron-loading-inner" style="width:<?php echo $percentDone; ?>%"></div>
+                                    <div id="oss-cron-loading-percent"><?php echo $percentDone ?>%</div>
+                                </div>
+                                <div id="oss-cron-stats"><?php echo $numberIndexed ?> / <?php echo $totalToIndex ?></div>
+                              </div>
+                          </div>
+                          <p>CRON is running. You can choose to restart it from 0:</p>
+                          <?php endif; ?>
+                          <p>
+                            <input type="hidden" name="oss_submit" value="opensearchserver_reindex_cron" />
+                            <input type="submit"
+                                name="opensearchserver_submit" value="Re-index with CRON"
+                                class="button-primary" />
+                          </p>
 						</form>
 					</div>
 				</div>

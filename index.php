@@ -172,6 +172,12 @@ function opensearchserver_uninstall_one_site() {
   delete_option('oss_query_template');
   delete_option('oss_autocomplete_number');
   
+  wp_clear_scheduled_hook( 'synchronize_with_cron' );
+  delete_option('oss_cron_from');
+  delete_option('oss_cron_reset');
+  delete_option('oss_cron_running');
+  delete_option('oss_cron_number_by_job');
+  
   $taxonomies=get_taxonomies('','names'); 
     foreach ($taxonomies as $taxonomy ) {
       $check_taxonomy_name = 'oss_taxonomy_'.$taxonomy;
