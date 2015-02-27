@@ -261,7 +261,7 @@ function opensearchserver_reindex_site_with_cron() {
         $contentTypesToKeep[] = $post_type;  
     }
   }
-  $sql_query = 'SELECT ID FROM '.$wpdb->posts.' WHERE post_status = \'publish\' AND post_type IN ("'.implode('","', $contentTypesToKeep).'") ORDER BY ID';
+  $sql_query = 'SELECT ID FROM '.$wpdb->posts.' WHERE post_status = \'publish\' AND post_type IN ("'.implode('","', $contentTypesToKeep).'") ORDER BY ID'.$limitSuffix;
   $posts = $wpdb->get_results($sql_query);
   $total_count = count($posts);
   $index = new OSSIndexDocument();
@@ -1614,6 +1614,24 @@ function opensearchserver_admin_page() {
                             <p>
                                 With current "Index settings" total number of documents to index is <strong><?php echo opensearchserver_get_number_to_index(); ?>.</strong>
                             </p>
+                            
+                            <?php 
+                                 $indexName = get_option('oss_indexname');
+                                 if(!empty($indexName)) :
+                                     $oss_result = opensearchserver_getsearchresult('*', false, false);
+                                     if (isset($oss_result) && $oss_result instanceof SimpleXMLElement) :
+                                         $oss_results = opensearchserver_getresult_instance($oss_result);
+                                         //if first query does not return results try a spellcheck query to get a new suggestion
+                                         $numberOfDocsInIndex = $oss_results->getResultFound();
+                            ?>
+                                    <p>
+                                        There are currently <strong><?php echo $numberOfDocsInIndex; ?></strong> documents in the 
+                                        <strong><?php echo get_option('oss_indexname'); ?></strong> index. 
+                                    </p>
+                            <?php     
+                                    endif;
+                                 endif; 
+                            ?>
                              <hr/>
                               <p><strong>Re-index manually</strong><br/>
                               Re-index data as soon as the button is clicked, in a synchronous process.</p>
@@ -1642,7 +1660,7 @@ function opensearchserver_admin_page() {
                           <label for="oss_cron_number_by_job">Number of documents to index with each job : </label> <input
                                     type="text" name="oss_cron_number_by_job" id="oss_cron_number_by_job" size="7" placeholder="200"
                                     value="<?php print get_option('oss_cron_number_by_job');?>" /> 
-                          <br/><span class="help">Full re-indexing may need several automatic execution of the CRON, depending on the <strong>Number of documents to index with each job</strong> value.</span>
+                          <br/><span class="help">Full re-indexing may need several the CRON to run automatically several times, depending on the <strong>Number of documents to index with each job</strong> value and the total number of documents to index.</span>
                           <?php 
                               //If a CRON indexing is running, check the current percentage of job done
                               $cronIsRunning = get_option('oss_cron_running');
