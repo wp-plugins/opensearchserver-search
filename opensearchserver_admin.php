@@ -224,8 +224,11 @@ function opensearchserver_get_number_to_index() {
             $contentTypesToKeep[] = $post_type;
         }
     }
-    $sql_query = 'SELECT count(ID) FROM '.$wpdb->posts.' WHERE post_status = \'publish\' AND post_type IN ("'.implode('","', $contentTypesToKeep).'") ORDER BY ID';
-    $docs_count = $wpdb->get_var( 'SELECT count(ID) FROM '.$wpdb->posts.' WHERE post_status = \'publish\' AND post_type IN ("'.implode('","', $contentTypesToKeep).'") ORDER BY ID' );
+    $postStatus = array('publish');
+    if(in_array('attachment', $contentTypesToKeep)) {
+        $postStatus[] = 'inherit';
+    }
+    $docs_count = $wpdb->get_var( opensearchserver_get_sql_query_count_posts_toindex() );
     return $docs_count;
 }
 
@@ -236,16 +239,12 @@ function opensearchserver_reindex_site_with_cron() {
   global $wpdb;
   $lang = get_option('oss_language', '');  
   
-  var_dump('Reset ? :');
-  var_dump(get_option('oss_cron_reset'));
   update_option('oss_cron_reset', false);
   $numberOfPostsToIndexByJob = get_option('oss_cron_number_by_job', 200);
   
   // Get boundaries to use for getting the posts to index
   // Those limits are set by previous CRON jobs
   $from = (int) get_option('oss_cron_from', null);
-  var_dump('From:');
-  var_dump($from);
   // Start by deleting all documents from the index if the OSS CRON job runs
   // for the first time.
   if (empty($from)) {
@@ -253,15 +252,7 @@ function opensearchserver_reindex_site_with_cron() {
   }
   $limitSuffix = ' LIMIT '.$from.','.$numberOfPostsToIndexByJob;
   
-  var_dump($limitSuffix);
-  
-  $contentTypesToKeep = array();
-  foreach (get_post_types() as $post_type) {
-    if (get_option('oss_index_types_'.$post_type) == 1) {
-        $contentTypesToKeep[] = $post_type;  
-    }
-  }
-  $sql_query = 'SELECT ID FROM '.$wpdb->posts.' WHERE post_status = \'publish\' AND post_type IN ("'.implode('","', $contentTypesToKeep).'") ORDER BY ID'.$limitSuffix;
+  $sql_query = opensearchserver_get_sql_query_get_posts_reindex($limitSuffix);
   $posts = $wpdb->get_results($sql_query);
   $total_count = count($posts);
   $index = new OSSIndexDocument();
@@ -285,11 +276,8 @@ function opensearchserver_reindex_site_with_cron() {
       // CRON may have been reset since the beginning of this batch. 
       // If it's the case, do not update the oss_cron_from option  and 
       // do not program a new batch
-      var_dump('2 - Reset ? :');
-      var_dump(get_option('oss_cron_reset'));
       if(get_option('oss_cron_reset')) {
           update_option('oss_cron_from', 0);
-          var_dump('reset!');
       } else {
           update_option('oss_cron_from', $to);
           //schedule a next CRON job
@@ -297,6 +285,36 @@ function opensearchserver_reindex_site_with_cron() {
       }
   }
   return 1;
+}
+
+/**
+ * Return the SQL query used to get posts to re index
+ */
+function opensearchserver_get_sql_query_get_posts_reindex($suffix = '') {
+    return opensearchserver_get_sql_query_toindex('ID', $suffix);
+}
+
+/**
+ * Return the SQL query used to count posts to re index
+ */
+function opensearchserver_get_sql_query_count_posts_toindex($suffix = '') {
+    return opensearchserver_get_sql_query_toindex('count(ID)', $suffix);
+}
+
+function opensearchserver_get_sql_query_toindex($prefix = 'ID', $suffix = '') {
+  global $wpdb;
+  $contentTypesToKeep = array();
+  foreach (get_post_types() as $post_type) {
+    if (get_option('oss_index_types_'.$post_type) == 1) {
+        $contentTypesToKeep[] = $post_type;  
+    }
+  }
+  $postStatus = array('publish');
+    if(in_array('attachment', $contentTypesToKeep)) {
+        $postStatus[] = 'inherit';
+    }
+  $sql_query = 'SELECT '.$prefix.' FROM '.$wpdb->posts.' WHERE post_status IN ("'.implode('","', $postStatus).'") AND post_type IN ("'.implode('","', $contentTypesToKeep).'") ORDER BY ID'.$suffix;
+  return $sql_query;
 }
 
 function opensearchserver_reset_cron() {
@@ -325,18 +343,8 @@ function opensearchserver_reindex_site($id, $type, $from = 0, $to = 0) {
       opensearchserver_delete_document('*:*');
     }
     $limitSuffix = $to != 0 ? ' LIMIT '.$from.','.($to - $from) : '';
-    //create list of content type to index to filter query
-    $contentTypesToKeep = array();
-    foreach (get_post_types() as $post_type) {
-        if (get_option('oss_index_types_'.$post_type) == 1) {
-            $contentTypesToKeep[] = $post_type;
-        }
-    }
-    $postStatus = array('publish');
-    if(in_array('attachment', $contentTypesToKeep)) {
-        $postStatus[] = 'inherit';
-    }
-    $sql_query = 'SELECT ID FROM '.$wpdb->posts.' WHERE post_status IN ("'.implode('","', $postStatus).'") AND post_type IN ("'.implode('","', $contentTypesToKeep).'") ORDER BY ID '.$limitSuffix;
+    
+    $sql_query = opensearchserver_get_sql_query_get_posts_reindex($limitSuffix);
     $posts = $wpdb->get_results($sql_query);
     $total_count = count($posts);
     $index = new OSSIndexDocument();
