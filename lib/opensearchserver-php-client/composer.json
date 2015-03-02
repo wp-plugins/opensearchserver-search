@@ -1,0 +1,22 @@
+{
+   "name" : "opensearchserver/opensearchserver",
+   "description" : "PHP library for OpenSearchServer: professionnal search engine, crawlers (web, file, database), REST APIs, .... This library uses OpenSearchServer's V2 API.",
+   "type" : "library",
+   "keywords" : ["oss","search engine","opensearchserver","search","crawler","web crawler","file crawler","index","open source search engine"],
+   "homepage" : "http://www.opensearchserver.com/",
+   "require-dev": {
+   },
+   "license": "GPL-3.0",
+   "require": {
+        "php": ">=5.3.3",
+        "kriswallsmith/buzz": ">=0.6"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "4.1.*"
+    },
+    "autoload": {
+        "psr-0": {
+            "OpenSearchServer": "src"
+        }
+    }
+}

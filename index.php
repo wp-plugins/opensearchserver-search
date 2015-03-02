@@ -238,6 +238,19 @@ function opensearchserver_admin_register_head() {
 }
 add_action('admin_head', 'opensearchserver_admin_register_head');
 
+/**
+ * This function autoloads class for the newest OpenSearchServer client 
+ * and for Buzz library (used by OSS client)
+ */
+function opensearchserver_autoload($class_name) {
+    if(substr($class_name, 0, 16) == 'OpenSearchServer') {
+        include __DIR__.'/lib/opensearchserver-php-client/src/'.str_replace('\\','/', $class_name) . '.php';
+    } else if(substr($class_name, 0, 4) == 'Buzz') {
+        include __DIR__.'/lib/Buzz/lib/'.str_replace('\\', '/', $class_name) . '.php';
+    }
+}
+spl_autoload_register('opensearchserver_autoload');
+
 register_activation_hook(__FILE__,'opensearchserver_install');
 register_deactivation_hook( __FILE__, 'opensearchserver_uninstall');
 add_action('save_post','opensearchserver_do_while_posting',10,2);

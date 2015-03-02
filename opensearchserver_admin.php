@@ -20,7 +20,21 @@ function opensearchserver_getautocomplete_instance() {
 function opensearchserver_getmonitor_instance() {
   return new OssMonitor(get_option('oss_serverurl'), get_option('oss_login'), get_option('oss_key'));
 }
-
+/**
+ * Return the "handler" to work with V2 API (new PHP client)
+ */
+function opensearchserver_get_handler_client() {
+    global $oss_api_v2;
+    if(empty($oss_api_v2)) {
+        $key = get_option('oss_key');
+        $login = get_option('oss_login');
+        //new PHP client can not work with empty key or login, for some dumb values
+        $key = (empty($key)) ? 'xx' : $key;
+        $login = (empty($login)) ? 'xx' : $login;
+        $oss_api_v2 = new OpenSearchServer\Handler(array('url' => get_option('oss_serverurl'), 'key' => $key, 'login' => $login));
+    }
+    return $oss_api_v2;
+}
 
 /**
  * Create or re-create the index if it already exists
@@ -217,17 +231,6 @@ function opensearchserver_checkindex(OSSIndexDocument $index, $limit = 1, $idx =
 
 function opensearchserver_get_number_to_index() {
     global $wpdb;
-    //create list of content type to index to filter query
-    $contentTypesToKeep = array();
-    foreach (get_post_types() as $post_type) {
-        if (get_option('oss_index_types_'.$post_type) == 1) {
-            $contentTypesToKeep[] = $post_type;
-        }
-    }
-    $postStatus = array('publish');
-    if(in_array('attachment', $contentTypesToKeep)) {
-        $postStatus[] = 'inherit';
-    }
     $docs_count = $wpdb->get_var( opensearchserver_get_sql_query_count_posts_toindex() );
     return $docs_count;
 }
@@ -331,9 +334,25 @@ function opensearchserver_reindex_site($id, $type, $from = 0, $to = 0) {
   global $wpdb;
   $lang = get_option('oss_language', '');
   if($id) {
-    $delete='id:'.$type.'_'.$id;
-    opensearchserver_delete_document($delete);
     $index = new OSSIndexDocument();
+      
+    //If current post has some attached media, process them too if needed
+    //This is only useful here, for full re indexing attachments will be processed
+    //directly in opensearchserver_add_documents_to_index because they will be results
+    //from the SQL Query
+    $deleteSuffix;
+    if(is_content_type_allowed('attachment')) {
+        $attachments = get_attached_media(null, $id);
+        foreach($attachments as $attachmentId => $attachment) {
+            $deleteSuffix .= ' id:attachment_'.$attachmentId;
+            //index this attachment
+            opensearchserver_add_documents_to_index($index, $lang, get_post($attachmentId));
+        }
+    }
+   
+    //process POST
+    $delete='id:'.$type.'_'.$id . $deleteSuffix;
+    opensearchserver_delete_document($delete);
     opensearchserver_add_documents_to_index($index, $lang, get_post($id));
     opensearchserver_checkindex($index);
   } else {
@@ -445,8 +464,38 @@ function opensearchserver_get_user_cache($author) {
 }
 
 function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang, $post) {
+  //Handling attached files
+  $contentFromParsing = '';
+  if(get_option('oss_parse_file', 0) && $post->post_type == 'attachment' ) {
+      //get path to the file
+      $path = get_attached_file($post->ID);
+      if(!empty($path)) {
+          $oss_api2 = opensearchserver_get_handler_client();
+          $request = new OpenSearchServer\Parser\Parse\DetectType();
+          $request->file($path);
+          if(!empty($post->post_mime_type)) {
+              //add Mime Type if known
+              $request->type($post->post_mime_type);
+          }
+          //send the file to OpenSearchSerfver for automatic parsing
+          $response = $oss_api2->submit($request);
+          //parse available fields: looking for fields "content", "title"
+          if(!empty($response->getJsonValues()->documents[0]->fields)) {
+              $fieldsToKeep = array('content', 'title');
+              foreach($response->getJsonValues()->documents[0]->fields as $field) {
+                  if(in_array($field->fieldName, $fieldsToKeep) ) {
+                      $contentFromParsing .= implode(' ', $field->values);
+                  }
+              }
+          }          
+      }
+  }
+    
   $user = opensearchserver_get_user_cache($post->post_author);
   $content = $post->post_content;
+  if(!empty($contentFromParsing)) {
+      $content .= ' ' . $contentFromParsing;
+  }
   $content = apply_filters('the_content', $content);
   $content = str_replace(']]>', ']]&gt;', $content);
   $content = opensearchserver_encode(strip_tags($content));
@@ -474,7 +523,6 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
   $document->newField('user_email', $user->user_email);
   $document->newField('user_email', $user->user_url);
   
-  
   //Handling post's thumbnail
   $post_thumbnail_id = get_post_thumbnail_id( $post->ID );
   if(!empty($post_thumbnail_id)) {
@@ -487,6 +535,7 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
   	}
   }
   
+  //Handling tranlsations
   if (opensearchserver_is_wpml_usable()) {
     $post_language_information = wpml_get_language_information($post->ID);
     //split locale on "_" to save only language info
@@ -497,6 +546,7 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
         }
     }
   }
+  
   //Handling taxonomies
   $taxonomies=get_taxonomies('','names'); 
     foreach ($taxonomies as $taxonomy ) {
@@ -876,6 +926,9 @@ function opensearchserver_admin_set_index_settings() {
     
     $customFields = ($_POST['oss_custom_fields']) ? $_POST['oss_custom_fields'] : array();
     update_option('oss_custom_fields', array_keys($customFields));
+    
+    $oss_parse_file = isset($_POST['oss_parse_file']) ? $_POST['oss_parse_file'] : NULL;
+    update_option('oss_parse_file', (int)$oss_parse_file);
     
     $oss_enable_autoindexation = isset($_POST['oss_enable_autoindexation']) ? $_POST['oss_enable_autoindexation'] : NULL;
     update_option('oss_enable_autoindexation', (int)$oss_enable_autoindexation);
@@ -1526,6 +1579,18 @@ function opensearchserver_admin_page() {
 								<?php } ?>
                             </div>
 						</fieldset>
+                        <fieldset>
+                            <legend>Extract text from attached files</legend>
+                                <p>If you chose <code>attachment</code> from the previous list you can decide to use OpenSearchServer's parsers
+                                 to automatically extract text from your files and index it alongside the attachment.<br/>
+                                 <strong>This feature requires OpenSearchServer > 1.5.11</strong></p>
+                                 <p>
+                                <input type="checkbox" name="oss_parse_file"
+                                    value="1" <?php checked( 1 == get_option('oss_parse_file')); ?> id="oss_parse_file"/>&nbsp;<label
+                                    for="oss_parse_file">Extract test data from the attachments</label><br />
+                                    <span class="help">This could slow down the indexing if there are lots of attachments.</span>
+                                </p>
+                        </fieldset>
 						 <fieldset>
 			                    <legend>Taxonomies to index</legend>
                                 <div class="oss_scrollable_list">
@@ -1644,6 +1709,7 @@ function opensearchserver_admin_page() {
                                     endif;
                                  endif; 
                             ?>
+                            <p><strong>Re-indexing starts by deleting all content from the index. During the time of the indexing the search engine will provide less or no result.</strong>
                              <hr/>
                               <p><strong>Re-index manually</strong><br/>
                               Re-index data as soon as the button is clicked, in a synchronous process.</p>
