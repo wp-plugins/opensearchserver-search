@@ -116,6 +116,10 @@ _Serbian translation provided by Ogi Djuraskovic - [http://firstsiteguide.com](h
 
 == Changelog ==
 
+= 1.5.4 - 02/03/2015 =
+ * Fixed bug when indexing attachment
+ * Forced default query for getting total number of docs in the index
+
 = 1.5.3 - 27/02/2015 =
  * Added a feature to re-index full data using WordPress CRON
 

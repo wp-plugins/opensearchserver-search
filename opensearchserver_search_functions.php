@@ -151,7 +151,7 @@ function get_multiple_filter_parameter_string($current_key, $current_value) {
   return $filters_string;
 }
 */
-function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
+function opensearchserver_getsearchresult($query, $spellcheck, $facet, $forceDefaultQuery = false) {
   if($query) {
     $start = isset($_REQUEST['pa']) ? $_REQUEST['pa'] : NULL;
     $start = isset($start) ? max(0, $start - 1) * 10 : 0;
@@ -172,7 +172,7 @@ function opensearchserver_getsearchresult($query, $spellcheck, $facet) {
           opensearchserver_add_filter($search, $fieldToFilterOn, ICL_LANGUAGE_CODE);
       }
 
-      if(get_option('oss_query_behaviour') == 2) {
+      if(!$forceDefaultQuery && get_option('oss_query_behaviour') == 2) {
         $oss_query = $search->query($query)->template(get_option('oss_query_template'));
       } else { 
         $oss_query = $search->query($query)->template('search');

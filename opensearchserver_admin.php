@@ -332,7 +332,11 @@ function opensearchserver_reindex_site($id, $type, $from = 0, $to = 0) {
             $contentTypesToKeep[] = $post_type;
         }
     }
-    $sql_query = 'SELECT ID FROM '.$wpdb->posts.' WHERE post_status = \'publish\' AND post_type IN ("'.implode('","', $contentTypesToKeep).'") ORDER BY ID'.$limitSuffix;
+    $postStatus = array('publish');
+    if(in_array('attachment', $contentTypesToKeep)) {
+        $postStatus[] = 'inherit';
+    }
+    $sql_query = 'SELECT ID FROM '.$wpdb->posts.' WHERE post_status IN ("'.implode('","', $postStatus).'") AND post_type IN ("'.implode('","', $contentTypesToKeep).'") ORDER BY ID '.$limitSuffix;
     $posts = $wpdb->get_results($sql_query);
     $total_count = count($posts);
     $index = new OSSIndexDocument();
@@ -1618,7 +1622,7 @@ function opensearchserver_admin_page() {
                             <?php 
                                  $indexName = get_option('oss_indexname');
                                  if(!empty($indexName)) :
-                                     $oss_result = opensearchserver_getsearchresult('*', false, false);
+                                     $oss_result = opensearchserver_getsearchresult('*', false, false, true);
                                      if (isset($oss_result) && $oss_result instanceof SimpleXMLElement) :
                                          $oss_results = opensearchserver_getresult_instance($oss_result);
                                          //if first query does not return results try a spellcheck query to get a new suggestion
