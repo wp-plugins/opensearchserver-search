@@ -28,7 +28,7 @@ function opensearchserver_get_handler_client() {
     if(empty($oss_api_v2)) {
         $key = get_option('oss_key');
         $login = get_option('oss_login');
-        //new PHP client can not work with empty key or login, for some dumb values
+        //new PHP client can not work with empty key or login, use some dumb values
         $key = (empty($key)) ? 'xx' : $key;
         $login = (empty($login)) ? 'xx' : $login;
         $oss_api_v2 = new OpenSearchServer\Handler(array('url' => get_option('oss_serverurl'), 'key' => $key, 'login' => $login));
@@ -1583,7 +1583,7 @@ function opensearchserver_admin_page() {
                             <legend>Extract text from attached files</legend>
                                 <p>If you chose <code>attachment</code> from the previous list you can decide to use OpenSearchServer's parsers
                                  to automatically extract text from your files and index it alongside the attachment.<br/>
-                                 <strong>This feature requires OpenSearchServer > 1.5.11</strong></p>
+                                 <strong>This feature requires OpenSearchServer >= 1.5.11</strong></p>
                                  <p>
                                 <input type="checkbox" name="oss_parse_file"
                                     value="1" <?php checked( 1 == get_option('oss_parse_file')); ?> id="oss_parse_file"/>&nbsp;<label

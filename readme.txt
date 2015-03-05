@@ -3,7 +3,7 @@ Contributors: ekeller,naveenann,AlexandreT
 Tags: search,search engine,opensearchserver, full-text, phonetic, filter, facet, indexation, auto-completion
 Requires at least: 3.0.1
 Tested up to: 4.0
-Stable tag: 1.5.4
+Stable tag: 1.5.5
 License: GPLv2 or later
 
 The OpenSearchServer Search Plugin enables OpenSearchServer full-text search in WordPress-based websites.
@@ -23,6 +23,7 @@ This plugin automatically replaces the WordPress built-in search function.
  * Search results can be filtered using **facets**,
  * Automatic search suggestions through **autocompletion**,
  * **Spell-checking** with automatic substitution,
+ * **Search into your files**: .docx, .doc, .pdf, .rtf, etc. The plugin will extract text from your attachments and index it.
  * Automatic indexing of content as soon as it gets published, edited or deleted,
  * Can index and search through **all type of content**,
  * Can index and search **every taxonomies**,
@@ -38,7 +39,7 @@ See the screenshots page for more!
 = Requirements =
 
  * WordPress 3.0.1 or higher
- * A running instance of OpenSearchServer 1.3 or higher
+ * A running instance of OpenSearchServer 1.3 or higher (OpenSearchServer 1.5.11 is required for searching into attachments)
  
 = Installing an OpenSearchServer instance =
 
@@ -115,6 +116,9 @@ _Serbian translation provided by Ogi Djuraskovic - [http://firstsiteguide.com](h
 3. Administration page: index settings.
 
 == Changelog ==
+
+= 1.5.5 - 04/03/2015 ==
+* Added feature to index content from attachments (use OSS's parsers) 
 
 = 1.5.4 - 02/03/2015 =
  * Fixed bug when indexing attachment
