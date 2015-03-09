@@ -947,7 +947,7 @@ function opensearchserver_admin_set_index_settings() {
  * Format name of a custom field in machine readable string
  */
 function opensearchserver_format_custom_field_name($name) {
-  return strtolower('oss_custom_field_'.str_replace(' ', '_', $name));
+  return strtolower('custom_field_'.str_replace(' ', '_', $name));
 }
 
 /**
