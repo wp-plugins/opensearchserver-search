@@ -1738,7 +1738,7 @@ function opensearchserver_admin_page() {
                           <label for="oss_cron_number_by_job">Number of documents to index with each job : </label> <input
                                     type="text" name="oss_cron_number_by_job" id="oss_cron_number_by_job" size="7" placeholder="200"
                                     value="<?php print get_option('oss_cron_number_by_job');?>" /> 
-                          <br/><span class="help">Full re-indexing may need several the CRON to run automatically several times, depending on the <strong>Number of documents to index with each job</strong> value and the total number of documents to index.</span>
+                          <br/><span class="help">Full re-indexing may need the CRON to run automatically several times, depending on the <strong>Number of documents to index with each job</strong> value and the total number of documents to index.</span>
                           <?php 
                               //If a CRON indexing is running, check the current percentage of job done
                               $cronIsRunning = get_option('oss_cron_running');
