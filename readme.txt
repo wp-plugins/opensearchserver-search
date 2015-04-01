@@ -3,7 +3,7 @@ Contributors: ekeller,naveenann,AlexandreT
 Tags: search,search engine,opensearchserver, full-text, phonetic, filter, facet, indexation, auto-completion
 Requires at least: 3.0.1
 Tested up to: 4.0
-Stable tag: 1.5.5
+Stable tag: 1.5.6
 License: GPLv2 or later
 
 The OpenSearchServer Search Plugin enables OpenSearchServer full-text search in WordPress-based websites.
@@ -117,8 +117,11 @@ _Serbian translation provided by Ogi Djuraskovic - [http://firstsiteguide.com](h
 
 == Changelog ==
 
+= 1.5.6 - 01/04/2015 ==
+ * Added some filters and actions when indexing a document
+
 = 1.5.5 - 04/03/2015 ==
-* Added feature to index content from attachments (use OSS's parsers) 
+ * Added feature to index content from attachments (use OSS's parsers) 
 
 = 1.5.4 - 02/03/2015 =
  * Fixed bug when indexing attachment
