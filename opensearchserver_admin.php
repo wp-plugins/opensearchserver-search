@@ -464,6 +464,14 @@ function opensearchserver_get_user_cache($author) {
 }
 
 function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang, $post) {
+  /*
+   * filter "oss_abort_index_document"
+   */
+  $abortIndexing = apply_filters('oss_abort_index_document', $document, $index, $lang, $post);
+  if($abortIndexing === true) {
+      return;
+  }
+  
   //Handling attached files
   $contentFromParsing = '';
   if(get_option('oss_parse_file', 0) && $post->post_type == 'attachment' ) {
@@ -501,6 +509,12 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
   $content = opensearchserver_encode(strip_tags($content));
   $content = opensearchserver_stripInvalidXml($content);
   $document = $index->newDocument($lang);
+
+  /*
+   * action "oss_index_document_begin"
+   */
+  do_action('oss_index_document_begin', $document, $index, $lang, $post);
+  
   $document->newField('id', $post->post_type.'_'.$post->ID);
   $document->newField('type', strip_tags($post->post_type));
   $title = opensearchserver_stripInvalidXml(strip_tags($post->post_title));
