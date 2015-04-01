@@ -117,10 +117,10 @@ _Serbian translation provided by Ogi Djuraskovic - [http://firstsiteguide.com](h
 
 == Changelog ==
 
-= 1.5.6 - 01/04/2015 ==
+= 1.5.6 - 01/04/2015 =
  * Added some filters and actions when indexing a document
 
-= 1.5.5 - 04/03/2015 ==
+= 1.5.5 - 04/03/2015 =
  * Added feature to index content from attachments (use OSS's parsers) 
 
 = 1.5.4 - 02/03/2015 =
