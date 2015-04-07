@@ -491,8 +491,10 @@ function opensearchserver_add_documents_to_index(OSSIndexDocument $index, $lang,
           if(!empty($response->getJsonValues()->documents[0]->fields)) {
               $fieldsToKeep = array('content', 'title');
               foreach($response->getJsonValues()->documents[0]->fields as $field) {
-                  if(in_array($field->fieldName, $fieldsToKeep) ) {
-                      $contentFromParsing .= implode(' ', $field->values);
+                  if(!empty($field->values)) {
+                      if(in_array($field->fieldName, $fieldsToKeep) ) {
+                          $contentFromParsing .= implode(' ', $field->values);
+                      }
                   }
               }
           }          
@@ -1174,7 +1176,7 @@ function opensearchserver_admin_page() {
                             
                             <fieldset><legend>Query template</legend>
     						<div class="oss_visibleByQueryPattern" id="oss-query-write-template">
-                                <p>Enter the template query, or leave empty to use the default one</p>
+                                <p>Enter your template query in this box, or leave it empty to use the default one.</p>
     							<p>	<label for="oss_query">OpenSearchServer query template</label>:<br />
     								<textarea rows="7" cols="80" name="oss_query" wrap="off"><?php
     									if (trim(get_option('oss_query'))) {
@@ -1184,12 +1186,12 @@ function opensearchserver_admin_page() {
     								  }?></textarea>
     							</p>
                                 <div class="help">
-                                    <p>Taxonomies and Custom fields chosen below (in section "Index Settings") automatically create fields in the schema that can be used in query.</p>
+                                    <p>The Taxonomies and Custom Fields selected in the "Index Settings" section below automatically create fields in the schema. They can thus be used in your template query.</p>
                                     <ul>
-                                        <li>Fields for Taxonomies will use this format: <code>taxonomy_&lt;taxonomy_name&gt;</code>, for example <code>taxonomy_mytags</code></li>
-                                        <li>Fields for Custom Fields will use this format: <code>custom_field_&lt;custom_field_name&gt;</code>, for example <code>custom_field_favorite_fruits</code></li> 
+                                        <li>OSS fields for Taxonomies are generated using this format: <code>taxonomy_&lt;taxonomy_name&gt;</code>, for example <code>taxonomy_mytags</code></li>
+                                        <li>OSS fields for Custom Fields are generated using this format: <code>custom_field_&lt;custom_field_name&gt;</code>, for example <code>custom_field_favorite_fruits</code></li> 
                                     </ul>
-                                    <p>For allowing search into a new field simply add it to the query, for example <code>OR custom_field_favorite_fruits:($$)^5</code>. <code>^5</code> gives a weight of 5 to this field.
+                                    <p>To allow search into a new field, simply add it to the query, for example <code>OR custom_field_favorite_fruits:($$)^5</code>. <code>^5</code> which also gives a weight of 5 to this field.
                                 </div>
                           </div>
                           <div class="oss_visibleByQueryTemplate" id="oss-query-select-template">
@@ -1230,16 +1232,14 @@ function opensearchserver_admin_page() {
 								<input type="submit" name="opensearchserver_add" value="Add" class="button-secondary" /><br />
                                 
                                 <div class="help">
-                                    <p><strong>How to create facets on taxonomies or custom fields?</strong>
-                                    <p>Taxonomies and Custom fields chosen below (in section "Index Settings") automatically create 
-                                        fields in the schema that can be used as facets. Format for fields name are 
+                                    <p><strong>How do I create facets on Taxonomies or Custom Fields?</strong>
+                                    <p>Those Taxonomies and Custom Fields selected in the "Index Settings" section below automatically create 
+                                        fields in the schema. These can then be used as facets. The field name formats are 
                                         <code>taxonomy_&lt;taxonomy_name&gt;_notAnalyzed</code> and 
-                                        <code>custom_field_&lt;custom_field_name&gt;_notAnalyzed</code>.
-                                    </p>
-                                    <p>For example use  
+                                        <code>custom_field_&lt;custom_field_name&gt;_notAnalyzed</code>. For instance :  
                                         <code>custom_field_favorite_fruits_notAnalyzed</code>.
                                     </p>
-                                    <p>If you want to create a facet on a hierarchical taxonomy you will have to add it first, using its fieldname, and then
+                                    <p>If you want to create a facet on a hierarchical Taxonomy you will have to add it first, using its field name, then
                                     choose the corresponding taxonomy in the "hierarchical" select list.</p>
                                 </div>
                                 <br/>
@@ -1274,15 +1274,15 @@ function opensearchserver_admin_page() {
                                             <span class="help">
 	                                            <h4>Help on facets management:</h4>
 	                                            <ul>
-	                                                <li><strong>URL slug: </strong>name of parameter to use in URL for this facet. If empty, name of field will be used.</li>
-	                                                <li><strong>Custom label: </strong>Choose another name for this facet that will be displayed on the results page.</li>
+	                                                <li><strong>URL slug: </strong>Name of the parameter to use in the URL for this facet. If left empty, the name of the field will be used.</li>
+	                                                <li><strong>Custom label: </strong>You can enter a custom name for this facet that will be displayed on the results page.</li>
 	                                                <li><strong>Custom values: </strong>Write one replacement by line, with this format: &lt;original value&gt;|&lt;value to display&gt;. 
-	                                            For example "2014-02|February 2014" would replace "2014-02" by "February 2014" when displaying and "post|Blog post" would replace "post" by "Blog post".</li>
+	                                            For example "2014-02|February 2014" would replace "2014-02" with "February 2014" when displaying and "post|Blog post" would replace "post" with "Blog post".</li>
                                                     <?php if(1 == get_option(oss_advanced_facets)):?>
-                                                        <li><strong>Search form</strong>: display a small search form on top of the facet that can be used to filter displayed values.</li>
-                                                        <lI><strong>Hierarchical</strong>: hierarchical facet. If checked, you will have to choose which taxonmy should be used to get hierarchical values.</li>                                                        
-                                                        <li><strong>Link "All"</strong>: add an "All" link to reset the facet.</li>
-	                                                    <li><strong>Exclusive: </strong>one value only can be chosen for those facets.</li>
+                                                        <li><strong>Search form</strong>: displays a small search form on top of the facet. This form can be used to filter the displayed values.</li>
+                                                        <li><strong>Hierarchical</strong>: indicates a hierarchical facet. If checked, you will have to choose which Taxonomy should be used to get hierarchical values.</li>                                                        
+                                                        <li><strong>Link "All"</strong>: adds an "All" link which resets the facet when clicked.</li>
+	                                                    <li><strong>Exclusive: </strong>only one value can be selected by the user for this facet.</li>
                                                    <?php endif;?>
 	                                            </ul>
                                             </span>
@@ -1366,16 +1366,16 @@ function opensearchserver_admin_page() {
                                            Maximum number of values to display before displaying a "See more" link:
                                         </label> 
                                         <input type="text" name="oss_facet_max_display" id="oss_facet_max_display" placeholder="5" size="7" value="<?php print get_option('oss_facet_max_display');?>" />
-                                        <br/><span class="help">Can be useful if facets have lots of values. Leave empty to display all values.</span>                                
+                                        <br/><span class="help">This can be useful if facets have lots of values. Leave this box empty to always display all values.</span>                                
                                     </p>
                                 <?php endif; ?>
                                 <br/>
                                 <input type="checkbox" value="1" name="oss_advanced_facets" id="oss_advanced_facets" <?php checked( 1 == get_option('oss_advanced_facets')); ?>/>
                                 <label for="oss_advanced_facets"><strong>Enable advanced facets behaviour</strong></label>
-                                <br/><span class="help">This option allows for choosing facet's type (exclusive / multiple), hierarchical facets and some other options, display an "Active filters" section on top of the facets, and provide more values for facets in search results.</span>
+                                <br/><span class="help">This option allows for choosing the type of facets (exclusive ones or multiple choices ones), using hierarchical facets and some other options, displaying an "Active filters" section on top of the facets on the search page, and provide more values for facets in search results.</span>
                                 <br/>
                                 <input type="checkbox" id="oss_facet_display_count" name="oss_facet_display_count" value="1" <?php checked( 1 == get_option('oss_facet_display_count')); ?> />
-                                <label for="oss_facet_display_count">Display number of results for each facet's value</label>
+                                <label for="oss_facet_display_count">Display the number of results for each facet</label>
                                 <br/>
                                 
 							</p>
@@ -1430,7 +1430,7 @@ function opensearchserver_admin_page() {
 										Special characters to remove <span class="help">(separated by space)</span> :
 									</label> 
                                     <br/><input type="text" name="oss_clean_query" id="oss_clean_query" placeholder="# $ ! @" size="50" value="<?php print htmlspecialchars(stripslashes(get_option('oss_clean_query')));?>" />
-                                    <br/><span class="help">If escaping is enabled and no special characters is written here it will default to: \\ ^ ~ ( ) { } [ ] & || ! * ? 039; ' #</span>
+                                    <br/><span class="help">If the "enable escaping" option is ticked but nothing is written in the box, OSS will default to the following list: \\ ^ ~ ( ) { } [ ] & || ! * ? 039; ' #</span>
     							</p>
                             </fieldset>
                             
@@ -1441,7 +1441,7 @@ function opensearchserver_admin_page() {
                                         value="1" name="oss_log_enable"
                                         <?php checked( 1 == get_option('oss_log_enable')); ?> />
                                     <label for="oss_log_enable">Enable logging of queries in OpenSearchServer</label>
-                                    <br/><span class="help">Reports can be viewed in OpenSearchServer in tab "Report".</span>
+                                    <br/><span class="help">Reports can be viewed in OpenSearchServer in the "Report" tab.</span>
                                 </p>
                                 
                                 <div id="oss_logs_custom" style="<?php if(get_option('oss_log_enable') != 1) { echo 'display:none'; }?>">
@@ -1466,8 +1466,8 @@ function opensearchserver_admin_page() {
                                         <label for="oss_filter_language_wpml">Filter search results based on current website's language</label>
                                     </p>
                                     <p>
-                                        <span class="help">If enabled, search results will automatically be filtered by language, based on language of the current used website.
-                                        <br/><strong>Option "Index language information" must be checked in order to use this feature.</strong>
+                                        <span class="help">If enabled, search results will automatically be filtered by language, based on the language of the currently used website.
+                                        <br/><strong>The "Index language information" option must be checked in order to use this feature.</strong>
                                         </span>
                                         
                                     </p>
@@ -1478,8 +1478,8 @@ function opensearchserver_admin_page() {
                                             <input type="text" id="oss_filter_language_field_wpml" placeholder="Leave empty to use default" size="40" value="<?php print get_option('oss_filter_language_field_wpml'); ?>" name="oss_filter_language_field_wpml" />
                                         </p>
                                         <p>
-                                            <span class="help"><strong>Leave this field empty if you enabled option "Index language information" and wish to filter on field used for this information.</strong><br/>
-                                            If you want to filter language on a different field (for example if your index is managed in a different way) please enter name of field. Filter value will be value of ICL_LANGUAGE_CODE, which is for example <code>fr</code>, <code>en</code>, <code>es</code>, etc.: you must ensure that values indexed in this field match those codes. See <a href="http://wpml.org/documentation/support/wpml-coding-api/" target="_blank">this page</a> for more information.
+                                            <span class="help"><strong>Leave this field empty if you enabled the "Index language information" option and wish to filter on the field used for this information.</strong><br/>
+                                            If you want to filter the language on a different field (because, say, your index is managed in a different way) please enter the field's name. The filter value will be the ICL_LANGUAGE_CODE one, such as <code>fr</code>, <code>en</code>, <code>es</code>, etc. You must ensure that values indexed in your field match those codes. See <a href="http://wpml.org/documentation/support/wpml-coding-api/" target="_blank">this page</a> for more information.
                                             </span>
                                         </p>
                                     </div>
@@ -1507,7 +1507,7 @@ function opensearchserver_admin_page() {
                                 <input
                                     type="checkbox" name="oss_phonetic" value="1"
                                     <?php checked( 1 == get_option('oss_phonetic')); ?> />
-                                     <label for="oss_phonetic">Enable phonetic</label>
+                                     <label for="oss_phonetic">Enable phonetic approximation</label>
                             </p>
                             <p>
                                 Display:&nbsp;
@@ -1519,11 +1519,11 @@ function opensearchserver_admin_page() {
                                     <label for="oss_display_user">user</label>&nbsp;&nbsp;
                                     <input type="checkbox" name="oss_display_category" id="oss_display_category" value="1" <?php checked( 1 == get_option('oss_display_category')); ?> />
                                     <label for="oss_display_category">Chosen taxonomy (see list below)</label>
-                                     <br/><span class="help">Choose what kind of information should be displayed below each result.</span>
+                                     <br/><span class="help">Choose what kind of information should be displayed under each result.</span>
                             </p>
                             <p>
                                 <input type="checkbox" name="oss_sort_timestamp" id="oss_sort_timestamp" value="1" <?php checked( 1 == get_option('oss_sort_timestamp')); ?> />&nbsp;
-                                <label for="oss_sort_timestamp">Display link to sort results by date</label>
+                                <label for="oss_sort_timestamp">Display a link to sort results by date</label>
                             </p>
                              <p>
                                 <label for="oss_taxonomy_display">Taxonomy to be displayed on Result</label>: <select
@@ -1558,7 +1558,7 @@ function opensearchserver_admin_page() {
                                     <div class="oss_visibleByQueryPattern" id="oss_query_settings_post_to_oss_wrapper">
 	                                   <input type="checkbox" name="oss_query_settings_post_to_oss" id="oss_query_settings_post_to_oss" value="1" <?php checked(!opensearchserver_is_search_only()); ?> />&nbsp;
 	                                   <label for="oss_query_settings_post_to_oss">Post query settings to OpenSearchServer instance.</label>
-	                                   <br/><span class="help">If not checked, settings will only be saved localy and nothing will be posted to OpenSearchServer instance. Useful for example to edit custom label of a facet.</span>
+	                                   <br/><span class="help">If not checked, settings will only be saved locally and nothing will be posted to OpenSearchServer instance. Useful for example to edit the custom label of a facet.</span>
                                     </div>
                                 <?php endif; ?>
                                 <input type="submit" name="opensearchserver_submit" value="Update query settings" class="button-primary" />
@@ -1595,9 +1595,9 @@ function opensearchserver_admin_page() {
 						</fieldset>
                         <fieldset>
                             <legend>Extract text from attached files</legend>
-                                <p>If you chose <code>attachment</code> from the previous list you can decide to use OpenSearchServer's parsers
-                                 to automatically extract text from your files and index it alongside the attachment.<br/>
-                                 <strong>This feature requires OpenSearchServer >= 1.5.11</strong></p>
+                                <p>If you chose <code>attachment</code> among the types of content to index (above) you can decide to use OpenSearchServer's parsers
+                                 to automatically extract text from your files - and index it alongside the attachment.<br/>
+                                 <strong>This feature requires OpenSearchServer version 1.5.11 or better.</strong></p>
                                  <p>
                                 <input type="checkbox" name="oss_parse_file"
                                     value="1" <?php checked( 1 == get_option('oss_parse_file')); ?> id="oss_parse_file"/>&nbsp;<label
@@ -1640,8 +1640,8 @@ function opensearchserver_admin_page() {
                       <fieldset>
                          <legend>Auto Indexation </legend>
                          <input type="checkbox" name="oss_enable_autoindexation" id="oss_enable_autoindexation" value="1" <?php checked( 1 == get_option('oss_enable_autoindexation')); ?> />
-                         <label for="oss_enable_autoindexation">Enable automatic indexation when content are added, edited or deleted.</label><br>
-                         <span class="help"> If this option is disabled content will only be indexed when button 'Synchronize / Re-index' is pressed </span>
+                         <label for="oss_enable_autoindexation">Enable automatic indexation whenever content is added, edited or deleted.</label><br>
+                         <span class="help"> If this option is disabled, the content will only be indexed when the 'Synchronize / Re-index' button is pressed.</span>
                       </fieldset>
 							</p>
                             
@@ -1657,7 +1657,7 @@ function opensearchserver_admin_page() {
                                     </p>
                                     <p>
                                         <span class="help">This will index language information for each content. Index re-creation and synchronization will be needed.</span>
-                                        <br/><span class="help">Facet "Language" must be added in list of facets to make use of this information.</span>
+                                        <br/><span class="help">The "Language" facet must be added to the list of facets to make use of this information.</span>
                                     </p>
                                 </fieldset>
                              <?php endif;?>
@@ -1667,10 +1667,10 @@ function opensearchserver_admin_page() {
                                  <br/>
                                  <span class="help"><strong>Which button should I click?</strong></span>
                                  <br/><br/>
-                                 <span class="help">If you changed "Content-types to index" or "Auto indexation" settings you will only need to update index settings.</span>
+                                 <span class="help">If you changed your "Content types to index" list or your "Auto indexation" settings you will only need to click "Update Index Settings".</span>
                                  <br/>
-                                 <span class="help">However, if you updated "Taxonomies to index" or "Custom Fields to index" settings you will first need to save your settings and then press "(Re-)Create index" button (as specific fields need to be created in index's schema).</span>
-                                 <br/><br/><span class="help">If you did not create your index yet or wish to completely re-create it you need to press the "(Re-)Create index" button.</span> 
+                                 <span class="help">However, if you updated your "Taxonomies to index" list or your "Custom Fields to index" list settings &mdash; you will *first* need to update your settings and *then* press the "(Re-)Create index" button. This is because specific fields need to be created in index's schema.</span>
+                                 <br/><br/><span class="help">If you did not create your index yet or wish to completely re-create it, you need to press the "(Re-)Create index" button.</span> 
                                  <br/><br/>
                                  <input type="submit" name="opensearchserver_submit"
                                     value="Update Index Settings" class="button-primary" />
@@ -1679,7 +1679,7 @@ function opensearchserver_admin_page() {
                                     onclick="return confirm('This will erase current indexed data and totally re-create your index, are you sure?');"
                                     type="submit" name="opensearchserver_submit"
                                     value="(Re-)Create index" class="button-secondary" />
-                                <br/><span class="help">When clicking "(Re-)Create index" you may want to click "Synchronize / Re-index" afterwards to re-populate index.</span>
+                                <br/><span class="help">When clicking "(Re-)Create index" you may want to click "Synchronize / Re-index" afterwards to re-populate the index.</span>
 
                             </p>
 						</form>
@@ -1703,7 +1703,7 @@ function opensearchserver_admin_page() {
 							action="">
                             
                             <p>
-                                With current "Index settings" total number of documents to index is <strong><?php echo opensearchserver_get_number_to_index(); ?>.</strong>
+                                With your current "Index settings", the total number of documents to index is <strong><?php echo opensearchserver_get_number_to_index(); ?>.</strong>
                             </p>
                             
                             <?php 
@@ -1723,13 +1723,13 @@ function opensearchserver_admin_page() {
                                     endif;
                                  endif; 
                             ?>
-                            <p><strong>Re-indexing starts by deleting all content from the index. During the time of the indexing the search engine will provide less or no result.</strong>
+                            <p><strong>Re-indexing starts by deleting all content from the index. Thus, while the indexing process runs, the search engine will provide fewer or no results.</strong>
                              <hr/>
-                              <p><strong>Re-index manually</strong><br/>
-                              Re-index data as soon as the button is clicked, in a synchronous process.</p>
-                            <p><span class="help">If indexing is taking too long and process finally crashes, try running it several times 
-                            with small number of documents to index. Use for example ranges of 1000 documents.<br/>
-                            <strong>Leave these fields empty to index all documents.</strong></span>
+                              <p><strong>Re-indexing manually</strong><br/>
+                              This re-indexes the data as soon as the button is clicked, as a synchronous process.</p>
+                            <p><span class="help">If indexing is taking too long and the process ends up crashing, try running in several chunks,
+                            each with a small number of documents to index. For instance you could index chunks of 1000 documents.<br/>
+                            <strong>Leave both fields empty to index all documents.</strong></span>
 							<p>
 								<label for="oss_index_from">From document </label> <input
 									type="text" name="oss_index_from" id="oss_index_from" size="7" placeholder="0"
@@ -1746,8 +1746,8 @@ function opensearchserver_admin_page() {
                           </form>
                           <form id="reindex_settings_cron" name="reindex_settings_cron" method="post" action="">
                           <hr/>
-                          <p><strong>Re-index with CRON</strong><br/>
-                          Schedule a CRON job to re-index full content. This job will be executed next time the WordPress CRON runs.</p>
+                          <p><strong>Re-indexing with CRON</strong><br/>
+                          This schedules a CRON job to re-index your full content. This job will be executed on the next time that WordPress' CRON runs.</p>
                           
                           <label for="oss_cron_number_by_job">Number of documents to index with each job : </label> <input
                                     type="text" name="oss_cron_number_by_job" id="oss_cron_number_by_job" size="7" placeholder="200"
@@ -1804,27 +1804,27 @@ function opensearchserver_admin_page() {
                                 <input type="checkbox" value="1" name="oss_advanced_search_only" id="oss_advanced_search_only" <?php checked( 1 == get_option('oss_advanced_search_only')); ?>/>
                                     <label for="oss_advanced_search_only"><em>Search only</em> mode</label>
                                 <br/>
-                                <span class="help">In this mode, data is not sent from Wordpress to your OpenSearchServer instance. Plugin will be used
-                                for search page only. This mode can be used if data is indexed in another way (web crawler for example).</span>
+                                <span class="help">In this mode, data is not sent from Wordpress to your OpenSearchServer instance. The OSS plugin will thus be only used
+                                for the search page. This mode can be used if the data is indexed in another way (for example, a web crawler).</span>
                             </p>
                             <p>
                                 <input type="checkbox" value="1" name="oss_advanced_query_settings_not_automatic" id="oss_advanced_query_settings_not_automatic" <?php checked( 1 == get_option('oss_advanced_query_settings_not_automatic')); ?>/>
                                     <label for="oss_advanced_query_settings_not_automatic">Do not immediately post "Query Settings" to OpenSearchServer</label>
                                 <br/>
-                                <span class="help">If enabled, this option will display a checkbox at the bottom of "Query settings" section allowing to choose whether or not
+                                <span class="help">If enabled, this option will display a checkbox at the bottom of the "Query settings" section allowing to choose whether
                                 OpenSearchServer related settings (pattern, spell-check, ...) should be sent to your OpenSearchServer instance. <br/>If not checked, settings will only be
-                                saved localy. This may be useful if query is managed on OpenSearchServer's side, Wordpress plugin should only be used to manage local options (like
-                                labels and custom values for facets, type of information to display for each document on the results page, etc.).<br/>
-                                If option "Allow for choosing a different search template" and option "Do not immediately post "Query Settings" to OpenSearchServer" are both enabled then the
+                                saved locally. This may be useful if the query is managed on OpenSearchServer's side, and the Wordpress plugin is only meant to be used to manage local options (like
+                                labels and custom values for facets, types of information to display for each document on the results page, etc.).<br/>
+                                If the "Allow for choosing a different search template" option and the "Do not immediately post "Query Settings" to OpenSearchServer" option are both enabled then the
                                 checkbox at the bottom of the "Query Settings" section will be hidden.</span>
                             </p>
                             <p>
                                 <input type="checkbox" value="1" name="oss_advanced_query_template_choice" id="oss_advanced_query_template_choice" <?php checked( 1 == get_option('oss_advanced_query_template_choice')); ?>/>
                                     <label for="oss_advanced_query_template_choice">Allow for choosing a different search template</label>
                                 <br/>
-                                <span class="help">If enabled, this option will display an option on top of the "Query settings" section that will allow for choosing to use a specific search 
-                                template created in OpenSearchserver directly. If this option is chosen, search template will have to be fully managed in OpenSearchServer: searched fields (or pattern),
-                                needed returned fields, snippets, etc. Only keywords and facets will be dynamically configured on the search template.</span>
+                                <span class="help">If enabled, this option will display an option on top of the "Query settings" section that allows for choosing to use a specific search 
+                                template created in OpenSearchserver directly. If this option is chosen, your search template will have to be fully managed in OpenSearchServer: searched fields (or pattern),
+                                needed returned fields, snippets, etc. Only keywords and facets will be dynamically configured in the search template.</span>
                             </p>
                             <p>
                                 <input type="hidden" name="oss_submit" value="opensearchserver_advanced_settings" /> 
