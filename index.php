@@ -6,7 +6,7 @@
  Author: Emmanuel Keller - Naveen.A.N - Alexandre Toyer
  Author URI: http://open-search-server.com
  Tested up to: 4.0
- Version: 1.5.7
+ Version: 1.5.8
  */
 require_once 'lib/oss_api.class.php';
 require_once 'lib/oss_misc.lib.php';
@@ -40,12 +40,7 @@ function opensearchserver_load_scripts_styles() {
   wp_enqueue_script( 'opensearchserver' );
   wp_register_style( 'opensearchserver-style', plugins_url('opensearchserver-search')  . '/css/oss-style.css');
   wp_enqueue_style('opensearchserver-style');
-  if($wp_version >= 3.8 ) {
-  	wp_register_style( 'opensearchserver-style-latest', plugins_url('opensearchserver-search')  . '/css/oss-style-latest.css');
-  	wp_enqueue_style('opensearchserver-style-latest');
-  }
   wp_enqueue_script( 'jQuery' );
-  
 }
 
 function  opensearchserver_search() {
