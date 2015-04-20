@@ -103,7 +103,7 @@ OpenSearchServer.handleAutocomplete = function() {
 				+ j + ');" ';
 		content += 'onclick="javascript:OpenSearchServer.setKeywords_onClick(this.innerHTML);" ';
 		*/
-		content += 'class="oss-autocomplete_link">' + str[i].trim() + '</div>';
+		content += 'class="oss-autocomplete_link">' + String(str[i]).trim() + '</div>';
 	}
 	content += '</div>';
 	ac.html(content);
@@ -137,7 +137,8 @@ jQuery(function($) {
 	})
 	
 	// autocomplete on search page
-	$('input#oss-keyword').on('input', function(event) {
+	$('input#oss-keyword').on('input propertychange', function(event) {
+		console.log('test');
     	OpenSearchServer.autosuggest(event, $(this));
     });
 	$('input#oss-keyword').on('keyup', function(event) {
@@ -146,7 +147,7 @@ jQuery(function($) {
 	
 	// autocomplete on main Wordpress search input
 	$('input.search-field').attr('autocomplete', 'off');
-	$('input.search-field').on('input', function(event) {
+	$('input.search-field').on('input propertychange', function(event) {
     	OpenSearchServer.autosuggest(event, $(this));
     });
 	$('input.search-field').on('keyup', function(event) {
@@ -201,7 +202,12 @@ jQuery(function($) {
 	});
 });
 
-
+// Add "trim()" for old IE
+if(typeof String.prototype.trim !== 'function') {
+  String.prototype.trim = function() {
+    return this.replace(/^\s+|\s+$/g, ''); 
+  }
+}
 
 /*
 OpenSearchServer.autocompleteLinkOver = function(n) {
