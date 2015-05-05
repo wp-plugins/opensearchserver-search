@@ -6,7 +6,7 @@
  Author: Emmanuel Keller - Naveen.A.N - Alexandre Toyer
  Author URI: http://open-search-server.com
  Tested up to: 4.0
- Version: 1.5.9
+ Version: 1.5.10
  */
 require_once 'lib/oss_api.class.php';
 require_once 'lib/oss_misc.lib.php';
@@ -205,13 +205,11 @@ $plugin = plugin_basename(__FILE__);
 add_filter("plugin_action_links_$plugin", 'opensearchserver_settings_link');
 
 function is_content_type_allowed($post_type) {
-    foreach (get_post_types() as $post_type) {
-      $content_type = 'oss_index_types_'.$post_type;
-        if(get_option($content_type) == 1) {
-          return TRUE;
-        }
-    }
-   return FALSE;
+  $content_type = 'oss_index_types_'.$post_type;
+  if(get_option($content_type) == 1) {
+      return TRUE;
+  }
+  return FALSE;
 }
 
 function opensearchserver_do_while_posting($post_id,$post) {
